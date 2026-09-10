@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CP & Job Status Situational Quiz</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card-bg: #ffffff;
+    --card-bg-soft: #f8fafc;
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --border: #e2e8f0;
+    --accent: #7c3aed;
+    --accent-2: #4f46e5;
+    --accent-soft: #ede9fe;
+    --green: #16a34a;
+    --green-soft: #ecfdf3;
+    --red: #dc2626;
+    --red-soft: #fef2f2;
+    --amber: #d97706;
+    --shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: radial-gradient(circle at 20% -10%, #312e81 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  header.hero {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+
+  header.hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #e0e7ff;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  header.hero h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    margin: 0 0 8px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  header.hero p {
+    margin: 0;
+    color: #c7d2fe;
+    font-size: 16px;
+  }
+
+  .topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .topics span {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #e0e7ff;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  .stage {
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-soft), #fff 60%);
+    z-index: 0;
+  }
+
+  .stage-inner { position: relative; z-index: 1; }
+
+  .assign-btn {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: none;
+    border-radius: 16px;
+    padding: 18px 40px;
+    cursor: pointer;
+    box-shadow: 0 12px 24px -8px rgba(124, 58, 237, 0.55);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .assign-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -8px rgba(124, 58, 237, 0.65); }
+  .assign-btn:active { transform: translateY(0); }
+  .assign-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .placeholder-text {
+    color: var(--ink-soft);
+    font-size: 17px;
+    margin: 0;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 22px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  }
+
+  .btn:hover { background: var(--card-bg-soft); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .btn.primary {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .btn.primary:hover { background: #1e293b; }
+
+  .btn.danger { color: var(--red); border-color: #fecaca; }
+  .btn.danger:hover { background: #fef2f2; }
+
+  .btn.ghost { background: transparent; }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .card-head h2 {
+    font-size: 18px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .count-pill {
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent-2);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .pool-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+
+  ul.item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  ul.item-list li {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--card-bg-soft);
+    border: 1px solid var(--border);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  ul.item-list li.used {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+
+  ul.item-list li .tag-used {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .empty-note {
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* Quiz assignment banner */
+  .assign-banner {
+    background: linear-gradient(135deg, #ffffff, #f5f3ff);
+    border: 2px solid #ddd6fe;
+    border-radius: 20px;
+    padding: 22px 26px;
+    text-align: center;
+    margin-bottom: 24px;
+    animation: pop-in 0.4s cubic-bezier(.2,.9,.3,1.3);
+  }
+
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.9) translateY(8px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .assign-banner .flag {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .assign-banner .trainee-name {
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .assign-banner .sub {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* Quiz questions */
+  .q-card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: var(--card-bg-soft);
+  }
+
+  .q-topic {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-2);
+    background: var(--accent-soft);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+  }
+
+  .q-scenario {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  label.option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #fff;
+    cursor: pointer;
+    font-size: 15px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  label.option:hover { border-color: var(--accent); }
+
+  label.option input { margin-top: 3px; flex-shrink: 0; }
+
+  label.option.correct {
+    border-color: var(--green);
+    background: var(--green-soft);
+  }
+
+  label.option.incorrect {
+    border-color: var(--red);
+    background: var(--red-soft);
+  }
+
+  .q-feedback {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .q-feedback.right {
+    background: var(--green-soft);
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .q-feedback.wrong {
+    background: var(--red-soft);
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
+
+  .q-feedback .expl { color: var(--ink-soft); margin-top: 6px; }
+
+  .score-banner {
+    text-align: center;
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent-soft), #fff);
+    border: 2px solid #ddd6fe;
+    margin-bottom: 20px;
+  }
+
+  .score-banner .score-value {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .score-banner .score-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+
+  /* Modal (trainee edit) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+
+  .modal-overlay[hidden] { display: none; }
+
+  .modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4);
+  }
+
+  .modal-head {
+    padding: 22px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-head h3 { margin: 0; font-size: 19px; }
+
+  .modal-body {
+    padding: 18px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-foot {
+    padding: 16px 24px 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .modal-foot .right { display: flex; gap: 10px; }
+
+  .edit-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .edit-row input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  .edit-row input[type="text"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .icon-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--red);
+    transition: background 0.15s ease;
+  }
+  .icon-btn:hover { background: #fef2f2; }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .add-row input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer.foot {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 30px;
+  }
+
+  details.answer-key summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--accent-2);
+  }
+
+  details.answer-key {
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <span class="badge">Live Training Activity</span>
+    <h1>🎯 CP &amp; Job Status Situational Quiz</h1>
+    <p>Randomly assigns each trainee a 5-question situational quiz drawn from the topics below.</p>
+    <div class="topics">
+      <span>CP Profile Status</span>
+      <span>CP-Facing Deactivation</span>
+      <span>Job Statuses (Submitted / Invoiced / Cancelled / Pending Invoice)</span>
+      <span>AG: Pending Invoice &amp; Cancellation Reason Codes</span>
+    </div>
+  </header>
+
+  <section class="stage">
+    <div class="stage-inner">
+      <button class="assign-btn" id="assignBtn">🎲 Assign Quiz to Next Trainee</button>
+      <div class="controls">
+        <button class="btn danger" id="resetBtn">🔄 Reset Round</button>
+        <button class="btn" id="editTraineesBtn">✏️ Edit Trainees</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="quizArea"></div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>🧑‍🤝‍🧑 Trainee List <span class="count-pill" id="traineeCount">0</span></h2>
+      <button class="btn ghost" id="editTraineesBtn2">Edit</button>
+    </div>
+    <p class="pool-note" id="traineePoolNote"></p>
+    <ul class="item-list" id="traineeDisplayList"></ul>
+  </section>
+
+  <footer class="foot">CP &amp; Job Status Situational Quiz &middot; Trainer tool &middot; Trainee list is saved in this browser</footer>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Edit Trainee List</h3>
+      <button class="icon-btn" id="modalCloseX" style="color:var(--ink-soft)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="editRows"></div>
+      <div class="add-row">
+        <input type="text" id="newItemInput" placeholder="Add trainee name..." />
+        <button class="btn primary" id="addItemBtn">➕ Add</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" id="clearListBtn">🗑️ Clear / Reset List</button>
+      <div class="right">
+        <button class="btn" id="cancelEditBtn">Cancel</button>
+        <button class="btn primary" id="saveEditBtn">✅ Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "cpJobStatusQuiz.v1";
+
+  var DEFAULT_TRAINEES = [
+    "Alex Johnson",
+    "Jordan Lee",
+    "Taylor Smith",
+    "Morgan Davis",
+    "Sam Rivera"
+  ];
+
+  // ---- Question bank: 6 situational questions per topic (24 total) ----
+  var QUESTION_BANK = [
+    // ---------------- CP Profile Status ----------------
+    {
+      topic: "CP Profile Status",
+      scenario: "A CP who is NOT in a probation period has an 82% keep rate (18% cancellation rate). Based on the system-generated thresholds, what should happen to their CP Profile Status?",
+      options: [
+        "No change — 82% keep rate is above the norequests threshold",
+        "norequests",
+        "suspended",
+        "cp-opt-out"
+      ],
+      correct: "No change — 82% keep rate is above the norequests threshold",
+      explanation: "norequests only triggers at ≤80% keep rate (>20% cancellation rate). An 18% cancellation rate is under that threshold, so no automatic status change applies."
+    },
+    {
+      topic: "CP Profile Status",
+      scenario: "A CP's keep rate drops to 65%, and they are not in a probation period. What should their CP Profile Status become?",
+      options: ["active", "norequests", "suspended", "cp-opt-out"],
+      correct: "suspended",
+      explanation: "A keep rate under 70% triggers suspended, regardless of probation status."
+    },
+    {
+      topic: "CP Profile Status",
+      scenario: "A CP is in their probation period (their first 3 jobs after joining or reactivating) and has a single no-show. What CP Profile Status applies?",
+      options: [
+        "No action — one no-show is tolerated for new CPs",
+        "norequests",
+        "suspended",
+        "cp-opt-out"
+      ],
+      correct: "suspended",
+      explanation: "Outside probation, it takes 2 no-shows in the last 5 jobs to suspend a CP. During probation, the threshold is stricter: any single no-show triggers suspended."
+    },
+    {
+      topic: "CP Profile Status",
+      scenario: "A cleaner tells CS they're relocating and want to stop taking jobs for a while, but plan to return later. Which status fits, and does reactivating it require a fee?",
+      options: [
+        "suspended; $15–25 fee to reactivate",
+        "norequests; $15–25 fee to reactivate",
+        "cp-opt-out; no fee to reactivate",
+        "cp-opt-out; $15–25 fee to reactivate"
+      ],
+      correct: "cp-opt-out; no fee to reactivate",
+      explanation: "cp-opt-out is for CPs who voluntarily choose not to be available (illness, moved, no longer wants to clean). They can reactivate without a fee, via their dashboard or through CS."
+    },
+    {
+      topic: "CP Profile Status",
+      scenario: "A suspended CP has a do_not_reactivate flag on their account and offers to pay the standard reactivation fee. Should you reactivate them?",
+      options: [
+        "Yes — paying the fee always overrides any flag",
+        "No — a do_not_reactivate flag blocks reactivation even with the fee",
+        "Only if they live in a General Operating Model state",
+        "Only with case-by-case manager approval every time"
+      ],
+      correct: "No — a do_not_reactivate flag blocks reactivation even with the fee",
+      explanation: "norequests/suspended CPs can normally reactivate by paying the $15–25 fee, unless they have a do_not_reactivate flag (or are in a CA/CAWA Operating Model state) — in which case the fee path is unavailable."
+    },
+    {
+      topic: "CP Profile Status",
+      scenario: "Before changing a CP's status for a reliability issue, what should you always do first, and what test should guide the decision?",
+      options: [
+        "Apply the system threshold immediately with no further review",
+        "Check the CP's tier only, then apply the change",
+        "Check the CP's reason/flag history first, and ask “would I want this CP for my own cleaning?”",
+        "Check only the customer's account history"
+      ],
+      correct: "Check the CP's reason/flag history first, and ask “would I want this CP for my own cleaning?”",
+      explanation: "The guidance is never to change a CP's status without checking their reason/flag history first, and to apply the “would I want this CP for my cleaning” test before deciding."
+    },
+
+    // ---------------- CP-Facing Deactivation Reasons ----------------
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "You're deactivating a CP because their customer, Maria, reported the CP didn't show up for their Tuesday Nov 4 job. What's the correct CP-facing reason code entry?",
+      options: [
+        "“No-show: Maria says you missed her Tuesday Nov 4 appointment”",
+        "cpq_noshow Your customer Maria reported you didn't show up to their Tuesday Nov 4 job. Submit reactivation appeal through dashboard.",
+        "cpq_cancel Your customer Maria reported you didn't show up to their Tuesday Nov 4 job.",
+        "A short note in your own words describing what happened"
+      ],
+      correct: "cpq_noshow Your customer Maria reported you didn't show up to their Tuesday Nov 4 job. Submit reactivation appeal through dashboard.",
+      explanation: "No-show uses the cpq_noshow code with the exact templated sentence format, filling in the customer's name and the job's day/date."
+    },
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "A CP accepted a cash payment for job #4455667. What's the correct deactivation reason code?",
+      options: [
+        "cpq_cash Cash Payment J 4455667",
+        "HGTA 4455667",
+        "cpq_dnr Cash payment on job 4455667",
+        "cpq_false_invoice Cash Payment J 4455667"
+      ],
+      correct: "cpq_cash Cash Payment J 4455667",
+      explanation: "Accepted cash payment uses the format: cpq_cash Cash Payment J <JOB ID>."
+    },
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "You find that a CP's SSN and bank info match those of a CP who was already suspended for fraud — a duplicate account case under our DTC policy. What code do you enter?",
+      options: ["dp-cp <other CP's ID>", "ssn_flagged", "199", "bgcheck_flagged"],
+      correct: "199",
+      explanation: "Duplicate account where SSN/bank info matches a suspended CP (DTC) uses the code 199."
+    },
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "A CP rescheduled customer David's Friday Dec 1 job without David's permission. What's the correct code and message?",
+      options: [
+        "cpq_reschedule Your customer David reported you rescheduled their Friday Dec 1 job without permission. Submit reactivation appeal through dashboard.",
+        "cpq_invalid_reschedule Upon review, your customer reschedule report has been deemed invalid. Submit reactivation appeal through dashboard.",
+        "cpq_cancel Your customer David reported you cancelled their Friday Dec 1 job. Submit reactivation appeal through dashboard.",
+        "cpq_dnr David reported an unauthorized reschedule."
+      ],
+      correct: "cpq_reschedule Your customer David reported you rescheduled their Friday Dec 1 job without permission. Submit reactivation appeal through dashboard.",
+      explanation: "Reschedule unauthorized by the customer uses cpq_reschedule with the customer's name and the job's day/date filled into the templated sentence."
+    },
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "True or False: As long as it's accurate, you can write a freeform explanation for a CP's deactivation reason instead of using the standard code format.",
+      options: [
+        "True — accuracy matters more than exact formatting",
+        "False — always use the exact reason code format; never freeform",
+        "True, but only for suspended (not norequests) statuses",
+        "False, but only as an exception for theft cases"
+      ],
+      correct: "False — always use the exact reason code format; never freeform",
+      explanation: "The rule is explicit: always use the exact reason code format shown in the reference table. Never write a freeform reason for a CP's deactivation."
+    },
+    {
+      topic: "CP-Facing Deactivation",
+      scenario: "Why does it matter that you use the exact CP-facing reason code format, rather than a paraphrase that says essentially the same thing?",
+      options: [
+        "It doesn't really matter as long as the CP understands why they were deactivated",
+        "The code is both the CP-facing message AND the value stored as the deactivation flag in our system, so a wrong or freeform entry breaks both the CP's understanding and our data tracking",
+        "It only affects how the message displays on the CP's dashboard, nothing else",
+        "It's purely a style preference with no functional impact"
+      ],
+      correct: "The code is both the CP-facing message AND the value stored as the deactivation flag in our system, so a wrong or freeform entry breaks both the CP's understanding and our data tracking",
+      explanation: "The reason code has two audiences at once: the CP reading it on their dashboard, and the data it feeds into (it's stored as the actual value of the deactivation flag, used to track patterns over time)."
+    },
+
+    // ---------------- Job Statuses ----------------
+    {
+      topic: "Job Statuses",
+      scenario: "A job has been Submitted and sits unclaimed. Within roughly 24–48 hours of the start time, what automatically happens to it?",
+      options: [
+        "It's automatically cancelled",
+        "It's automatically upgraded to a Priority Request, sending more frequent notifications and allowing cleaners up to 14% above the customer's previous max rate to claim it",
+        "It reverts to Pending status",
+        "The customer is automatically charged a Priority Markup"
+      ],
+      correct: "It's automatically upgraded to a Priority Request, sending more frequent notifications and allowing cleaners up to 14% above the customer's previous max rate to claim it",
+      explanation: "A submitted job auto-upgrades to a Priority Request within 24–48 hours of the start time, which increases cleaner notifications and the allowable claim rate."
+    },
+    {
+      topic: "Job Statuses",
+      scenario: "A job has can_substitute = False (the customer only wants their Requested CP). CS books it via CRM 40 hours before the job's start time, and none of the Requested CPs have claimed it yet. How long do the Requested CPs have to claim before the system auto-flips can_substitute to True?",
+      options: [
+        "24 hours",
+        "48 hours",
+        "20 hours (half of the 40-hour window)",
+        "It never auto-flips for CRM-booked jobs"
+      ],
+      correct: "20 hours (half of the 40-hour window)",
+      explanation: "If the job is submitted ≤48 hours before start, Requested CPs get [(time from submit to start)/2] hours to claim — here that's 40 / 2 = 20 hours."
+    },
+    {
+      topic: "Job Statuses",
+      scenario: "A cleaner completes a job and clicks “Charge Client” on their dashboard. What job status results, and what happens to the customer and CP?",
+      options: [
+        "Pending Invoice; nothing happens until CS reviews it",
+        "Invoiced; the customer is charged and the CP receives their pay",
+        "Cancelled; the customer must confirm first",
+        "Claimed; the CP must still invoice separately later"
+      ],
+      correct: "Invoiced; the customer is charged and the CP receives their pay",
+      explanation: "Clicking Charge Client moves the job to Invoiced — the customer's card is charged and the CP is paid."
+    },
+    {
+      topic: "Job Statuses",
+      scenario: "An Invoiced job later receives a full refund. What does the job status become?",
+      options: [
+        "It stays Invoiced — refunds don't change job status",
+        "Pending Invoice",
+        "Cancelled",
+        "Submitted, so it can be rebooked automatically"
+      ],
+      correct: "Cancelled",
+      explanation: "An Invoiced job only becomes Cancelled through a full refund — that's the one path from Invoiced to Cancelled."
+    },
+    {
+      topic: "Job Statuses",
+      scenario: "A cleaner doesn't invoice a job within a few hours after its scheduled end time. What happens to the job status, and who can move it forward from there?",
+      options: [
+        "It stays Claimed indefinitely until the CP eventually invoices it",
+        "It automatically changes to Pending Invoice; either the CP clicks “Charge Client” or the customer reports “My cleaning was completed”",
+        "It automatically cancels because the CP missed the invoicing window",
+        "It automatically changes to Pending Invoice, but only the CP can invoice it from there"
+      ],
+      correct: "It automatically changes to Pending Invoice; either the CP clicks “Charge Client” or the customer reports “My cleaning was completed”",
+      explanation: "If the cleaner doesn't invoice within a few hours of the job's end time, it auto-changes to Pending Invoice. From there, either the cleaner or the customer can trigger the invoice."
+    },
+    {
+      topic: "Job Statuses",
+      scenario: "A customer wants to cancel their appointment 3 hours before the job's start time, and the job is currently Claimed (not yet invoiced). What might apply?",
+      options: [
+        "Nothing — cancellations are always free until Invoiced",
+        "A Last-Minute Cancellation Fee, since it's within 6 hours of the start time",
+        "The job cannot be cancelled once it's Claimed",
+        "A Priority Markup"
+      ],
+      correct: "A Last-Minute Cancellation Fee, since it's within 6 hours of the start time",
+      explanation: "Customers can cancel any time the job isn't Invoiced, but may be subject to a Last-Minute Cancellation Fee if they cancel less than 6 hours before the job start time."
+    },
+
+    // ---------------- AG: Pending Invoice & Cancellation Reason Codes ----------------
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "A job is Pending Invoice. The customer messages confirming the cleaning happened, but reports a different appointment duration than what's currently pending. What should you do?",
+      options: [
+        "Cancel the job and have the customer rebook",
+        "Invoice the appointment in the CP Dashboard with the corrected duration, tell the customer it's marked completed, and tell the CP it was invoiced on their behalf while coaching them about leaving jobs pending",
+        "Mark the job completed via “Report an Issue” without changing the duration",
+        "Wait 72 hours before taking any action"
+      ],
+      correct: "Invoice the appointment in the CP Dashboard with the corrected duration, tell the customer it's marked completed, and tell the CP it was invoiced on their behalf while coaching them about leaving jobs pending",
+      explanation: "When the customer confirms completion with a different duration, invoice the job with the confirmed duration, notify the customer it was marked completed, and notify/coach the CP."
+    },
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "A job is Pending Invoice with no clear evidence either way on completion, and it's only been 50 hours since the job's end time (under the 72-hour mark). What's the right next step?",
+      options: [
+        "Cancel the job immediately and waive the fee",
+        "Send the customer comms asking for confirmation the job was completed, and consider calling the customer/CP",
+        "Invoice the job automatically to avoid delay",
+        "Escalate straight to a CP Profile Status penalty"
+      ],
+      correct: "Send the customer comms asking for confirmation the job was completed, and consider calling the customer/CP",
+      explanation: "Under 72 hours with insufficient evidence, send comms to the customer to confirm completion (and consider a call) rather than cancelling right away."
+    },
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "A customer wants to cancel because their job hasn't been claimed by any CP yet. Which cancellation reason code applies?",
+      options: ["CP cancellation", "No CP Claimed", "Customer schedule", "Customer doesn't want service"],
+      correct: "No CP Claimed",
+      explanation: "“No CP Claimed” is used when the customer wants to cancel because their job hasn't yet been claimed by a CP."
+    },
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "A customer says they need to cancel because they're moving to a new home. Which cancellation reason code applies?",
+      options: ["Customer moved", "Customer wants one time", "Customer schedule", "Customer doesn't want service"],
+      correct: "Customer moved",
+      explanation: "“Customer moved” covers cancellations because the customer needs to cancel due to moving or being in the process of moving."
+    },
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "A CP needs to cancel a job and did attempt to reschedule with the customer first. Compare that to a CP who cancels outright with zero reschedule attempt — which reason code fits each?",
+      options: [
+        "Both situations use “CP cancellation”",
+        "Attempted reschedule → “CP no-show/reschedule”; no attempt at all → “CP cancellation”",
+        "Attempted reschedule → “CP cancellation”; no attempt at all → “CP no-show/reschedule”",
+        "Both situations use “CP Quality”"
+      ],
+      correct: "Attempted reschedule → “CP no-show/reschedule”; no attempt at all → “CP cancellation”",
+      explanation: "“CP no-show/reschedule” applies when the CP needed to cancel but attempted to reschedule; “CP cancellation” applies when the CP initiated the cancellation with no reschedule attempt."
+    },
+    {
+      topic: "AG: Pending Invoice & Cancellation Codes",
+      scenario: "We determine, before the job even happens, that we're likely unable to charge a customer's card because it's invalid. Which cancellation code applies, and is this reactive or proactive?",
+      options: [
+        "Customer credit card failed — proactive cancellation",
+        "Customer credit card failed — reactive, only used after a charge actually fails",
+        "Customer disputed credit card charge — proactive cancellation",
+        "Homeaglow UI — proactive cancellation"
+      ],
+      correct: "Customer credit card failed — proactive cancellation",
+      explanation: "“Customer credit card failed” is used proactively — when we determine we're likely unable to charge the customer's card because it's invalid, before it actually fails."
+    }
+  ];
+
+  var TOPICS = [];
+  (function buildTopics() {
+    var seen = {};
+    QUESTION_BANK.forEach(function (q) {
+      if (!seen[q.topic]) { seen[q.topic] = true; TOPICS.push(q.topic); }
+    });
+  })();
+
+  var state = {
+    trainees: [],
+    traineePool: [],
+    currentTrainee: null,
+    currentQuestions: null, // array of {question, options(shuffled), answered, selected}
+    submitted: false
+  };
+
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        state.trainees = Array.isArray(parsed.trainees) && parsed.trainees.length ? parsed.trainees : DEFAULT_TRAINEES.slice();
+        state.traineePool = Array.isArray(parsed.traineePool) ? parsed.traineePool.filter(function (t) { return state.trainees.indexOf(t) !== -1; }) : [];
+        state.currentTrainee = parsed.currentTrainee || null;
+        state.currentQuestions = Array.isArray(parsed.currentQuestions) ? parsed.currentQuestions : null;
+        state.submitted = !!parsed.submitted;
+        ensurePool();
+        return;
+      } catch (e) { /* fall through to defaults */ }
+    }
+    state.trainees = DEFAULT_TRAINEES.slice();
+    state.traineePool = [];
+    state.currentTrainee = null;
+    state.currentQuestions = null;
+    state.submitted = false;
+    ensurePool();
+  }
+
+  function ensurePool() {
+    if (state.traineePool.length === 0 && state.trainees.length > 0) {
+      state.traineePool = shuffle(state.trainees);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        trainees: state.trainees,
+        traineePool: state.traineePool,
+        currentTrainee: state.currentTrainee,
+        currentQuestions: state.currentQuestions,
+        submitted: state.submitted
+      }));
+    } catch (e) { /* storage unavailable, continue without persistence */ }
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function drawTrainee() {
+    if (state.traineePool.length === 0) {
+      state.traineePool = shuffle(state.trainees);
+    }
+    return state.traineePool.shift();
+  }
+
+  // Pick 5 questions: one from each topic first (coverage), then 1 more at random.
+  function pickFiveQuestions() {
+    var byTopic = {};
+    TOPICS.forEach(function (t) { byTopic[t] = []; });
+    QUESTION_BANK.forEach(function (q) { byTopic[q.topic].push(q); });
+
+    var picked = [];
+    var pickedSet = {};
+    TOPICS.forEach(function (t) {
+      var pool = shuffle(byTopic[t]);
+      if (pool.length) {
+        picked.push(pool[0]);
+        pickedSet[pool[0].scenario] = true;
+      }
+    });
+
+    var remaining = QUESTION_BANK.filter(function (q) { return !pickedSet[q.scenario]; });
+    remaining = shuffle(remaining);
+    while (picked.length < 5 && remaining.length) {
+      picked.push(remaining.shift());
+    }
+
+    picked = shuffle(picked);
+
+    return picked.map(function (q) {
+      return {
+        topic: q.topic,
+        scenario: q.scenario,
+        correct: q.correct,
+        explanation: q.explanation,
+        options: shuffle(q.options),
+        selected: null
+      };
+    });
+  }
+
+  // ---- DOM refs ----
+  var assignBtn = document.getElementById("assignBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var quizArea = document.getElementById("quizArea");
+  var traineeDisplayList = document.getElementById("traineeDisplayList");
+  var traineeCount = document.getElementById("traineeCount");
+  var traineePoolNote = document.getElementById("traineePoolNote");
+
+  var modalOverlay = document.getElementById("modalOverlay");
+  var editRows = document.getElementById("editRows");
+  var newItemInput = document.getElementById("newItemInput");
+  var addItemBtn = document.getElementById("addItemBtn");
+  var saveEditBtn = document.getElementById("saveEditBtn");
+  var cancelEditBtn = document.getElementById("cancelEditBtn");
+  var clearListBtn = document.getElementById("clearListBtn");
+  var modalCloseX = document.getElementById("modalCloseX");
+  var toastEl = document.getElementById("toast");
+
+  var editingDraft = [];
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---- Rendering ----
+  function renderTraineeList() {
+    traineeCount.textContent = state.trainees.length;
+    traineeDisplayList.innerHTML = "";
+    if (state.trainees.length === 0) {
+      var li = document.createElement("li");
+      li.className = "empty-note";
+      li.style.justifyContent = "center";
+      li.textContent = "No trainees yet — click Edit to add some.";
+      traineeDisplayList.appendChild(li);
+    } else {
+      state.trainees.forEach(function (item) {
+        var li = document.createElement("li");
+        var usedThisRound = state.traineePool.indexOf(item) === -1;
+        if (usedThisRound) li.classList.add("used");
+        var span = document.createElement("span");
+        span.textContent = item;
+        li.appendChild(span);
+        if (usedThisRound) {
+          var tag = document.createElement("span");
+          tag.className = "tag-used";
+          tag.textContent = "used";
+          li.appendChild(tag);
+        }
+        traineeDisplayList.appendChild(li);
+      });
+    }
+
+    if (state.trainees.length === 0) {
+      traineePoolNote.textContent = "";
+    } else {
+      var remaining = state.traineePool.length;
+      var total = state.trainees.length;
+      var used = total - remaining;
+      traineePoolNote.textContent = used === 0 && remaining === total
+        ? "Full round ready — all " + total + " trainee" + (total === 1 ? "" : "s") + " available."
+        : used + " of " + total + " trainee" + (total === 1 ? "" : "s") + " quizzed this round — " + remaining + " remaining.";
+    }
+  }
+
+  function renderQuiz() {
+    if (!state.currentTrainee || !state.currentQuestions) {
+      quizArea.innerHTML = '<section class="card"><p class="placeholder-text">Click “Assign Quiz to Next Trainee” to draw a trainee and their 5 questions.</p></section>';
+      return;
+    }
+
+    var html = "";
+    html += '<div class="assign-banner">';
+    html += '  <div class="flag">🎯 Quiz Assigned</div>';
+    html += '  <div class="trainee-name">' + escapeHtml(state.currentTrainee) + '</div>';
+    html += '  <div class="sub">5 situational questions, one drawn from each topic area plus one bonus question</div>';
+    html += '</div>';
+
+    if (state.submitted) {
+      var scoreCount = state.currentQuestions.filter(function (q) { return q.selected === q.correct; }).length;
+      html += '<div class="score-banner"><div class="score-value">' + scoreCount + ' / ' + state.currentQuestions.length + '</div><div class="score-label">Correct Answers</div></div>';
+    }
+
+    state.currentQuestions.forEach(function (q, qIdx) {
+      html += '<div class="q-card">';
+      html += '  <span class="q-topic">' + escapeHtml(q.topic) + '</span>';
+      html += '  <div class="q-scenario">' + (qIdx + 1) + '. ' + escapeHtml(q.scenario) + '</div>';
+      html += '  <div class="q-options">';
+      q.options.forEach(function (opt, oIdx) {
+        var optId = "q" + qIdx + "_o" + oIdx;
+        var extraClass = "";
+        if (state.submitted) {
+          if (opt === q.correct) extraClass = " correct";
+          else if (opt === q.selected) extraClass = " incorrect";
+        }
+        html += '<label class="option' + extraClass + '" for="' + optId + '">';
+        html += '<input type="radio" id="' + optId + '" name="q' + qIdx + '" value="' + oIdx + '"' +
+          (q.selected === opt ? " checked" : "") + (state.submitted ? " disabled" : "") + ' data-qidx="' + qIdx + '">';
+        html += '<span>' + escapeHtml(opt) + '</span>';
+        html += '</label>';
+      });
+      html += '  </div>';
+      if (state.submitted) {
+        var isRight = q.selected === q.correct;
+        html += '<div class="q-feedback ' + (isRight ? "right" : "wrong") + '">';
+        html += isRight ? "✅ Correct." : "❌ Not quite — correct answer: " + escapeHtml(q.correct);
+        html += '<div class="expl">' + escapeHtml(q.explanation) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+
+    if (!state.submitted) {
+      html += '<div class="controls"><button class="btn primary" id="submitQuizBtn">✅ Submit Quiz</button></div>';
+    } else {
+      html += '<div class="controls"><button class="btn primary" id="nextTraineeBtn">➡️ Assign Next Trainee</button></div>';
+    }
+
+    quizArea.innerHTML = html;
+
+    if (!state.submitted) {
+      var radios = quizArea.querySelectorAll('input[type="radio"]');
+      radios.forEach(function (r) {
+        r.addEventListener("change", function () {
+          var qIdx = parseInt(r.getAttribute("data-qidx"), 10);
+          var oIdx = parseInt(r.value, 10);
+          state.currentQuestions[qIdx].selected = state.currentQuestions[qIdx].options[oIdx];
+          saveState();
+        });
+      });
+      var submitBtn = document.getElementById("submitQuizBtn");
+      if (submitBtn) submitBtn.addEventListener("click", submitQuiz);
+    } else {
+      var nextBtn = document.getElementById("nextTraineeBtn");
+      if (nextBtn) nextBtn.addEventListener("click", assignQuiz);
+    }
+  }
+
+  // ---- Quiz actions ----
+  function assignQuiz() {
+    if (state.trainees.length === 0) {
+      showToast("Add at least one trainee first.");
+      return;
+    }
+    state.currentTrainee = drawTrainee();
+    state.currentQuestions = pickFiveQuestions();
+    state.submitted = false;
+    saveState();
+    renderTraineeList();
+    renderQuiz();
+    quizArea.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function submitQuiz() {
+    var unanswered = state.currentQuestions.some(function (q) { return q.selected === null; });
+    if (unanswered) {
+      showToast("Answer all 5 questions before submitting.");
+      return;
+    }
+    state.submitted = true;
+    saveState();
+    renderQuiz();
+  }
+
+  function resetRound() {
+    state.traineePool = [];
+    state.currentTrainee = null;
+    state.currentQuestions = null;
+    state.submitted = false;
+    ensurePool();
+    saveState();
+    renderTraineeList();
+    renderQuiz();
+    showToast("Round reset. All trainees available again.");
+  }
+
+  // ---- Modal / editing trainees ----
+  function openEditor() {
+    editingDraft = state.trainees.slice();
+    newItemInput.value = "";
+    renderEditRows();
+    modalOverlay.hidden = false;
+    setTimeout(function () { newItemInput.focus(); }, 50);
+  }
+
+  function closeEditor() {
+    modalOverlay.hidden = true;
+    editingDraft = [];
+  }
+
+  function renderEditRows() {
+    editRows.innerHTML = "";
+    if (editingDraft.length === 0) {
+      var p = document.createElement("p");
+      p.className = "empty-note";
+      p.textContent = "List is empty. Add a trainee below.";
+      editRows.appendChild(p);
+      return;
+    }
+    editingDraft.forEach(function (val, idx) {
+      var row = document.createElement("div");
+      row.className = "edit-row";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = val;
+      input.addEventListener("input", function () {
+        editingDraft[idx] = input.value;
+      });
+
+      var del = document.createElement("button");
+      del.className = "icon-btn";
+      del.title = "Remove";
+      del.textContent = "🗑️";
+      del.addEventListener("click", function () {
+        editingDraft.splice(idx, 1);
+        renderEditRows();
+      });
+
+      row.appendChild(input);
+      row.appendChild(del);
+      editRows.appendChild(row);
+    });
+  }
+
+  function addDraftItem() {
+    var val = newItemInput.value.trim();
+    if (!val) return;
+    editingDraft.push(val);
+    newItemInput.value = "";
+    renderEditRows();
+    newItemInput.focus();
+  }
+
+  function saveEditor() {
+    var cleaned = editingDraft.map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+    if (cleaned.length === 0) {
+      showToast("List can't be empty — add at least one trainee.");
+      return;
+    }
+    state.trainees = cleaned;
+    state.traineePool = [];
+    state.currentTrainee = null;
+    state.currentQuestions = null;
+    state.submitted = false;
+    ensurePool();
+    saveState();
+    renderTraineeList();
+    renderQuiz();
+    closeEditor();
+    showToast("Trainee list saved.");
+  }
+
+  function clearEditorList() {
+    if (!confirm("Clear all trainees? This removes every entry from the list.")) return;
+    editingDraft = [];
+    renderEditRows();
+  }
+
+  // ---- Wire up events ----
+  assignBtn.addEventListener("click", assignQuiz);
+  resetBtn.addEventListener("click", function () {
+    if (confirm("Reset the round? This clears the current quiz and makes all trainees available again.")) {
+      resetRound();
+    }
+  });
+
+  document.getElementById("editTraineesBtn").addEventListener("click", openEditor);
+  document.getElementById("editTraineesBtn2").addEventListener("click", openEditor);
+
+  addItemBtn.addEventListener("click", addDraftItem);
+  newItemInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); addDraftItem(); }
+  });
+
+  saveEditBtn.addEventListener("click", saveEditor);
+  cancelEditBtn.addEventListener("click", closeEditor);
+  modalCloseX.addEventListener("click", closeEditor);
+  clearListBtn.addEventListener("click", clearEditorList);
+  modalOverlay.addEventListener("click", function (e) {
+    if (e.target === modalOverlay) closeEditor();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modalOverlay.hidden) closeEditor();
+  });
+
+  // ---- Init ----
+  loadState();
+  renderTraineeList();
+  renderQuiz();
+})();
+</script>
+</body>
+</html>
