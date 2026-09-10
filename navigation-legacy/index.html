@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Navigation (Legacy)</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-grad-2: #1e1b4b;
+    --card-bg: #ffffff;
+    --card-bg-soft: #f8fafc;
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --border: #e2e8f0;
+    --accent: #7c3aed;
+    --accent-2: #4f46e5;
+    --accent-soft: #ede9fe;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: radial-gradient(circle at 20% -10%, #312e81 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  header.hero {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 28px;
+  }
+
+  header.hero .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #e0e7ff;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  header.hero h1 {
+    font-size: clamp(32px, 5vw, 48px);
+    margin: 0 0 8px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  header.hero p {
+    margin: 0;
+    color: #c7d2fe;
+    font-size: 16px;
+  }
+
+  .stage {
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 28px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-soft), #fff 60%);
+    z-index: 0;
+  }
+
+  .stage-inner { position: relative; z-index: 1; }
+
+  .assign-btn {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: none;
+    border-radius: 16px;
+    padding: 18px 40px;
+    cursor: pointer;
+    box-shadow: 0 12px 24px -8px rgba(124, 58, 237, 0.55);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .assign-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -8px rgba(124, 58, 237, 0.65); }
+  .assign-btn:active { transform: translateY(0); }
+
+  .result-area {
+    margin-top: 28px;
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .placeholder-text {
+    color: var(--ink-soft);
+    font-size: 17px;
+  }
+
+  .result-card {
+    width: 100%;
+    max-width: 640px;
+    background: linear-gradient(135deg, #ffffff, #f5f3ff);
+    border: 2px solid #ddd6fe;
+    border-radius: 20px;
+    padding: 28px 32px;
+    animation: pop-in 0.45s cubic-bezier(.2,.9,.3,1.3);
+  }
+
+  @keyframes pop-in {
+    0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .result-flag {
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .result-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+  }
+
+  .result-row .label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    min-width: 90px;
+    text-align: right;
+  }
+
+  .result-row .value {
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 800;
+    color: var(--ink);
+  }
+
+  .result-row.trainee .value { color: var(--accent-2); }
+  .result-row.action .value { color: var(--accent); }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  }
+
+  .btn:hover { background: var(--card-bg-soft); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn.primary {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .btn.primary:hover { background: #1e293b; }
+
+  .btn.danger { color: var(--red); border-color: #fecaca; }
+  .btn.danger:hover { background: #fef2f2; }
+
+  .btn.ghost { background: transparent; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .card-head h2 {
+    font-size: 18px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .count-pill {
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--accent-soft);
+    color: var(--accent-2);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  .pool-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+
+  ul.item-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  ul.item-list li {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--card-bg-soft);
+    border: 1px solid var(--border);
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  ul.item-list li.used {
+    opacity: 0.45;
+    text-decoration: line-through;
+  }
+
+  ul.item-list li .tag-used {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .empty-note {
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+
+  .modal-overlay[hidden] { display: none; }
+
+  .modal {
+    background: #fff;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,0.4);
+  }
+
+  .modal-head {
+    padding: 22px 24px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-head h3 { margin: 0; font-size: 19px; }
+
+  .modal-body {
+    padding: 18px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-foot {
+    padding: 16px 24px 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .modal-foot .right { display: flex; gap: 10px; }
+
+  .edit-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .edit-row input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  .edit-row input[type="text"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .icon-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--red);
+    transition: background 0.15s ease;
+  }
+  .icon-btn:hover { background: #fef2f2; }
+
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .add-row input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 15px;
+    font-family: inherit;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer.foot {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="hero">
+    <span class="badge">Live Training Activity</span>
+    <h1>🧭 Navigation (Legacy)</h1>
+    <p>Randomly assign a trainee and a navigation task — built for live training sessions.</p>
+  </header>
+
+  <section class="stage">
+    <div class="stage-inner">
+      <button class="assign-btn" id="assignBtn">🎲 Assign Action</button>
+      <div class="result-area" id="resultArea">
+        <p class="placeholder-text">Click "Assign Action" to pick a trainee and their task.</p>
+      </div>
+      <div class="controls">
+        <button class="btn" id="nextTurnBtn">➡️ Next Turn</button>
+        <button class="btn danger" id="resetBtn">🔄 Reset Game</button>
+        <button class="btn" id="editTraineesBtn">✏️ Edit Trainees</button>
+        <button class="btn" id="editActionsBtn">✏️ Edit Actions</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <div class="card-head">
+        <h2>🧑‍🤝‍🧑 Trainee List <span class="count-pill" id="traineeCount">0</span></h2>
+        <button class="btn ghost" id="editTraineesBtn2">Edit</button>
+      </div>
+      <p class="pool-note" id="traineePoolNote"></p>
+      <ul class="item-list" id="traineeDisplayList"></ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>📋 Action List <span class="count-pill" id="actionCount">0</span></h2>
+        <button class="btn ghost" id="editActionsBtn2">Edit</button>
+      </div>
+      <p class="pool-note" id="actionPoolNote"></p>
+      <ul class="item-list" id="actionDisplayList"></ul>
+    </div>
+  </section>
+
+  <footer class="foot">Navigation (Legacy) &middot; Trainer tool &middot; Lists are saved in this browser</footer>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Edit List</h3>
+      <button class="icon-btn" id="modalCloseX" style="color:var(--ink-soft)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="editRows"></div>
+      <div class="add-row">
+        <input type="text" id="newItemInput" placeholder="Add new entry..." />
+        <button class="btn primary" id="addItemBtn">➕ Add</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" id="clearListBtn">🗑️ Clear / Reset List</button>
+      <div class="right">
+        <button class="btn" id="cancelEditBtn">Cancel</button>
+        <button class="btn primary" id="saveEditBtn">✅ Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "navLegacy.v1";
+
+  var DEFAULT_ACTIONS = [
+    "Add a time reminder",
+    "Invalidate the time reminder",
+    "Add a $20 credit",
+    "Book the appointment",
+    "Cancel the appointment",
+    "Issue a 1 hour voucher",
+    "Invalidate the voucher",
+    "Unsubscribe the customer",
+    "Add a block comms",
+    "Invalidate the block comms",
+    "Update Max Rate to $30",
+    "Retry failed Stripe charges"
+  ];
+
+  var DEFAULT_TRAINEES = [
+    "Alex Johnson",
+    "Jordan Lee",
+    "Taylor Smith",
+    "Morgan Davis",
+    "Sam Rivera"
+  ];
+
+  var state = {
+    trainees: [],
+    actions: [],
+    traineePool: [],
+    actionPool: [],
+    current: null // { trainee, action }
+  };
+
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+    if (raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        state.trainees = Array.isArray(parsed.trainees) && parsed.trainees.length ? parsed.trainees : DEFAULT_TRAINEES.slice();
+        state.actions = Array.isArray(parsed.actions) && parsed.actions.length ? parsed.actions : DEFAULT_ACTIONS.slice();
+        state.traineePool = Array.isArray(parsed.traineePool) ? parsed.traineePool.filter(function (t) { return state.trainees.indexOf(t) !== -1; }) : [];
+        state.actionPool = Array.isArray(parsed.actionPool) ? parsed.actionPool.filter(function (a) { return state.actions.indexOf(a) !== -1; }) : [];
+        state.current = parsed.current || null;
+        ensurePools();
+        return;
+      } catch (e) { /* fall through to defaults */ }
+    }
+    state.trainees = DEFAULT_TRAINEES.slice();
+    state.actions = DEFAULT_ACTIONS.slice();
+    state.traineePool = [];
+    state.actionPool = [];
+    state.current = null;
+    ensurePools();
+  }
+
+  // A pool of [] with a non-empty source list means "fresh round, not yet drawn" -
+  // fill it immediately so display logic can tell "fresh" apart from "just exhausted".
+  function ensurePools() {
+    if (state.traineePool.length === 0 && state.trainees.length > 0) {
+      state.traineePool = shuffle(state.trainees);
+    }
+    if (state.actionPool.length === 0 && state.actions.length > 0) {
+      state.actionPool = shuffle(state.actions);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        trainees: state.trainees,
+        actions: state.actions,
+        traineePool: state.traineePool,
+        actionPool: state.actionPool,
+        current: state.current
+      }));
+    } catch (e) { /* storage unavailable, continue without persistence */ }
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function drawFrom(poolName, sourceName) {
+    if (!state[poolName] || state[poolName].length === 0) {
+      state[poolName] = shuffle(state[sourceName]);
+    }
+    return state[poolName].shift();
+  }
+
+  // ---- DOM refs ----
+  var assignBtn = document.getElementById("assignBtn");
+  var nextTurnBtn = document.getElementById("nextTurnBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var resultArea = document.getElementById("resultArea");
+  var traineeDisplayList = document.getElementById("traineeDisplayList");
+  var actionDisplayList = document.getElementById("actionDisplayList");
+  var traineeCount = document.getElementById("traineeCount");
+  var actionCount = document.getElementById("actionCount");
+  var traineePoolNote = document.getElementById("traineePoolNote");
+  var actionPoolNote = document.getElementById("actionPoolNote");
+
+  var modalOverlay = document.getElementById("modalOverlay");
+  var modalTitle = document.getElementById("modalTitle");
+  var editRows = document.getElementById("editRows");
+  var newItemInput = document.getElementById("newItemInput");
+  var addItemBtn = document.getElementById("addItemBtn");
+  var saveEditBtn = document.getElementById("saveEditBtn");
+  var cancelEditBtn = document.getElementById("cancelEditBtn");
+  var clearListBtn = document.getElementById("clearListBtn");
+  var modalCloseX = document.getElementById("modalCloseX");
+  var toastEl = document.getElementById("toast");
+
+  var editingKey = null; // "trainees" | "actions"
+  var editingDraft = [];
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+  }
+
+  // ---- Rendering ----
+  function renderLists() {
+    traineeCount.textContent = state.trainees.length;
+    actionCount.textContent = state.actions.length;
+
+    renderDisplayList(traineeDisplayList, state.trainees, state.traineePool, "No trainees yet — click Edit to add some.");
+    renderDisplayList(actionDisplayList, state.actions, state.actionPool, "No actions yet — click Edit to add some.");
+
+    traineePoolNote.textContent = poolNoteText(state.trainees, state.traineePool, "trainee");
+    actionPoolNote.textContent = poolNoteText(state.actions, state.actionPool, "action");
+  }
+
+  function poolNoteText(list, pool, label) {
+    if (list.length === 0) return "";
+    var remaining = pool.length;
+    var total = list.length;
+    var used = total - remaining;
+    if (used === 0 && remaining === total) return "Full round ready — all " + total + " " + label + (total === 1 ? "" : "s") + " available.";
+    return used + " of " + total + " " + label + (total === 1 ? "" : "s") + " used this round — " + remaining + " remaining.";
+  }
+
+  function renderDisplayList(ul, list, pool, emptyMsg) {
+    ul.innerHTML = "";
+    if (list.length === 0) {
+      var li = document.createElement("li");
+      li.className = "empty-note";
+      li.style.justifyContent = "center";
+      li.textContent = emptyMsg;
+      ul.appendChild(li);
+      return;
+    }
+    list.forEach(function (item) {
+      var li = document.createElement("li");
+      // Pool holds the entries not yet drawn this round; anything missing from it has been used.
+      var usedThisRound = pool.indexOf(item) === -1;
+      if (usedThisRound) li.classList.add("used");
+      var span = document.createElement("span");
+      span.textContent = item;
+      li.appendChild(span);
+      if (usedThisRound) {
+        var tag = document.createElement("span");
+        tag.className = "tag-used";
+        tag.textContent = "used";
+        li.appendChild(tag);
+      }
+      ul.appendChild(li);
+    });
+  }
+
+  function renderResult() {
+    if (!state.current) {
+      resultArea.innerHTML = '<p class="placeholder-text">Click "Assign Action" to pick a trainee and their task.</p>';
+      return;
+    }
+    resultArea.innerHTML =
+      '<div class="result-card" id="resultCard">' +
+        '<div class="result-flag">🎯 Your Turn!</div>' +
+        '<div class="result-row trainee"><span class="label">Trainee</span><span class="value">' + escapeHtml(state.current.trainee) + '</span></div>' +
+        '<div class="result-row action"><span class="label">Action</span><span class="value">' + escapeHtml(state.current.action) + '</span></div>' +
+      '</div>';
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---- Game actions ----
+  function assignAction() {
+    if (state.trainees.length === 0 || state.actions.length === 0) {
+      showToast("Add at least one trainee and one action first.");
+      return;
+    }
+    var trainee = drawFrom("traineePool", "trainees");
+    var action = drawFrom("actionPool", "actions");
+    state.current = { trainee: trainee, action: action };
+    saveState();
+    renderResult();
+    renderLists();
+  }
+
+  function nextTurn() {
+    state.current = null;
+    saveState();
+    renderResult();
+    renderLists();
+  }
+
+  function resetGame() {
+    state.traineePool = [];
+    state.actionPool = [];
+    state.current = null;
+    ensurePools();
+    saveState();
+    renderResult();
+    renderLists();
+    showToast("Game reset. New round ready.");
+  }
+
+  // ---- Modal / editing ----
+  function openEditor(key) {
+    editingKey = key;
+    editingDraft = state[key].slice();
+    modalTitle.textContent = key === "trainees" ? "Edit Trainee List" : "Edit Action List";
+    newItemInput.value = "";
+    renderEditRows();
+    modalOverlay.hidden = false;
+    setTimeout(function () { newItemInput.focus(); }, 50);
+  }
+
+  function closeEditor() {
+    modalOverlay.hidden = true;
+    editingKey = null;
+    editingDraft = [];
+  }
+
+  function renderEditRows() {
+    editRows.innerHTML = "";
+    if (editingDraft.length === 0) {
+      var p = document.createElement("p");
+      p.className = "empty-note";
+      p.textContent = "List is empty. Add an entry below.";
+      editRows.appendChild(p);
+      return;
+    }
+    editingDraft.forEach(function (val, idx) {
+      var row = document.createElement("div");
+      row.className = "edit-row";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = val;
+      input.addEventListener("input", function () {
+        editingDraft[idx] = input.value;
+      });
+
+      var del = document.createElement("button");
+      del.className = "icon-btn";
+      del.title = "Remove";
+      del.textContent = "🗑️";
+      del.addEventListener("click", function () {
+        editingDraft.splice(idx, 1);
+        renderEditRows();
+      });
+
+      row.appendChild(input);
+      row.appendChild(del);
+      editRows.appendChild(row);
+    });
+  }
+
+  function addDraftItem() {
+    var val = newItemInput.value.trim();
+    if (!val) return;
+    editingDraft.push(val);
+    newItemInput.value = "";
+    renderEditRows();
+    newItemInput.focus();
+  }
+
+  function saveEditor() {
+    var cleaned = editingDraft.map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+    if (cleaned.length === 0) {
+      showToast("List can't be empty — add at least one entry.");
+      return;
+    }
+    state[editingKey] = cleaned;
+    // Reset the pool for this list since membership changed
+    if (editingKey === "trainees") state.traineePool = [];
+    if (editingKey === "actions") state.actionPool = [];
+    state.current = null;
+    ensurePools();
+    saveState();
+    renderLists();
+    renderResult();
+    closeEditor();
+    showToast((editingKey === "trainees" ? "Trainee" : "Action") + " list saved.");
+  }
+
+  function clearEditorList() {
+    var label = editingKey === "trainees" ? "trainees" : "actions";
+    if (!confirm("Clear all " + label + "? This removes every entry from the list.")) return;
+    editingDraft = [];
+    renderEditRows();
+  }
+
+  // ---- Wire up events ----
+  assignBtn.addEventListener("click", assignAction);
+  nextTurnBtn.addEventListener("click", nextTurn);
+  resetBtn.addEventListener("click", function () {
+    if (confirm("Reset the game? This clears the current result and starts a fresh round for both trainees and actions.")) {
+      resetGame();
+    }
+  });
+
+  document.getElementById("editTraineesBtn").addEventListener("click", function () { openEditor("trainees"); });
+  document.getElementById("editTraineesBtn2").addEventListener("click", function () { openEditor("trainees"); });
+  document.getElementById("editActionsBtn").addEventListener("click", function () { openEditor("actions"); });
+  document.getElementById("editActionsBtn2").addEventListener("click", function () { openEditor("actions"); });
+
+  addItemBtn.addEventListener("click", addDraftItem);
+  newItemInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); addDraftItem(); }
+  });
+
+  saveEditBtn.addEventListener("click", saveEditor);
+  cancelEditBtn.addEventListener("click", closeEditor);
+  modalCloseX.addEventListener("click", closeEditor);
+  clearListBtn.addEventListener("click", clearEditorList);
+  modalOverlay.addEventListener("click", function (e) {
+    if (e.target === modalOverlay) closeEditor();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modalOverlay.hidden) closeEditor();
+  });
+
+  // ---- Init ----
+  loadState();
+  renderLists();
+  renderResult();
+})();
+</script>
+</body>
+</html>
