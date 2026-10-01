@@ -407,6 +407,14 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
+    const s = content('Callback Handling', 'Where to call from', 'On the customer\'s page in the New C CRM.',
+      'The Customer Information panel has two call buttons at the top right: GVoice (Google Voice) and Callbox. Local Time shows the customer\'s current time, so you can check you are within 8 AM - 8 PM their time before calling. Call order: Primary CRM, then Google Voice, then Secondary CRM. Customer details in the screenshot are sample training data.');
+    await shot(s, 'callback_crm.png', 0.45, 1.35, 5.75, 2.95, [[1, 476, 87, 539, 112], [2, 540, 87, 602, 112], [3, 319, 178, 436, 196]]);
+    legend(s, 6.35, 1.35, 3.2, [['GVoice', 'Call with Google Voice'], ['Callbox', 'Call from the CRM'], ['Local Time', 'Check it\'s 8 AM – 8 PM their time']], 0.78);
+    await tip(s, 4.45, 'Call order:', 'Primary CRM, then Google Voice, then Secondary CRM.', 'FiPhone');
+  }
+
+  {
     const s = content('Callback Handling', 'What happens next', 'Every call ends one of three ways.',
       'Answered: attempt to resolve the issue on the call, send an email summary of what was discussed/resolved, and log an internal note about the conversation (calls are not recorded, so the next agents need to know what happened). Not answered: address the concern via email and ask for their availability for a callback. Voicemail: leave a voicemail if applicable, send email + SMS, then apply the 10-minute buffer rule: after sending the SMS, wait 10 minutes and check the ticket again. If the customer replies asking for an immediate callback, call right away, buffer or not. The buffer exists so we don\'t call back-to-back with no sign the customer has seen our message.');
     const cols = [
