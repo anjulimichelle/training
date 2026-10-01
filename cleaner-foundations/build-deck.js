@@ -206,6 +206,34 @@ async function infographic(eb, title, file, notes) {
   return s;
 }
 
+
+// Screenshot with numbered highlight boxes. marks: [[n, x0, y0, x1, y1]] in image pixels.
+async function shot(s, file, x, y, w, h, marks = []) {
+  box(s, x, y, w, h, C.white, C.border);
+  const r = await fitImage(s, file, x + 0.08, y + 0.08, w - 0.16, h - 0.16);
+  const { width } = await sharp(path.join(IMG, file)).metadata();
+  const k = r.w / width;
+  for (const [n, x0, y0, x1, y1] of marks) {
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: r.x + x0 * k, y: r.y + y0 * k, w: (x1 - x0) * k, h: (y1 - y0) * k, fill: { type: 'none' }, line: { color: C.teal, width: 2 }, rectRadius: 0.03 });
+    const bx = r.x + x0 * k - 0.11, by = r.y + y0 * k - 0.11;
+    s.addShape(pres.shapes.OVAL, { x: bx, y: by, w: 0.22, h: 0.22, fill: { color: C.teal }, line: { color: C.white, width: 1 } });
+    T(s, String(n), { x: bx, y: by, w: 0.22, h: 0.22, fontFace: HEAD, bold: true, fontSize: 8, color: C.white, align: 'center', valign: 'middle' });
+  }
+}
+
+// Numbered legend rows matching the highlight numbers.
+// Item marker: a number matching a highlight, or '—' for a row with no highlight.
+function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
+  items.forEach(([title, body, mark], i) => {
+    const yy = y + i * (rowH + 0.1);
+    const label = mark || String(start + i), plain = label === '—';
+    box(s, x, yy, w, rowH, C.white, C.border);
+    s.addShape(pres.shapes.OVAL, { x: x + 0.14, y: yy + (rowH - 0.28) / 2, w: 0.28, h: 0.28, fill: { color: plain ? C.tealSoft : C.teal }, line: { color: plain ? C.tealSoft : C.teal } });
+    T(s, label, { x: x + 0.14, y: yy + (rowH - 0.28) / 2, w: 0.28, h: 0.28, fontFace: HEAD, bold: true, fontSize: 9, color: plain ? C.teal : C.white, align: 'center', valign: 'middle' });
+    T(s, [{ text: title, options: { bold: true, fontFace: HEAD, breakLine: true } }, { text: body, options: { color: C.soft, fontSize: 9 } }], { x: x + 0.55, y: yy + 0.05, w: w - 0.65, h: rowH - 0.1, fontSize: 10.5, valign: 'middle' });
+  });
+}
+
 (async () => {
   // ---------- Cover ----------
   {
@@ -335,6 +363,15 @@ async function infographic(eb, title, file, notes) {
   }
 
   {
+    const s = content('CP Profile Status', 'Where to see and change it', 'In the Legacy CP CRM.',
+      'Status history: the Flags table on the CP\'s CRM page shows when a status changed, what it changed to, and the previous status (e.g. cp-step-active > suspended). Changing a status: use the Change Step menu and pick the new status; norequests, suspended and cp-opt-out are grouped under one option. The trainer will show the exact clicks in the live CRM. Names and photo in the screenshots are sample training details.');
+    await shot(s, 'cp_header.png', 0.45, 1.4, 4.9, 2.4, [[1, 28, 186, 792, 345]]);
+    await shot(s, 'cp_changestep.png', 5.5, 1.4, 4.05, 2.4, [[2, 17, 40, 167, 353]]);
+    legend(s, 0.45, 3.95, 4.9, [['Flags table', 'When the status changed, to what, and what it was before']]);
+    legend(s, 5.5, 3.95, 4.05, [['Change Step', 'Pick the new status. Check the history first']], 0.55, 2);
+  }
+
+  {
     const s = content('CP Profile Status', 'Onboarding statuses', 'Where a new cleaner is stuck in sign-up.',
       'Imported: was a Homejoy CP; info imported. cpintrovideo: hasn\'t finished the intro video. cpprofile_setpay: hasn\'t set hourly rate (CPs set their own rate; a $5/hr match fee may apply to first jobs with each client in General Operating Model states; CPs can update rate anytime). cpprofilebio: hasn\'t uploaded photo/bio. cpprofilesetuppayment: hasn\'t entered legal info for the BGC or payment info (they can temporarily skip payment details to see claimable jobs). cpsignica: hasn\'t accepted the Platform Access Agreement. cphowitworks: hasn\'t done the quiz, OR was active but hasn\'t accessed the dashboard in 30+ days (auto_update_inactive_cp_step flag), OR was active but has no photo (auto_update_bad_photo_cp_step flag).');
     const items = [
@@ -373,6 +410,13 @@ async function infographic(eb, title, file, notes) {
   }
 
   {
+    const s = content('CP Profile Status', 'Check the numbers', 'The CP\'s CRM page shows their status and how they compare to the limits.',
+      'The panel shows the CP\'s current status and rate, their review score, lifetime issues (damage, theft, false invoice, overcharged hours), and a Limit vs Actual table for the last 60 days (no-shows, reschedules, cancels, lockouts, last-minute cancels). Actual is issues divided by invoiced jobs. Use it with the flag history before deciding on a status change.');
+    await shot(s, 'cp_reliability.png', 0.45, 1.4, 5.6, 2.8, [[1, 26, 95, 66, 112], [2, 26, 135, 372, 220], [3, 397, 113, 741, 277]]);
+    legend(s, 6.2, 1.4, 3.35, [['Status and rate', 'The current status, e.g. active'], ['Lifetime issues', 'Damage, theft, false invoices, overcharged hours'], ['Limit vs Actual', 'Last 60 days: issues out of invoiced jobs']], 0.75);
+  }
+
+  {
     const s = content('CP Profile Status', 'Before you change a status', null,
       'Ask: "If I were the customer, would I want this CP for my cleaning?" If no, norequests or suspended is likely appropriate after proper review. A new customer with a bad first job is 50% less likely to stay on the platform, so this protects retention as well as quality. Never change a CP\'s status without checking the reason or flag history first: a status change without context is how legitimate CPs get penalized for something that wasn\'t their fault.');
     box(s, 0.45, 1.3, 9.1, 1.35, C.tealSoft);
@@ -396,6 +440,16 @@ async function infographic(eb, title, file, notes) {
     await card(s, 0.45, 1.55, w, 1.8, { ico: 'FiMonitor', title: 'The cleaner', body: 'Sees it on their dashboard as the reason they were deactivated.' });
     await card(s, 0.45 + w + 0.15, 1.55, w, 1.8, { ico: 'FiDatabase', title: 'Our data', body: 'Stored as the flag\'s value, so we can track deactivation patterns.' });
     await tip(s, 3.6, 'Rule:', 'always use the exact reason code format. Never write a freeform reason.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content('CP-Facing Deactivation', 'Where you enter the reason', 'The Change CP step window in the Legacy CP CRM.',
+      'Top: the CP-facing reason box ("Explain to CP in 1 sentence: Why was I deactivated? & Call to Action"); the sample shows cpq_false_invoice. Middle: reference tables with templated wording by situation and codes to use (HGTA, 199, ssn_validation_failed, bgcheck_not_clear). Bottom: the three status buttons: norequests & notify CP (no new jobs, keeps existing jobs and dashboard); suspended & remove CP from claimed jobs (no new jobs, existing jobs or dashboard); cp-opt-out & remove CP from claimed jobs (also stops system messages), with notify and do_not_reactivate checkboxes. The window also shows whether the CP is eligible for timed reactivation.');
+    await shot(s, 'cp_stepmodal.png', 0.45, 1.3, 3.1, 3.85, [[1, 8, 58, 616, 110], [2, 8, 120, 616, 350], [3, 8, 478, 610, 555]]);
+    legend(s, 3.75, 1.3, 5.8, [['Reason box', 'Type the code and sentence the cleaner will see'], ['Reference tables', 'Templated wording and codes by situation'], ['Status buttons', 'norequests, suspended or cp-opt-out, plus notify options']], 0.8);
+    box(s, 3.75, 4.05, 5.8, 0.5, C.goldSoft);
+    s.addImage({ data: await icon('FiAlertCircle', C.gold), x: 3.92, y: 4.21, w: 0.18, h: 0.18 });
+    T(s, [{ text: 'Rule:  ', options: { bold: true, color: C.gold } }, { text: 'use the exact code format. Never a freeform reason.' }], { x: 4.2, y: 4.15, w: 5.2, h: 0.3, fontSize: 10, valign: 'middle' });
   }
 
   {
@@ -442,6 +496,15 @@ async function infographic(eb, title, file, notes) {
   }
 
   {
+    const s = content('Operating Models', 'How to spot it', 'Look next to the user\'s name on the CRM.',
+      'Users in the CA or CA-WA Operating Model have a banner next to their name on the CRM. No banner means the General Operating Model. The sample shows a CA Operating Model cleaner.');
+    await shot(s, 'cp_header_top.png', 0.45, 1.35, 9.1, 1.7, [[1, 410, 8, 538, 29]]);
+    legend(s, 0.45, 3.2, 4.475, [['Operating model banner', 'CA or CA-WA Operating Model']], 0.65);
+    legend(s, 5.075, 3.2, 4.475, [['No banner?', 'General Operating Model', '—']], 0.65);
+    await tip(s, 4.05, 'Check first:', 'look for the banner before applying fees, penalties or pay rules.', 'FiEye');
+  }
+
+  {
     const s = content('Operating Models', 'What changes between them', null,
       'Day to day: if a CA/CAWA CP didn\'t bring cleaning supplies, coach but don\'t penalize, and don\'t apply the require_new_cleaning_supplies_photo flag. When calculating first-time-client pay, check the model: General CPs lose $5/hr on that job; CA/CAWA CPs don\'t. Whether a CP cancellation is penalized depends on the model and how much notice was given. CA/CAWA CPs must certify their business is registered and give the business name, except WA CPs, who register with the Department of Revenue and give a Universal Business Identifier.');
     table(s, ['', 'CA / CA-WA', 'General'], [
@@ -470,6 +533,15 @@ async function infographic(eb, title, file, notes) {
       { ico: 'FiLayers', title: 'More jobs', body: 'Higher tiers can claim more jobs at once.' },
     ]);
     await tip(s, 3.65, 'ZTP:', 'tiering is internal. Never share tier levels or tiering logic with a cleaner or customer.', 'FiLock');
+  }
+
+  {
+    const s = content('CP Tiering', 'Where to see the tier', 'On the cleaner\'s CRM page.',
+      'Click the CP\'s Tier banner on the CRM, or go to CP View > CleanerTier, to see their full Tier History. Tiering is internal: never share it with a CP or customer (ZTP).');
+    await shot(s, 'cp_header_top.png', 0.45, 1.35, 9.1, 1.7, [[1, 109, 30, 165, 51]]);
+    legend(s, 0.45, 3.2, 4.475, [['Tier banner', 'Click it for full tier history']], 0.65);
+    legend(s, 5.075, 3.2, 4.475, [['Or CP View > CleanerTier', 'Same tier history', '—']], 0.65);
+    await tip(s, 4.05, 'ZTP:', 'tier levels are internal. Never share them with a cleaner or customer.', 'FiLock');
   }
 
   {
