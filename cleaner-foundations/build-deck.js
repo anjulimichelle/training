@@ -272,10 +272,10 @@ async function infographic(eb, title, file, notes) {
 
   {
     const s = content('Cleaner Journey  ·  Step 5', 'After the job is complete', null,
-      'Once a claimed job is completed: the CP processes payment based on their selected payment method; the customer gets email/SMS confirmation and is encouraged to leave a review and tip; if there is a service concern such as quality, the customer may request a refund; the CP can issue a refund themselves, either in response to a request or proactively if they know they didn\'t fully meet expectations (some CPs do this to protect their review score).');
+      'Once a claimed job is completed: the CP processes payment based on their selected payment method; the customer gets email/SMS confirmation and is encouraged to leave a review and tip (optional); if there is a service concern such as quality, the customer may request a refund; the CP can issue a refund themselves, either in response to a request or proactively if they know they didn\'t fully meet expectations (some CPs do this to protect their review score).');
     await cards(s, 1.4, 1.95, [
       { ico: 'FiDollarSign', title: 'Cleaner gets paid', body: 'Through the payment method they chose.' },
-      { ico: 'FiStar', title: 'Customer reviews', body: 'They get a confirmation and are asked for a review and tip.' },
+      { ico: 'FiStar', title: 'Review and tip', body: 'The customer gets a confirmation. Leaving a review and tip is optional.' },
       { ico: 'FiRotateCcw', title: 'Refund requests', body: 'If there\'s a service concern, the customer may ask for a refund.' },
       { ico: 'FiHeart', title: 'Cleaner refunds', body: 'Cleaners can refund on request, or proactively.' },
     ]);
