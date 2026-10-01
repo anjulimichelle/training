@@ -252,14 +252,22 @@ async function infographic(eb, title, file, notes) {
     'Step 1: go to homeaglow.com/apply and enter a zip code. Step 2: fill out details (name, email, address etc.). Step 3: take a short quiz about cleaning homes. Step 4: set up their profile: pay rate, coverage area, schedule, profile photo, SSN and pay details. Step 5: watch the welcome video, after which their profile is created and they can begin claiming jobs. Everything before the first claim is the registration phase; the key uncertainty is whether the CP will follow through and complete a job.');
 
   {
-    const s = content('Cleaner Journey', 'Before the first job', 'Cleaners can keep registering without these, but can\'t claim jobs until both are done.',
+    const s = content('Cleaner Journey', 'Before the first job', 'Two things are required to claim jobs. The background check comes after the first claim.',
       'Registration is normally quick, but two things commonly block a CP from claiming jobs: no pay details (debit cards and bank accounts are accepted) and no SSN (needed to run the background check, which protects customer safety). Once a CP claims their first job, we assume they are committed, intend to complete it and get paid, and could keep claiming. The background check (BGC) starts only after that first claim, not at registration, so the CP is verified before the first scheduled appointment. BGCs are a free benefit for CPs and a core reason customers trust the platform.');
-    await cards(s, 1.55, 1.85, [
-      { ico: 'FiCreditCard', title: 'No pay details', body: 'Needed so the cleaner can get paid. Debit cards and bank accounts are accepted.' },
-      { ico: 'FiFileText', title: 'No SSN', body: 'Needed to run the background check that keeps customers safe.' },
-      { ico: 'FiShield', title: 'Background check', body: 'Starts only after the cleaner claims their first job, before that job happens.' },
-    ]);
-    await tip(s, 3.65, 'Why it matters:', 'a cleaner who "finished registering" but can\'t claim is usually missing one of these.', 'FiInfo');
+    // Left: what's required before claiming
+    box(s, 0.45, 1.45, 5.75, 2.4, C.tealSoft);
+    eyebrow(s, 'Required to claim jobs', 0.65, 1.6, 5);
+    const w = (5.75 - 0.4 - 0.15) / 2;
+    await card(s, 0.65, 1.9, w, 1.75, { ico: 'FiCreditCard', title: 'Pay details', body: 'So the cleaner can get paid. Debit cards and bank accounts are accepted.' });
+    await card(s, 0.65 + w + 0.15, 1.9, w, 1.75, { ico: 'FiFileText', title: 'SSN', body: 'Needed to run the background check that keeps customers safe.' });
+    s.addImage({ data: await icon('FiArrowRight', C.soft), x: 6.3, y: 2.5, w: 0.35, h: 0.35 });
+    // Right: what happens after the first claim
+    box(s, 6.75, 1.45, 2.8, 2.4, C.white, C.border);
+    eyebrow(s, 'After the first claim', 6.95, 1.6, 2.5);
+    await iconDot(s, 6.95, 1.95, 'FiShield', 0.36);
+    T(s, 'Background check', { x: 6.95, y: 2.43, w: 2.45, h: 0.3, fontFace: HEAD, bold: true, fontSize: 12 });
+    T(s, 'Starts once the cleaner claims their first job, so they\'re verified before that job happens.', { x: 6.95, y: 2.75, w: 2.45, h: 0.9, fontSize: 9.5, color: C.soft });
+    await tip(s, 4.1, 'Why it matters:', 'a cleaner who "finished registering" but can\'t claim is usually missing pay details or an SSN.', 'FiInfo');
   }
 
   {
