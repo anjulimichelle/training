@@ -712,6 +712,13 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
+    const s = content('Job Statuses', 'Where to look in the CRM', 'On the customer\'s page in the New C CRM, jobs are grouped by status.',
+      'The customer page groups jobs into panels: Pending Invoice Jobs (past their scheduled time but not yet invoiced; a count badge shows how many), Claimed & Submitted (upcoming jobs, either still waiting for a cleaner or already claimed), Completed Jobs (invoiced jobs, with type, hours requested vs invoiced, cleaner, rating and review; a Failed Charge tag shows a charge that didn\'t go through), and Cancelled Jobs. Each panel links to View all in admin and View job history in admin.');
+    await shot(s, 'jobs_panels.png', 0.45, 1.35, 5.75, 3.4, [[1, 6, 5, 906, 83], [2, 6, 87, 906, 198], [3, 6, 202, 906, 397], [4, 6, 401, 906, 512]]);
+    legend(s, 6.35, 1.35, 3.2, [['Pending Invoice Jobs', 'Time has passed, not invoiced yet'], ['Claimed & Submitted', 'Upcoming: waiting for a cleaner, or claimed'], ['Completed Jobs', 'Invoiced. Watch for a Failed Charge tag'], ['Cancelled Jobs', 'Cancelled at any stage']], 0.72);
+  }
+
+  {
     const s = content('Job Statuses  ·  Submitted', 'Submitted', 'The job is officially requested and sent to available cleaners nearby.',
       'Who can book: customers (dashboard), CPs for repeat clients (dashboard or the CP App Handshake feature, if the C has <2 failed charges and no known_customer_fraud flag, the CP is active, under their claim limit, rate <= $30 and no more than $5 above the C\'s last max requested rate, no deactivation flag, and they aren\'t banned), and CS via CRM. Bookings can be made up to 12 hours before start; within 48 hours a system priority fee applies (not for CRM bookings). If still unclaimed 24 hours before start, the system adds alternate start times (10 AM-2 PM that day and the next 2 days); add do_not_auto_add_alternate_start_times (C CRM > Do) if the customer objects. can_substitute may flip to True if unclaimed <=48 hrs before start and no requested CP can claim. A submitted job becomes a Priority Request within 24-48 hours of start: more notifications, and CPs with rates up to 14% above the C\'s previous max can claim. Common tickets: match anxiety, last-minute requests, gender preference (rematch >6 hrs before), specific CP requests (only change Requested CPs if the customer explicitly asks).');
     await cards(s, 1.55, 1.9, [
@@ -761,6 +768,15 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       { ico: 'FiUser', title: 'The customer can', items: ['Report "My cleaning was completed" (this invoices it)', 'Cancel. A last-minute fee may apply', 'Edit duration, extras, address and notes'] },
       { ico: 'FiTool', title: 'The cleaner can', items: ['Click Charge Client to invoice', 'Edit hours. Adding hours needs the customer\'s OK', 'Reschedule (cleaner only), cancel, or file a lockout'] }, 1.4, 2.55);
     await tip(s, 4.15, 'Next:', 'Pending Invoice doesn\'t mean the job was done. See the action guide.', 'FiArrowRight');
+  }
+
+  {
+    const s = content('Job Statuses  ·  Pending Invoice', 'Spotting a Pending Invoice job', 'It shows in its own panel at the top of the customer\'s jobs.',
+      'When a customer has a Pending Invoice job, the Pending Invoice Jobs panel shows a count badge and lists the job with a PENDING_INVOICE status, date, type, hours and cleaner. CS must act on it even when it isn\'t the customer\'s stated concern; see the AG: Pending Invoice action guide.');
+    await shot(s, 'jobs_pending.png', 0.45, 1.35, 9.1, 1.45, [[1, 141, 4, 170, 26], [2, 161, 49, 257, 73]]);
+    legend(s, 0.45, 3.15, 4.475, [['Count badge', 'How many Pending Invoice jobs the customer has']], 0.65);
+    legend(s, 5.075, 3.15, 4.475, [['PENDING_INVOICE status', 'The job, date, hours and cleaner']], 0.65, 2);
+    await tip(s, 4.0, 'Act on it:', 'a Pending Invoice job needs action, even if the customer asked about something else.', 'FiAlertCircle');
   }
 
   // ================= 9. AG: PENDING INVOICE =================
