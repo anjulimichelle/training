@@ -248,7 +248,7 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
 
   // ================= UNDERSTANDING JOB HISTORY =================
   await topic('Understanding Job History', 'The record of every change made to a job, and what caused it.',
-    ['Why you always check it', 'Where to find it', 'How to read each column', 'Practice reading one'],
+    ['Why you always check it', 'Where to find it', 'How to read the columns', 'Practice reading one'],
     'ill21.png',
     'There are times we can\'t tell the full story of what happened to a job from the C/CP comms alone. The job history records every change made to the job, so we can understand how its status changed and what caused it.');
 
@@ -272,26 +272,38 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Understanding Job History', 'The job history', 'Every action on the job, newest at the top. Read it from the bottom up.',
-      'This is the job history page ("Select job history to change"). The numbered columns are the ones CS reads; they are explained on the next slide. The first column (ID) is the action ID, used by product or support to edit the action in Django; CS doesn\'t use it. Customer and cleaner names are sample training details.');
-    await shot(s, 'jh_table.png', 0.45, 1.3, 8.45, 3.85, [[1, 92, 82, 212, 101], [2, 219, 82, 333, 101], [3, 342, 82, 400, 101], [4, 462, 82, 588, 101], [5, 594, 82, 634, 101], [6, 641, 82, 700, 101], [7, 1141, 82, 1196, 101]]);
-    s.addImage({ data: await icon('FiArrowUp'), x: 9.1, y: 2.2, w: 0.3, h: 1.6 });
-    T(s, 'Read\nbottom\nto top', { x: 8.95, y: 3.9, w: 0.65, h: 0.7, fontSize: 8, bold: true, color: C.teal, align: 'center' });
-  }
-
-  {
-    const s = content('Understanding Job History', 'How to read each column', 'The numbers match the columns on the previous slide.',
-      'Job Start: basically, the job start time and date at the time the action was made. Job Start After Action: the job start time after the action was made. Action On: the time the action was taken. Job Status Before Action: the status of the job before the action was taken. Actor: the one who took the action; it can be the C, CP, CS, or system. Action: the action taken on the job; actions are written in a very self-explanatory manner. Comment: logs any essential detail about the action. The first column (ID) is the action ID, mostly used by product or support to edit the action in Django; CS doesn\'t use it.');
-    table(s, ['#', 'Column', 'What it tells you'], [
-      ['1', 'Job Start', 'The job\'s start date and time at the time the action was made'],
-      ['2', 'Job Start After Action', 'The job\'s start time after the action was made'],
-      ['3', 'Action On', 'When the action was taken'],
-      ['4', 'Job Status Before Action', 'The job\'s status before the action was taken'],
-      ['5', 'Actor', 'Who took the action: the C, CP, CS, or system'],
-      ['6', 'Action', 'What was done. Written to be self-explanatory'],
-      ['7', 'Comment', 'Any important detail about the action'],
-    ], { y: 1.4, colW: [0.5, 2.5, 6.1], fontSize: 10, rowH: 0.4 });
-    await tip(s, 4.6, 'Skip the ID column:', 'the action ID is for product and support (Django edits), not CS.', 'FiInfo');
+    const s = content('Understanding Job History', 'The job history', 'Click a number to reveal what that column tells you. Read the rows from the bottom up.',
+      'TRAINER: each click (on a number or anywhere on the slide) reveals the next column description, 1 to 7, while the job history stays on screen. 1 Job Start: the job start time and date at the time the action was made. 2 Job Start After Action: the job start time after the action was made. 3 Action On: the time the action was taken. 4 Job Status Before Action: the status of the job before the action was taken. 5 Actor: the one who took the action (it can be the C, CP, CS, or system). 6 Action: the action taken on the job; actions are written in a very self-explanatory manner. 7 Comment: logs any essential detail to the action. The first column (ID) is the action ID, mostly used by product or support to edit the action in Django; CS doesn\'t use it. Names are sample training details.');
+    const file = 'jh_table_hdr.png';
+    box(s, 0.45, 1.3, 5.95, 3.85, C.white, C.border);
+    const r = await fitImage(s, file, 0.53, 1.38, 5.79, 3.69);
+    const { width } = await sharp(path.join(IMG, file)).metadata();
+    const k = r.w / width;
+    const cols = [[92, 212], [219, 333], [342, 400], [462, 588], [594, 634], [641, 700], [1141, 1196]];
+    const hy0 = 62, hy1 = 81, d = 0.2;
+    cols.forEach(([x0, x1], i) => {
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: r.x + x0 * k, y: r.y + hy0 * k, w: (x1 - x0) * k, h: (hy1 - hy0) * k, fill: { type: 'none' }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.02 });
+      const cx = r.x + ((x0 + x1) / 2) * k;
+      s.addShape(pres.shapes.OVAL, { x: cx - d / 2, y: r.y + hy0 * k - d - 0.03, w: d, h: d, fill: { color: C.teal }, line: { color: C.white, width: 1 } });
+      T(s, String(i + 1), { x: cx - d / 2, y: r.y + hy0 * k - d - 0.03, w: d, h: d, fontFace: HEAD, bold: true, fontSize: 7.5, color: C.white, align: 'center', valign: 'middle' });
+    });
+    // Descriptions panel: empty until clicked; each click reveals the next line
+    box(s, 6.55, 1.3, 3.0, 3.85, C.tealSoft);
+    const items = [
+      ['Job Start', 'the job start time and date at the time the action was made'],
+      ['Job Start After Action', 'the job start time after the action was made'],
+      ['Action On', 'the time the action was taken'],
+      ['Job Status Before Action', 'the status of the job before the action was taken'],
+      ['Actor', 'the one who took the action: the C, CP, CS, or system'],
+      ['Action', 'the action taken on the job. Written to be self-explanatory'],
+      ['Comment', 'logs any essential detail to the action'],
+    ];
+    const runs = [];
+    items.forEach(([name, desc], i) => {
+      runs.push({ text: `${i + 1}  ${name}: `, options: { bold: true, color: C.teal } });
+      runs.push({ text: desc, options: { breakLine: i < items.length - 1 } });
+    });
+    T(s, runs, { x: 6.68, y: 1.42, w: 2.75, h: 3.6, fontSize: 8.5, paraSpaceAfter: 4, objectName: 'revealColumns' });
   }
 
   {
@@ -329,7 +341,7 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       runs.push({ text: d, options: { bold: true, color: C.teal } });
       runs.push({ text: t, options: { breakLine: i < lines.length - 1 } });
     });
-    T(s, runs, { x: 6.5, y: 2.02, w: 2.9, h: 3.05, fontSize: 9, paraSpaceAfter: 5, objectName: 'storyText' });
+    T(s, runs, { x: 6.5, y: 2.02, w: 2.9, h: 3.05, fontSize: 9, paraSpaceAfter: 5, objectName: 'revealStory' });
   }
 
   {
