@@ -143,7 +143,7 @@ async function topic(title, sub, learn, ill, notes) {
   return s;
 }
 
-// Screen preview: a framed screenshot (customer details blurred).
+// Screen preview: a framed screenshot (sample training details).
 async function screen(s, file, x, y, w, h, caption) {
   box(s, x, y, w, h, C.white, C.border);
   const r = await fitImage(s, file, x + 0.1, y + 0.1, w - 0.2, h - (caption ? 0.42 : 0.2));
@@ -415,9 +415,9 @@ async function walkthrough(eb, system, lookFor, notes) {
 
   {
     const s = content('Legacy C CRM', 'One hub for everything', 'Where we manage accounts, talk to users and find what we need to help them.',
-      'The CRM is the central hub for managing customer and cleaner accounts, jobs and payments. It is also where we communicate with users, manage tickets, see our daily targets, and access the information that helps us handle users\' concerns. We currently have two CRM systems; we introduce the Legacy CRM first. The screenshot is only a preview; the trainer will walk through the live system next. Customer details in the screenshot are blurred on purpose (see ZTP: work screens).');
+      'The CRM is the central hub for managing customer and cleaner accounts, jobs and payments. It is also where we communicate with users, manage tickets, see our daily targets, and access the information that helps us handle users\' concerns. We currently have two CRM systems; we introduce the Legacy CRM first. The screenshot is only a preview; the trainer will walk through the live system next. Customer details in the screenshot are sample training data, not a real customer.');
     await iconList(s, 0.45, 1.5, 3.0, [['FiUsers', 'Customer & cleaner accounts'], ['FiBriefcase', 'Jobs'], ['FiCreditCard', 'Payments'], ['FiMessageSquare', 'Messages with users'], ['FiInbox', 'Tickets'], ['FiTarget', 'Daily targets']], 0.42);
-    await screen(s, 'legacy.png', 3.6, 1.5, 5.95, 3.15, 'Legacy C CRM, preview only. Customer details blurred.');
+    await screen(s, 'legacy.png', 3.6, 1.5, 5.95, 3.15, 'Legacy C CRM, preview only. Sample training details.');
     await tip(s, 4.75, 'Two CRMs:', 'we have a Legacy CRM and a New CRM. We start with Legacy.', 'FiLayers');
   }
 
@@ -432,9 +432,9 @@ async function walkthrough(eb, system, lookFor, notes) {
 
   {
     const s = content('C Dashboard', 'The customer\'s side', 'Where customers manage their account and bookings.',
-      'The Customer dashboard is where customers manage their account and bookings: book a cleaning, see upcoming and past cleanings and alerts (e.g. a cancelled cleaning), and, up to 6 hours before start, reschedule, cancel or match with a different cleaner. Knowing what they see lets agents point customers to self-serve steps and understand what they have already tried. Customer name and cleaner photos in the screenshot are blurred.');
+      'The Customer dashboard is where customers manage their account and bookings: book a cleaning, see upcoming and past cleanings and alerts (e.g. a cancelled cleaning), and, up to 6 hours before start, reschedule, cancel or match with a different cleaner. Knowing what they see lets agents point customers to self-serve steps and understand what they have already tried. Customer details and cleaner photos in the screenshot are training placeholders.');
     await iconList(s, 0.45, 1.5, 3.0, [['FiPlusCircle', 'Book a cleaning'], ['FiBell', 'Alerts about their bookings'], ['FiCalendar', 'Upcoming cleanings'], ['FiClock', 'Past cleanings'], ['FiUser', 'Account settings']], 0.5);
-    await screen(s, 'dashboard.png', 3.6, 1.5, 5.95, 3.15, 'C Dashboard, preview only. Customer details blurred.');
+    await screen(s, 'dashboard.png', 3.6, 1.5, 5.95, 3.15, 'C Dashboard, preview only. Sample training details.');
     await tip(s, 4.75, 'Why it helps:', 'when you know what the customer sees, you can guide them step by step.', 'FiEye');
   }
 
@@ -449,9 +449,9 @@ async function walkthrough(eb, system, lookFor, notes) {
 
   {
     const s = content('New C CRM', 'Where we respond to customers', 'Every reply to a customer goes out from the New C CRM.',
-      'The New C CRM is where we respond to customers. The screenshot is a preview of a ticket: ticket header, customer information, related jobs, and the message thread with the reply box. Customer details are blurred. The trainer walks through the live system next.');
+      'The New C CRM is where we respond to customers. The screenshot is a preview of a ticket: ticket header, customer information, related jobs, and the message thread with the reply box. Customer details are sample training data. The trainer walks through the live system next.');
     await iconList(s, 0.45, 1.5, 3.0, [['FiInbox', 'Ticket status and SLA'], ['FiUser', 'Customer information'], ['FiBriefcase', 'Related jobs'], ['FiMessageSquare', 'Messages and internal notes'], ['FiSend', 'Reply with macros']], 0.5);
-    await screen(s, 'newcrm.png', 3.6, 1.5, 5.95, 3.15, 'New C CRM, preview only. Customer details blurred.');
+    await screen(s, 'newcrm.png', 3.6, 1.5, 5.95, 3.15, 'New C CRM, preview only. Sample training details.');
     await tip(s, 4.75, 'Important:', 'some actions can still only be done in the Legacy CRM.', 'FiAlertCircle');
   }
 
