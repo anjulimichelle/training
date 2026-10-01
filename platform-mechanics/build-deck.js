@@ -248,7 +248,7 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
 
   // ================= UNDERSTANDING JOB HISTORY =================
   await topic('Understanding Job History', 'The record of every change made to a job, and what caused it.',
-    ['Why you always check it', 'Where to find it', 'How to read each column', 'Reading a real example'],
+    ['Why you always check it', 'Where to find it', 'How to read each column', 'Practice reading one'],
     'ill21.png',
     'There are times we can\'t tell the full story of what happened to a job from the C/CP comms alone. The job history records every change made to the job, so we can understand how its status changed and what caused it.');
 
@@ -264,27 +264,34 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Understanding Job History', 'Where to find it', 'Both CRMs link straight to a job\'s history.',
-      'New CRM: on the customer page, each jobs panel has a "View job history in admin" link. Legacy CRM: job references in the ticket (for example in system notes) include a "jobhistory" link. The trainer will show both in the live CRMs.');
-    await shot(s, 'jobs_panels.png', 0.45, 1.35, 4.9, 2.85, [[1, 96, 57, 224, 75]]);
-    await shot(s, 'legacy_jobhistory.png', 5.5, 1.35, 4.05, 2.85, [[2, 206, 14, 266, 34]]);
-    legend(s, 0.45, 4.35, 4.9, [['New CRM', '"View job history in admin" under each jobs panel']], 0.6);
-    legend(s, 5.5, 4.35, 4.05, [['Legacy CRM', 'The "jobhistory" link next to a job']], 0.6, 2);
+    const s = content('Understanding Job History', 'Where to find it', 'Click the ⓘ icon next to a job ID to open its job history.',
+      'On the customer\'s page in the New C CRM, every job in the jobs panels (Claimed & Submitted, Completed Jobs and so on) has a small ⓘ icon next to the job ID. Clicking it opens that job\'s history. Names in the screenshot are sample training details.');
+    await shot(s, 'jh_open.png', 0.45, 1.4, 6.1, 2.75);
+    legend(s, 6.7, 1.4, 2.85, [['The ⓘ icon', 'Next to each job ID, in every jobs panel', 'i'], ['Click it', 'The job\'s history opens', '→']], 0.85);
+    await tip(s, 4.35, 'Tip:', 'investigating a job? Open its history before you decide on a resolution.', 'FiInfo');
   }
 
   {
-    const s = content('Understanding Job History', 'How to read each column', null,
-      'Job Start: the job start date and time at the time the action was made. Job Start After Action: the job start time after the action. Action On: when the action was taken. Job Status Before Action: the job\'s status before the action. Actor: who took the action. Action: what was done; written in a self-explanatory way. Comment: any essential detail about the action. The first column is the action ID, mostly used by product or support to edit the action in Django; CS doesn\'t use it.');
-    table(s, ['Column', 'What it tells you'], [
-      ['Job Start', 'The job\'s start date and time when the action was made'],
-      ['Job Start After Action', 'The job\'s start time after the action'],
-      ['Action On', 'When the action was taken'],
-      ['Job Status Before Action', 'The job\'s status before the action'],
-      ['Actor', 'Who took the action'],
-      ['Action', 'What was done. Written to be self-explanatory'],
-      ['Comment', 'Any important detail about the action'],
-    ], { y: 1.25, colW: [2.6, 6.5], fontSize: 10, rowH: 0.4 });
-    await tip(s, 4.55, 'Skip the first column:', 'the action ID is for product and support (Django edits), not CS.', 'FiInfo');
+    const s = content('Understanding Job History', 'The job history', 'Every action on the job, newest at the top. Read it from the bottom up.',
+      'This is the job history page ("Select job history to change"). The numbered columns are the ones CS reads; they are explained on the next slide. The first column (ID) is the action ID, used by product or support to edit the action in Django; CS doesn\'t use it. Customer and cleaner names are sample training details.');
+    await shot(s, 'jh_table.png', 0.45, 1.3, 8.45, 3.85, [[1, 92, 82, 212, 101], [2, 219, 82, 333, 101], [3, 342, 82, 400, 101], [4, 462, 82, 588, 101], [5, 594, 82, 634, 101], [6, 641, 82, 700, 101], [7, 1141, 82, 1196, 101]]);
+    s.addImage({ data: await icon('FiArrowUp'), x: 9.1, y: 2.2, w: 0.3, h: 1.6 });
+    T(s, 'Read\nbottom\nto top', { x: 8.95, y: 3.9, w: 0.65, h: 0.7, fontSize: 8, bold: true, color: C.teal, align: 'center' });
+  }
+
+  {
+    const s = content('Understanding Job History', 'How to read each column', 'The numbers match the columns on the previous slide.',
+      'Job Start: basically, the job start time and date at the time the action was made. Job Start After Action: the job start time after the action was made. Action On: the time the action was taken. Job Status Before Action: the status of the job before the action was taken. Actor: the one who took the action; it can be the C, CP, CS, or system. Action: the action taken on the job; actions are written in a very self-explanatory manner. Comment: logs any essential detail about the action. The first column (ID) is the action ID, mostly used by product or support to edit the action in Django; CS doesn\'t use it.');
+    table(s, ['#', 'Column', 'What it tells you'], [
+      ['1', 'Job Start', 'The job\'s start date and time at the time the action was made'],
+      ['2', 'Job Start After Action', 'The job\'s start time after the action was made'],
+      ['3', 'Action On', 'When the action was taken'],
+      ['4', 'Job Status Before Action', 'The job\'s status before the action was taken'],
+      ['5', 'Actor', 'Who took the action: the C, CP, CS, or system'],
+      ['6', 'Action', 'What was done. Written to be self-explanatory'],
+      ['7', 'Comment', 'Any important detail about the action'],
+    ], { y: 1.4, colW: [0.5, 2.5, 6.1], fontSize: 10, rowH: 0.4 });
+    await tip(s, 4.6, 'Skip the ID column:', 'the action ID is for product and support (Django edits), not CS.', 'FiInfo');
   }
 
   {
@@ -299,17 +306,42 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Understanding Job History', 'Reading an example', 'A simplified job history. Start at the bottom.',
-      'Reading this job history: On Oct 9 at 7 PM, CS booked a cleaning via CRM for Oct 10 at 11 AM. Around 8:42 PM on the same day, CP Victor claimed the appointment. On Oct 11 at 2:03 PM, the CP invoiced the job, and the system logged it to the snapshot. This table is a simplified illustration of the article\'s example, not the CRM screen.');
-    table(s, ['Action On', 'Job status before', 'Actor', 'Action'], [
-      ['Oct 11, 2:03 PM', 'Pending Invoice', 'CP Victor', 'Invoiced the job (logged to the snapshot)'],
-      ['Oct 9, 8:42 PM', 'Submitted', 'CP Victor', 'Claimed the job'],
-      ['Oct 9, 7:00 PM', '—', 'CS', 'Booked a cleaning via CRM for Oct 10, 11 AM'],
-    ], { y: 1.45, colW: [1.9, 1.9, 1.6, 3.7], fontSize: 10, rowH: 0.45 });
-    s.addImage({ data: await icon('FiArrowUp'), x: 9.6, y: 1.95, w: 0.25, h: 0.9 });
-    box(s, 0.45, 3.5, 9.1, 1.05, C.tealSoft);
-    eyebrow(s, 'The story', 0.7, 3.62, 3);
-    T(s, 'On Oct 9 at 7 PM, CS booked a cleaning for Oct 10 at 11 AM. At 8:42 PM, CP Victor claimed it. On Oct 11 at 2:03 PM, the CP invoiced the job.', { x: 0.7, y: 3.85, w: 8.6, h: 0.6, fontSize: 11 });
+    const s = content('Understanding Job History', 'Reading the example', 'The same job history, read from the bottom up.',
+      'Bottom to top: Sep 7, 10:35 AM: the system booked the job for Sep 21 at 10 AM (comment: populate_recurring_contract); status submitted. Sep 14, 2:29 PM: the cleaner claimed it. Sep 21, 9:19 AM: the cleaner rescheduled it from Sep 21, 10 AM to Sep 22, 11 AM. Sep 21, 9:50 AM: the cleaner rescheduled again, from Sep 22, 11 AM to Sep 24, 12:30 PM. Sep 24, 4:09 PM: the cleaner invoiced the job (status before: pending_invoice), and the system logged the invoice snapshot. Article example for reference: On Oct 9 at 7 PM, CS booked a cleaning via CRM for Oct 10 at 11 AM. Around 8:42 PM on the same day, CP Victor claimed the appointment. On Oct 11 at 2:03 PM, the CP invoiced the job, and the system logged it to the snapshot.');
+    table(s, ['', 'Action on', 'Actor', 'Action', 'What it tells you'], [
+      ['1', 'Sep 7, 10:35 AM', 'system', 'book', 'Job booked for Sep 21, 10 AM'],
+      ['2', 'Sep 14, 2:29 PM', 'cleaner', 'claim', 'The cleaner claimed it'],
+      ['3', 'Sep 21, 9:19 AM', 'cleaner', 'reschedule', 'Moved from Sep 21, 10 AM to Sep 22, 11 AM'],
+      ['4', 'Sep 21, 9:50 AM', 'cleaner', 'reschedule', 'Moved again, to Sep 24, 12:30 PM'],
+      ['5', 'Sep 24, 4:09 PM', 'cleaner', 'invoice', 'Invoiced, from Pending Invoice'],
+      ['6', 'Sep 24, 4:09 PM', 'system', 'log_snapshot_on_invoice', 'The system logged the invoice'],
+    ], { y: 1.4, colW: [0.4, 1.7, 1.0, 2.2, 3.8], fontSize: 9.5, rowH: 0.36 });
+    box(s, 0.45, 4.05, 9.1, 0.65, C.tealSoft);
+    T(s, [{ text: 'The story:  ', options: { bold: true, color: C.teal } }, { text: 'booked for Sep 21, claimed Sep 14, rescheduled twice by the cleaner, then invoiced on Sep 24.' }], { x: 0.7, y: 4.05, w: 8.7, h: 0.65, fontSize: 10.5, valign: 'middle' });
+  }
+
+  {
+    const s = content('Understanding Job History', 'Practice: read a job history', 'Open the practice ticket and answer these four questions.',
+      'TRAINER NOTE: Open the practice job history during the slideshow using the button (https://www.homeaglow.com/nocm/homeaglow/jobhistory/?job=12685237). Give trainees time to answer, then go through the answers together, row by row from the bottom up.');
+    const url = 'https://www.homeaglow.com/nocm/homeaglow/jobhistory/?job=12685237';
+    // Button drawn as an image so the whole thing is one clickable link in Slides
+    const btnSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="930" height="180"><rect width="930" height="180" rx="30" fill="#${C.teal}"/><text x="465" y="114" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="700" fill="#ffffff" text-anchor="middle">Open Practice Ticket  →</text></svg>`;
+    const btn = 'image/png;base64,' + (await sharp(Buffer.from(btnSvg)).png().toBuffer()).toString('base64');
+    s.addImage({ data: btn, x: 0.45, y: 1.45, w: 3.1, h: 0.6, hyperlink: { url, tooltip: 'Open the practice job history' } });
+    T(s, [{ text: 'Job 12685237', options: { hyperlink: { url }, color: C.teal } }], { x: 3.75, y: 1.6, w: 3, h: 0.3, fontSize: 10, color: C.teal, valign: 'middle' });
+    const qs = [
+      'Who booked the appointment?',
+      'When was the appointment initially scheduled for?',
+      'The customer writes: "I initially booked for Jan 12 at 1 PM, but I received a notification that I am booked for 2 PM. Why is that?"',
+      'What happened on Jan 8 at 5:58 PM?',
+    ];
+    const w = (9.1 - 0.15) / 2, h = 1.2;
+    for (let i = 0; i < 4; i++) {
+      const x = 0.45 + (i % 2) * (w + 0.15), y = 2.3 + Math.floor(i / 2) * (h + 0.15);
+      box(s, x, y, w, h, C.white, C.border);
+      badge(s, x + 0.18, y + 0.2, i + 1);
+      T(s, qs[i], { x: x + 0.65, y: y + 0.15, w: w - 0.85, h: h - 0.3, fontSize: 10.5, valign: 'middle' });
+    }
   }
 
   // ================= CALLBACK HANDLING =================
