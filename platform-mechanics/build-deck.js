@@ -407,11 +407,33 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Callback Handling', 'Where to call from', 'On the customer\'s page in the New C CRM.',
-      'The Customer Information panel has two call buttons at the top right: GVoice (Google Voice) and Callbox. Local Time shows the customer\'s current time, so you can check you are within 8 AM - 8 PM their time before calling. Call order: Primary CRM, then Google Voice, then Secondary CRM. Customer details in the screenshot are sample training data.');
-    await shot(s, 'callback_crm.png', 0.45, 1.35, 5.75, 2.95, [[1, 476, 87, 539, 112], [2, 540, 87, 602, 112], [3, 319, 178, 436, 196]]);
-    legend(s, 6.35, 1.35, 3.2, [['GVoice', 'Call with Google Voice'], ['Callbox', 'Call from the CRM'], ['Local Time', 'Check it\'s 8 AM – 8 PM their time']], 0.78);
-    await tip(s, 4.45, 'Call order:', 'Primary CRM, then Google Voice, then Secondary CRM.', 'FiPhone');
+    const s = content('Callback Handling', 'Where to call from', 'On the customer\'s page in the New C CRM. Click an option to see its screen.',
+      'Call options at the top right of Customer Information: 1 Callbox with the primary number; 2 GVoice (Google Voice); 3 Callbox with the secondary number (same Callbox button, choose the Secondary Phone in the From list). Call order: Primary CRM, then Google Voice, then Secondary CRM. Important: check the customer\'s Local Time before making a call (8 AM - 8 PM their time). Each option links to a slide with its screen; each of those has a Back link. Customer details are sample training data.');
+    const here = pres.slides.length;
+    await shot(s, 'callback_crm.png', 0.45, 1.35, 5.75, 2.95, [[1, 540, 87, 602, 112], [2, 476, 87, 539, 112], ['!', 319, 178, 436, 196]]);
+    const opts = [['Callbox: primary number', 'Call 1st, from the primary number'], ['GVoice', 'Call 2nd, with Google Voice'], ['Callbox: secondary number', 'Call 3rd, from the Secondary Phone']];
+    legend(s, 6.35, 1.35, 3.2, opts, 0.78);
+    opts.forEach((o, i) => {
+      T(s, [{ text: 'View ›', options: { hyperlink: { slide: here + 1 + i, tooltip: 'Show the ' + o[0] + ' screen' } } }], { x: 8.85, y: 1.35 + i * 0.88, w: 0.62, h: 0.78, fontSize: 9, bold: true, color: C.teal, align: 'right', valign: 'middle' });
+    });
+    box(s, 0.45, 4.45, 9.1, 0.6, C.goldSoft);
+    s.addImage({ data: await icon('FiClock', C.gold), x: 0.65, y: 4.64, w: 0.22, h: 0.22 });
+    T(s, [{ text: 'Important:  ', options: { bold: true, color: C.gold } }, { text: 'check the customer\'s Local Time (!) before making a call. Call only between 8 AM and 8 PM their time.' }], { x: 1.0, y: 4.45, w: 8.4, h: 0.6, fontSize: 10.5, valign: 'middle' });
+  }
+
+  {
+    const back = pres.slides.length; // "Where to call from" slide number
+    const screens = [
+      ['call_primary.png', 'Callbox: primary number', 'Open Callbox and make sure the From list shows the primary number.', [[1, 440, 94, 611, 120]]],
+      ['call_gvoice.png', 'GVoice', 'Sign in to Google Voice with the shared Homeaglow account, then call.', [[1, 560, 132, 1024, 192]]],
+      ['call_secondary.png', 'Callbox: secondary number', 'In Callbox, switch the From list to the Secondary Phone.', [[1, 431, 118, 604, 147]]],
+    ];
+    for (const [file, title, cap, marks] of screens) {
+      const s = content('Callback Handling  ·  Where to call from', title, cap,
+        title + ': ' + cap + ' Use the Back link to return to Where to call from.');
+      await shot(s, file, 0.45, 1.4, 9.1, 3.2, marks);
+      T(s, [{ text: '‹  Back to Where to call from', options: { hyperlink: { slide: back, tooltip: 'Back to Where to call from' } } }], { x: 0.48, y: 4.75, w: 4, h: 0.3, fontSize: 10.5, bold: true, color: C.teal, valign: 'middle' });
+    }
   }
 
   {
