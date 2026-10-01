@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Using the Knowledge Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #eef1f4;
+    --bg: #f7f8fa;
+    --rule: #c9cdd2;
+    --ink: #1c1d1f;
+    --ink-soft: #62666b;
+    --teal: #0f7a6c;
+    --teal-soft: #e3f1ee;
+    --peach: #fbefe4;
+    --peach-deep: #f3dcc6;
+    --amber: #f4b41a;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); color: var(--ink);
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; }
+
+  .slide {
+    width: min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    margin: 0 auto;
+    background: var(--bg);
+    position: relative;
+    container-type: inline-size;
+    overflow: hidden;
+  }
+  .slide::before { /* left margin rule */
+    content: ""; position: absolute; top: 0; bottom: 0; left: 3.9cqw;
+    width: 1px; background: var(--rule);
+  }
+  .inner {
+    position: absolute; inset: 5.2cqw 3.9cqw 4.2cqw 10.1cqw;
+    display: grid; grid-template-columns: 1.08fr 1fr; gap: 4.4cqw;
+  }
+
+  .left { display: flex; flex-direction: column; }
+  .eyebrow { font-family: "Exo 2", sans-serif; font-weight: 700; color: var(--teal);
+    font-size: 1.05cqw; letter-spacing: .04em; text-transform: uppercase; margin: 0; }
+  h1 { font-family: "Exo 2", sans-serif; font-weight: 800; font-size: 4.3cqw;
+    line-height: 1.08; letter-spacing: -.01em; margin: 1.9cqw 0 1.5cqw; }
+  .lede { color: var(--ink-soft); font-size: 1.6cqw; line-height: 1.4; margin: 0 0 2.2cqw; max-width: 36cqw; }
+
+  .modes { display: grid; gap: 1cqw; }
+  .mode { display: flex; gap: 1.1cqw; align-items: flex-start; background: var(--card);
+    border: 1px solid #e3e6ea; border-radius: 1cqw; padding: 1.1cqw 1.3cqw; }
+  .mode .ico { flex: none; width: 2.6cqw; height: 2.6cqw; border-radius: 50%;
+    background: var(--teal-soft); display: grid; place-items: center; }
+  .mode .ico svg { width: 1.4cqw; height: 1.4cqw; stroke: var(--teal); fill: none; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; }
+  .mode b { display: block; font-family: "Exo 2", sans-serif; font-weight: 700; font-size: 1.3cqw; margin-bottom: .2cqw; }
+  .mode span { color: var(--ink-soft); font-size: 1.15cqw; line-height: 1.35; }
+
+  .foot { margin-top: auto; color: var(--ink-soft); font-size: 1cqw; }
+
+  .card { background: var(--peach); border-radius: 2cqw; padding: 2.6cqw 2.6cqw 2.2cqw;
+    display: flex; flex-direction: column; }
+  .card h2 { font-family: "Exo 2", sans-serif; font-weight: 700; font-size: 1.05cqw; color: var(--teal);
+    letter-spacing: .04em; text-transform: uppercase; margin: 0 0 .5cqw; }
+  .card .sub { font-family: "Exo 2", sans-serif; font-weight: 800; font-size: 2cqw; margin: 0 0 1.6cqw; line-height: 1.15; }
+  ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .85cqw; }
+  li { display: flex; gap: 1.1cqw; align-items: center; background: var(--card);
+    border-radius: 1cqw; padding: .95cqw 1.2cqw; box-shadow: 0 .2cqw .6cqw rgba(160, 110, 60, .08); }
+  .num { flex: none; width: 2.4cqw; height: 2.4cqw; border-radius: 50%; background: var(--amber);
+    color: var(--ink); font-family: "Exo 2", sans-serif; font-weight: 800; font-size: 1.2cqw;
+    display: grid; place-items: center; }
+  li b { display: block; font-family: "Exo 2", sans-serif; font-weight: 700; font-size: 1.3cqw; }
+  li span { color: var(--ink-soft); font-size: 1.08cqw; line-height: 1.3; }
+  .quote { margin-top: auto; padding-top: 1.4cqw; font-size: 1.15cqw; color: var(--ink-soft); line-height: 1.4;
+    border-top: 1px dashed var(--peach-deep); }
+  .quote strong { color: var(--ink); }
+
+  @media (max-width: 700px) {
+    .slide { width: 100%; aspect-ratio: auto; }
+    .slide::before { display: none; }
+    .inner { position: static; padding: 32px 16px; grid-template-columns: 1fr; gap: 24px; }
+    .eyebrow, .card h2 { font-size: 12px; }
+    h1 { font-size: 34px; margin: 14px 0 12px; }
+    .lede { font-size: 16px; max-width: none; margin-bottom: 18px; }
+    .modes { gap: 10px; }
+    .mode { padding: 12px 14px; gap: 12px; border-radius: 10px; }
+    .mode .ico { width: 32px; height: 32px; } .mode .ico svg { width: 18px; height: 18px; }
+    .mode b, li b { font-size: 16px; } .mode span, li span { font-size: 14px; }
+    .foot { font-size: 12px; margin-top: 18px; order: 9; }
+    .card { padding: 22px 18px; border-radius: 18px; }
+    .card .sub { font-size: 22px; margin-bottom: 14px; }
+    ol { gap: 10px; } li { padding: 12px 14px; gap: 12px; border-radius: 10px; }
+    .num { width: 30px; height: 30px; font-size: 15px; }
+    .quote { font-size: 14px; padding-top: 16px; margin-top: 16px; }
+  }
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="inner">
+    <section class="left">
+      <p class="eyebrow">Homeaglow &middot; New Hire Care Training</p>
+      <h1>How to Use the Knowledge Library</h1>
+      <p class="lede">A guide, not a script. Learn the <em>why</em> behind each policy so you can handle what isn't written down.</p>
+
+      <div class="modes">
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg></div>
+          <div><b>Learning a topic?</b><span>Read the article from beginning to end.</span></div>
+        </div>
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <div><b>Handling a live ticket?</b><span>Jump straight to the section heading you need.</span></div>
+        </div>
+        <div class="mode">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M9 18h6M10 21h4"/><path d="M8.5 14.5a5 5 0 1 1 7 0c-.8.8-1.5 1.7-1.5 2.5h-4c0-.8-.7-1.7-1.5-2.5z"/></svg></div>
+          <div><b>No exact match?</b><span>Start with the facts, apply the reasoning, use your judgment.</span></div>
+        </div>
+      </div>
+
+      <p class="foot">Internal training material</p>
+    </section>
+
+    <aside class="card">
+      <h2>Every article, same structure</h2>
+      <p class="sub">Know where to look, every time</p>
+      <ol>
+        <li><div class="num">1</div><div><b>What Is This?</b><span>A quick overview of the situation covered.</span></div></li>
+        <li><div class="num">2</div><div><b>Why This Matters</b><span>The reasoning behind the policy: the why before the what.</span></div></li>
+        <li><div class="num">3</div><div><b>The Process</b><span>The steps to work through, and the thinking behind each.</span></div></li>
+        <li><div class="num">4</div><div><b>Related Articles</b><span>Connected topics, since real cases often involve more than one issue.</span></div></li>
+        <li><div class="num">5</div><div><b>Related Macros</b><span>The macro that matches your resolution, from decision to communication.</span></div></li>
+      </ol>
+      <p class="quote"><strong>Our goal:</strong> agents who understand the reasoning, apply policy with good judgment, and adapt to situations they've never seen.</p>
+    </aside>
+  </div>
+</main>
+</body>
+</html>
