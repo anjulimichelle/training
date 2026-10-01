@@ -124,7 +124,7 @@ async function panel(s, ill, y = 0.68, h = 4.26) {
 }
 
 let topicNo = 0;
-const TOPICS = 10;
+const TOPICS = 11;
 async function topic(title, sub, learn, ill, notes) {
   topicNo++;
   const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -243,12 +243,12 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
     T(s, 'How cleaners join and work on Homeaglow, and the tools and rules we use to support them.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
     T(s, 'Internal training material', { x: 0.62, y: 5.0, w: 3, h: 0.2, fontSize: 7, color: C.soft });
     await panel(s, 'ill7.png', 0.4, 4.82);
-    s.addNotes('Welcome. This module covers the cleaner (CP) side of Homeaglow: the Cleaner Journey, the Legacy CP CRM and CP Dashboard, CP profile statuses, deactivation reasons, operating models, tiering, job statuses, and the Pending Invoice action guide. It ends with a knowledge check.');
+    s.addNotes('Welcome. This module covers the cleaner (CP) side of Homeaglow: the Cleaner Journey, the Legacy CP CRM and CP Dashboard, CP profile statuses, deactivation reasons, CP penalties on the C side, operating models, tiering, job statuses, and the Pending Invoice action guide. It ends with a knowledge check.');
   }
 
   // ---------- Agenda ----------
   {
-    const s = content('Overview', 'Agenda', 'Ten topics. Topics 2 and 3 happen mostly in the live systems.',
+    const s = content('Overview', 'Agenda', 'Eleven topics. Topics 2 and 3 happen mostly in the live systems.',
       'Walk through the agenda. Topics 2 and 3 are live walkthroughs: the slides only set up what trainees will see.');
     const rows = [
       ['01', 'Cleaner Journey', 'How a cleaner goes from applying to getting paid'],
@@ -256,15 +256,16 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       ['03', 'CP Dashboard', 'What cleaners see and manage'],
       ['04', 'CP Profile Status', 'What each status lets a cleaner do'],
       ['05', 'CP-Facing Deactivation', 'The reason codes cleaners see'],
-      ['06', 'Operating Models', 'Why location changes the rules'],
-      ['07', 'CP Tiering', 'Who sees and claims jobs first'],
-      ['08', 'Job Statuses', 'Submitted, Claimed, Invoiced, Cancelled, Pending Invoice'],
-      ['09', 'AG: Pending Invoice', 'The action guide and cancellation reason codes'],
-      ['10', 'Knowledge Check', 'Set by your trainer'],
+      ['06', 'CP Penalty: C-Side Handling', 'What to do on the cleaner\'s side when a customer reports them'],
+      ['07', 'Operating Models', 'Why location changes the rules'],
+      ['08', 'CP Tiering', 'Who sees and claims jobs first'],
+      ['09', 'Job Statuses', 'Submitted, Claimed, Invoiced, Cancelled, Pending Invoice'],
+      ['10', 'AG: Pending Invoice', 'The action guide and cancellation reason codes'],
+      ['11', 'Knowledge Check', 'Set by your trainer'],
     ];
     const hdr = ['#', 'Topic', 'You will learn'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } }));
     const body = rows.map(r => r.map((t, i) => ({ text: t, options: { color: i === 0 ? C.teal : i === 1 ? C.ink : C.soft, bold: i < 2, fill: { color: C.white } } })));
-    s.addTable([hdr, ...body], { x: 0.45, y: 1.45, w: 9.1, colW: [0.7, 3.0, 5.4], rowH: 0.32, fontFace: BODY, fontSize: 10, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0, 0.14, 0, 0.14] });
+    s.addTable([hdr, ...body], { x: 0.45, y: 1.45, w: 9.1, colW: [0.7, 3.0, 5.4], rowH: 0.29, fontFace: BODY, fontSize: 9.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0, 0.14, 0, 0.14] });
   }
 
   // ================= 1. CLEANER JOURNEY =================
@@ -478,6 +479,123 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       ['Duplicate (other account is a CP)', 'dp-cp <CP_ID>', '', ''],
     ], { y: 1.3, colW: [2.2, 2.5, 2.5, 1.9], fontSize: 8.5, rowH: 0.36 });
     await tip(s, 4.65, 'Rule:', 'use the code exactly as written. Fill in only the <placeholders>.', 'FiAlertCircle');
+  }
+
+  // ================= CP PENALTY: C-SIDE HANDLING =================
+  await topic('CP Penalty: C-Side Handling', 'What to do on the cleaner\'s side when a customer reports a problem with their cleaner.',
+    ['Your two jobs, in order', 'Why we pause instead of suspend', 'The five-step process', 'The action for each offense'],
+    'ill12.png',
+    'This covers what you do on the CP side when a customer reports a no-show, cancellation, false invoice, overcharged hours, missing supplies, rude behavior and similar issues. Category: Service Issue.');
+
+  {
+    const s = content('CP Penalty: C-Side Handling', 'Two jobs, in this order', null,
+      'First resolve the customer\'s issue using the related article for that issue. Then take the CP-side action: pause, coach, flag and document. You don\'t make the permanent decision about the CP, and you don\'t suspend CPs yourself: that belongs to the CP-side team, Trust & Safety, or the system. You are seeing one incident, from one side; the CP-side team sees the CP\'s full history and hears the CP\'s side before deciding anything permanent.');
+    const w = (9.1 - 0.15) / 2;
+    await card(s, 0.45, 1.4, w, 1.85, { n: 1, title: 'Resolve the customer\'s issue', body: 'Use the related article for that issue first.' });
+    await card(s, 0.45 + w + 0.15, 1.4, w, 1.85, { n: 2, title: 'Take the CP-side action', body: 'Pause, coach, flag and document.' });
+    await tip(s, 3.5, 'Not your call:', 'permanent decisions and suspensions belong to the CP-side team, Trust & Safety, or the system.', 'FiInfo');
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling', 'Pause, don\'t suspend', 'You\'re seeing one incident from one side. The two statuses affect other customers very differently.',
+      'norequests: the CP can\'t claim new jobs but keeps their upcoming claimed jobs. suspended: the CP is removed from every upcoming claimed job, and those customers are notified. Suspending over one complaint may cancel several other customers\' cleanings. Example: a customer reports the CP arrived without supplies. The CP has four claimed jobs this week with other customers who had no problems. norequests stops new claims and lets those four customers keep their cleanings; suspending would cancel all four.');
+    await twoCol(s,
+      { ico: 'FiPauseCircle', title: 'norequests (pause)', items: ['Can\'t claim new jobs', 'Keeps upcoming claimed jobs, so other customers keep their cleanings'] },
+      { ico: 'FiXOctagon', title: 'suspended', items: ['Removed from every upcoming claimed job', 'Those customers are notified their cleaning is affected'] }, 1.55, 1.85);
+    box(s, 0.45, 3.6, 9.1, 0.95, C.tealSoft);
+    eyebrow(s, 'Example', 0.7, 3.72, 3);
+    T(s, 'A customer reports their cleaner came without supplies. The cleaner has 4 other jobs this week. Pausing lets those 4 customers keep their cleanings. Suspending would cancel all 4.', { x: 0.7, y: 3.95, w: 8.6, h: 0.5, fontSize: 10.5 });
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling', 'The default, and what you don\'t do', null,
+      'Default CP-side action: norequests + coaching + the relevant flag + an internal note. C-side agents don\'t suspend a CP (except the false-invoice exception), add a DNR flag, permanently deactivate a CP, or reactivate a CP.');
+    box(s, 0.45, 1.3, 9.1, 1.0, C.teal);
+    T(s, 'DEFAULT CP-SIDE ACTION', { x: 0.75, y: 1.43, w: 6, h: 0.2, fontFace: HEAD, bold: true, fontSize: 8, color: C.white, charSpacing: 0.5 });
+    T(s, 'norequests  +  coaching  +  the relevant flag  +  an internal note', { x: 0.75, y: 1.68, w: 8.6, h: 0.45, fontFace: HEAD, bold: true, fontSize: 16, color: C.white });
+    eyebrow(s, 'C-side agents don\'t', 0.48, 2.55, 5, C.soft);
+    const items = [['FiXOctagon', 'Suspend a CP', 'Except the false-invoice exception'], ['FiSlash', 'Add a DNR flag', 'Never'], ['FiUserX', 'Deactivate a CP', 'Never permanently'], ['FiRotateCcw', 'Reactivate a CP', 'The CP-side team decides']];
+    const gap = 0.15, w = (9.1 - 3 * gap) / 4;
+    for (let i = 0; i < 4; i++) {
+      const x = 0.45 + i * (w + gap);
+      box(s, x, 2.85, w, 1.55, C.white, C.border);
+      await iconDot(s, x + 0.18, 3.0, items[i][0], 0.4);
+      T(s, items[i][1], { x: x + 0.18, y: 3.5, w: w - 0.36, h: 0.3, fontFace: HEAD, bold: true, fontSize: 11.5 });
+      T(s, items[i][2], { x: x + 0.18, y: 3.82, w: w - 0.36, h: 0.45, fontSize: 9.5, color: C.soft });
+    }
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling', 'Exceptions to the default', null,
+      'Safety concern: theft, damage, threats, harassment, someone else doing jobs under the CP\'s account, or anything that makes the customer feel unsafe: route to Trust & Safety and follow the T&S process. System auto-suspended after your flag/report (e.g. no-show report, second cp_false_invoice on a new CP): leave it, don\'t override or downgrade; coach the CP, tell them about the penalty and how to appeal from their dashboard, add your internal note. First instance of a warning-level offense: coach only, no status change (false invoices are not warning-level). False invoice: norequests and ask the CP what happened, even when the customer says the CP never came (GPS alone can\'t confirm; CPs aren\'t required to turn it on). Multiple false invoices with an abusive pattern: you may set suspended; the only case a C-side agent sets suspended. Never add DNR.');
+    table(s, ['Situation', 'What to do'], [
+      ['Safety concern (theft, damage, threats, harassment, someone else working the account)', 'Route to Trust & Safety and follow their process'],
+      ['The system already suspended the CP after your flag or report', 'Leave it. Coach, explain how to appeal from the dashboard, add your note'],
+      ['First warning-level offense', 'Coach only. No status change'],
+      ['False invoice (even "the cleaner never came")', 'norequests, and ask the CP what happened. GPS alone can\'t confirm'],
+      ['Multiple false invoices that look abusive', 'You may set suspended. The only time you do. Never add DNR'],
+    ], { y: 1.25, colW: [4.7, 4.4], fontSize: 9, rowH: 0.46 });
+    await tip(s, 4.65, 'Safety first:', 'anything that makes the customer feel unsafe goes to Trust & Safety.', 'FiShield');
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling', 'The process', 'Five steps, in order.',
+      'Step 1: Is this a safety issue? Yes: route to Trust & Safety; you\'re done on the CP side. Step 2: Did the system already suspend the CP? Check the CP\'s Issues table after adding your flag or report. Yes: leave the status, send the coaching macro, add your note; you\'re done. Step 3: find the offense in the table and take the listed action. Step 4: coach the CP. Step 5: leave an internal note.');
+    const steps = [
+      ['FiShield', 'Safety issue?', 'Yes: route to Trust & Safety. Done'],
+      ['FiCheckSquare', 'Already suspended?', 'Check the Issues table. Yes: leave it, coach, note. Done'],
+      ['FiList', 'Find the offense', 'Take the action in the table'],
+      ['FiMessageSquare', 'Coach the CP', 'What was reported and how to appeal'],
+      ['FiEdit3', 'Leave a note', 'So the CP-side team doesn\'t re-investigate'],
+    ];
+    const w = 1.66, gap = (9.1 - 5 * w) / 4;
+    for (let i = 0; i < 5; i++) {
+      const x = 0.45 + i * (w + gap);
+      box(s, x, 1.5, w, 2.6, C.white, C.border);
+      await iconDot(s, x + (w - 0.55) / 2, 1.7, steps[i][0], 0.55);
+      T(s, `STEP ${i + 1}`, { x, y: 2.38, w, h: 0.2, fontFace: HEAD, bold: true, fontSize: 8, color: C.teal, align: 'center', charSpacing: 0.5 });
+      T(s, steps[i][1], { x: x + 0.1, y: 2.6, w: w - 0.2, h: 0.45, fontFace: HEAD, bold: true, fontSize: 11, align: 'center' });
+      T(s, steps[i][2], { x: x + 0.12, y: 3.1, w: w - 0.24, h: 1.05, fontSize: 9, color: C.soft, align: 'center' });
+      if (i < 4) s.addImage({ data: await icon('FiChevronRight', C.soft), x: x + w + gap / 2 - 0.08, y: 2.7, w: 0.16, h: 0.16 });
+    }
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling  ·  Step 3', 'The action for each offense', null,
+      'No-show or CP cancellation: report via Job Admin > No Show, or cancel the job from the CP Dashboard when the CP should be penalized; either usually makes the system set norequests or suspended. Lean coaching; set norequests yourself only if the CP already has a couple of no-shows or cancellations. Overcharged hours: cp_overcharged_hours flag if the refund is 30+ minutes. Accepted cash: the macro adds accepting_cash_not_allowed_warning. Supplies (Gen Op): require_new_cleaning_supplies_photo sets norequests automatically. Easy to miss: unauthorized reschedule and accepted cash are coaching-only on the first instance; check message history and flags for a previous warning before pausing. Macros: No Show/Cancellation (No Request); Unauthorized Reschedule (Warning); False Invoice (With Penalty); Overcharged Hours series; Accepted Cash (Coaching) / (Warning + Account Adjustment); No/Incomplete Cleaning Supplies; Rude to Customer (Coaching).');
+    table(s, ['Customer reported', 'Flag / report', 'CP status', 'Coaching'], [
+      ['No-show or CP cancellation', 'Job Admin > No Show, or cancel from the CP Dashboard', 'Lean coaching. norequests only if repeat', 'No-show / cancellation macro'],
+      ['Unauthorized reschedule', '—', '1st: no change · 2nd+: norequests', 'Warning macro'],
+      ['False invoice (incl. "never came")', 'cp_false_invoice (may auto-suspend new CPs)', 'norequests if not auto-suspended', 'False invoice macro'],
+      ['Overcharged hours', 'cp_overcharged_hours (refund 30+ min)', 'norequests', 'Overcharged Hours series'],
+      ['Accepted cash', 'accepting_cash_not_allowed_warning (by macro)', '1st: no change · 2nd+: norequests', 'Accepted Cash macro'],
+      ['Missing supplies (Gen Op)', 'require_new_cleaning_supplies_photo', 'Set by the flag', 'No/Incomplete Supplies macro'],
+      ['Missing supplies (non-Gen Op)', '—', 'No change', 'No/Incomplete Supplies macro'],
+      ['Rude / unprofessional (not safety)', '—', 'norequests', 'Coaching macro'],
+    ], { y: 1.15, colW: [2.15, 2.85, 2.3, 1.8], fontSize: 8, rowH: 0.36 });
+    await tip(s, 4.72, 'Easy to miss:', 'reschedules and accepted cash are coaching-only the first time. Check for a past warning.', 'FiAlertTriangle');
+  }
+
+  {
+    const s = content('CP Penalty: C-Side Handling  ·  Steps 4 & 5', 'Coach, then document', null,
+      'Coaching message: explain specifically what was reported; tell the CP their account is paused (if you paused it) and how to appeal through their dashboard; do not hint at an outcome ("you\'ll probably be reactivated", "this could be permanent"). The CP-side team decides. Internal note: the CP-side team uses it to decide on reactivation; a clear note saves them from investigating again. Template: CP No Request — J <JOB ID> / Reported by C: <what the customer said, one line> / Evidence: <what you verified: comms, GPS if available, CTJ, photos> / Action: <flag added> / <status set> / <macro sent> / C-side resolution: <refund, credits, rebook, etc.>');
+    const w = (9.1 - 0.15) / 2;
+    box(s, 0.45, 1.3, w, 3.3, C.white, C.border);
+    await iconDot(s, 0.65, 1.5, 'FiMessageSquare', 0.42);
+    T(s, 'Step 4: Coach the CP', { x: 1.2, y: 1.5, w: w - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, valign: 'middle' });
+    T(s, bullets(['Explain exactly what was reported', 'If you paused them, say so and explain how to appeal from their dashboard', 'Never hint at an outcome ("you\'ll probably be reactivated"). The CP-side team decides']), { x: 0.65, y: 2.1, w: w - 0.4, h: 2.3, fontSize: 10.5, paraSpaceAfter: 6 });
+    const x2 = 0.45 + w + 0.15;
+    box(s, x2, 1.3, w, 3.3, C.white, C.border);
+    await iconDot(s, x2 + 0.2, 1.5, 'FiEdit3', 0.42);
+    T(s, 'Step 5: Internal note', { x: x2 + 0.75, y: 1.5, w: w - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, valign: 'middle' });
+    box(s, x2 + 0.2, 2.1, w - 0.4, 2.3, C.bg, C.border);
+    T(s, [
+      { text: 'CP No Request — J <JOB ID>', options: { bold: true, breakLine: true } },
+      { text: 'Reported by C: <what the customer said, one line>', options: { breakLine: true } },
+      { text: 'Evidence: <comms, GPS if available, CTJ, photos>', options: { breakLine: true } },
+      { text: 'Action: <flag> / <status> / <macro sent>', options: { breakLine: true } },
+      { text: 'C-side resolution: <refund, credits, rebook>' },
+    ], { x: x2 + 0.35, y: 2.2, w: w - 0.7, h: 2.1, fontFace: 'Courier New', fontSize: 9.5, paraSpaceAfter: 6 });
   }
 
   // ================= 6. OPERATING MODELS =================
