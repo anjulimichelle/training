@@ -322,6 +322,17 @@ async function walkthrough(eb, system, lookFor, notes) {
     ]);
   }
 
+  {
+    const s = content('Operational compliance  ·  Level 2', 'Use AI tools the right way', 'AI tools are encouraged to support efficiency and accuracy. Improper use may result in termination.',
+      'Improper usage of AI tools (Level 2, auto-fail). AI tools are permitted and encouraged during training and operations to support efficiency and accuracy. However, improper use of AI tools is strictly prohibited and may result in termination. Examples of improper use: asking AI to answer tickets directly on your behalf; copying and pasting modules or articles into AI, then adding ticket concerns so the AI can generate a full response; asking AI to decide what actions to take instead of applying your own judgment and process knowledge.');
+    await cards(s, 1.6, 1.75, [
+      { ico: 'FiMessageSquare', title: 'Never let AI answer for you', body: 'Don\'t ask AI to answer tickets directly on your behalf.' },
+      { ico: 'FiCopy', title: 'Never paste KB + ticket', body: 'Don\'t paste modules or articles into AI with the ticket concern to get a full response.' },
+      { ico: 'FiCompass', title: 'Never let AI decide', body: 'Don\'t ask AI what actions to take. Apply your own judgment and process knowledge.' },
+    ]);
+    await tip(s, 3.6, 'Do:', 'use AI to support your efficiency and accuracy. The judgment and the reply stay yours.', 'FiCheckCircle');
+  }
+
   // ================= 2. CUSTOMER JOURNEY =================
   await topic('Customer Journey', 'The map of a customer\'s whole experience, from first hearing about us to their cleaning.',
     ['The five steps', 'How customers find us', 'Three ways to sign up', 'Where tickets come from'],
