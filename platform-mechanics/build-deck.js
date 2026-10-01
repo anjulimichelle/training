@@ -306,18 +306,30 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Understanding Job History', 'Reading the example', 'The same job history, read from the bottom up.',
-      'Bottom to top: Sep 7, 10:35 AM: the system booked the job for Sep 21 at 10 AM (comment: populate_recurring_contract); status submitted. Sep 14, 2:29 PM: the cleaner claimed it. Sep 21, 9:19 AM: the cleaner rescheduled it from Sep 21, 10 AM to Sep 22, 11 AM. Sep 21, 9:50 AM: the cleaner rescheduled again, from Sep 22, 11 AM to Sep 24, 12:30 PM. Sep 24, 4:09 PM: the cleaner invoiced the job (status before: pending_invoice), and the system logged the invoice snapshot. Article example for reference: On Oct 9 at 7 PM, CS booked a cleaning via CRM for Oct 10 at 11 AM. Around 8:42 PM on the same day, CP Victor claimed the appointment. On Oct 11 at 2:03 PM, the CP invoiced the job, and the system logged it to the snapshot.');
-    table(s, ['', 'Action on', 'Actor', 'Action', 'What it tells you'], [
-      ['1', 'Sep 7, 10:35 AM', 'system', 'book', 'Job booked for Sep 21, 10 AM'],
-      ['2', 'Sep 14, 2:29 PM', 'cleaner', 'claim', 'The cleaner claimed it'],
-      ['3', 'Sep 21, 9:19 AM', 'cleaner', 'reschedule', 'Moved from Sep 21, 10 AM to Sep 22, 11 AM'],
-      ['4', 'Sep 21, 9:50 AM', 'cleaner', 'reschedule', 'Moved again, to Sep 24, 12:30 PM'],
-      ['5', 'Sep 24, 4:09 PM', 'cleaner', 'invoice', 'Invoiced, from Pending Invoice'],
-      ['6', 'Sep 24, 4:09 PM', 'system', 'log_snapshot_on_invoice', 'The system logged the invoice'],
-    ], { y: 1.4, colW: [0.4, 1.7, 1.0, 2.2, 3.8], fontSize: 9.5, rowH: 0.36 });
-    box(s, 0.45, 4.05, 9.1, 0.65, C.tealSoft);
-    T(s, [{ text: 'The story:  ', options: { bold: true, color: C.teal } }, { text: 'booked for Sep 21, claimed Sep 14, rescheduled twice by the cleaner, then invoiced on Sep 24.' }], { x: 0.7, y: 4.05, w: 8.7, h: 0.65, fontSize: 10.5, valign: 'middle' });
+    const s = content('Understanding Job History', 'Reading the example', 'Read the job history from the bottom up. Then click The Story.',
+      'TRAINER: let trainees read the job history first (bottom to top). Then click The Story (or press the right arrow) to reveal the story one line at a time, staying on this slide. Story: On Sept 7, 2026, the system booked a cleaning for C Anjuli Kintanar scheduled for Sept 21 10AM CT through the recurring cleaning plan. On Sept 14, CP Truffle Wuffle claimed the job as scheduled. On Sept 21 9:19AM CT, CP Truffle Wuffle rescheduled the appointment from Sept 21, 10AM CT to Sept 22, 11AM. On Sept 21 9:50 AM CT, CP Truffle Wuffle rescheduled the appointment again from Sept 22, 11AM to Sept 24, 12:30 PM CT. On Sept 24, 4:09 PM CT, CP Truffle Wuffle invoiced the appointment and the system logged it in snapshot.');
+    await shot(s, 'jh_table.png', 0.45, 1.3, 5.75, 2.9);
+    s.addImage({ data: await icon('FiArrowUp'), x: 0.55, y: 4.3, w: 0.2, h: 0.2 });
+    T(s, 'Read bottom to top', { x: 0.8, y: 4.27, w: 3, h: 0.26, fontSize: 9.5, bold: true, color: C.teal, valign: 'middle' });
+    // "The Story" button
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 6.35, y: 1.3, w: 3.2, h: 0.5, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.1 });
+    s.addImage({ data: await icon('FiBookOpen', C.white), x: 6.55, y: 1.43, w: 0.24, h: 0.24 });
+    T(s, 'The Story', { x: 6.9, y: 1.3, w: 2.5, h: 0.5, fontFace: HEAD, bold: true, fontSize: 13, color: C.white, valign: 'middle' });
+    // Story area: empty panel; the text appears line by line on click
+    box(s, 6.35, 1.9, 3.2, 3.25, C.tealSoft);
+    const lines = [
+      ['Sept 7, 2026: ', 'the system booked a cleaning for C Anjuli Kintanar for Sept 21, 10 AM CT, through the recurring cleaning plan.'],
+      ['Sept 14: ', 'CP Truffle Wuffle claimed the job as scheduled.'],
+      ['Sept 21, 9:19 AM CT: ', 'CP Truffle Wuffle rescheduled from Sept 21, 10 AM CT to Sept 22, 11 AM.'],
+      ['Sept 21, 9:50 AM CT: ', 'CP Truffle Wuffle rescheduled again, from Sept 22, 11 AM to Sept 24, 12:30 PM CT.'],
+      ['Sept 24, 4:09 PM CT: ', 'CP Truffle Wuffle invoiced the appointment and the system logged it in snapshot.'],
+    ];
+    const runs = [];
+    lines.forEach(([d, t], i) => {
+      runs.push({ text: d, options: { bold: true, color: C.teal } });
+      runs.push({ text: t, options: { breakLine: i < lines.length - 1 } });
+    });
+    T(s, runs, { x: 6.5, y: 2.02, w: 2.9, h: 3.05, fontSize: 9, paraSpaceAfter: 5, objectName: 'storyText' });
   }
 
   {
