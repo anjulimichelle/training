@@ -720,6 +720,30 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
+    const s = content('Job Statuses  ·  Submitted', 'Common tickets: Submitted', 'What customers ask while the job waits for a cleaner, and how to answer.',
+      '1) Match anxiety: the customer asks if their request has been claimed, or when it will be. A submitted job is automatically upgraded to a Priority Request within 24-48 hours of the start time. 2) Last-minute job request: CS may book cleaning requests as soon as 12 hours in advance. Priority markups do not apply to jobs booked via CRM. 3) Customer wants a cleaner of a specific gender: there is no option to select a gender, but customers may request to be rematched with another cleaner any time more than 6 hours before the job start time if they don\'t like the cleaner who claims. Preferences can also be added to the cleaning notes. 4) Customer wants a specific cleaner for an upcoming appointment: we can change the customer\'s Requested CPs through the Job Admin Page, only if they explicitly request it. TRAINER NOTE: walk trainees through how to change Requested CPs on the Job Admin Page. 5) Customer has a strict schedule and can only do certain dates/times: to increase the likelihood of the job being claimed, the system may automatically add alternate start times if the job is still unclaimed 24 hours before it starts. To stop this, add the flag: C CRM > Do > do_not_auto_add_alternate_start_times.');
+    const rows = [
+      ['Match anxiety', '"Has my request been claimed? When will it be?"', 'A submitted job is automatically upgraded to a Priority Request within 24–48 hours of the start time.'],
+      ['Last-minute job request', null, 'CS can book as little as 12 hours ahead. Priority markups don\'t apply to jobs booked via the CRM.'],
+      ['Wants a cleaner of a specific gender', null, 'There\'s no gender option. They can rematch any time 6+ hours before start, and add preferences to the cleaning notes.'],
+      ['Wants a specific cleaner', null, 'Change their Requested CPs on the Job Admin Page, only if they explicitly ask.', 'Trainer demo'],
+      ['Strict schedule, only certain dates/times', null, 'Unclaimed 24 hrs before start, the system may add alternate times. Stop it: C CRM › Do › do_not_auto_add_alternate_start_times.'],
+    ];
+    for (let i = 0; i < rows.length; i++) {
+      const [title, quote, answer, chip] = rows[i], y = 1.42 + i * 0.75;
+      box(s, 0.45, y, 9.1, 0.68, C.white, C.border);
+      badge(s, 0.6, y + 0.2, i + 1);
+      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 10.5, breakLine: !!quote } }].concat(quote ? [{ text: quote, options: { color: C.soft, fontSize: 8.5, italic: true } }] : []),
+        { x: 1.05, y, w: 2.75, h: 0.68, valign: 'middle' });
+      T(s, answer, { x: 3.9, y, w: chip ? 4.35 : 5.55, h: 0.68, fontSize: 9.5, valign: 'middle' });
+      if (chip) {
+        box(s, 8.3, y + 0.2, 1.1, 0.28, C.goldSoft);
+        T(s, chip, { x: 8.3, y: y + 0.2, w: 1.1, h: 0.28, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+      }
+    }
+  }
+
+  {
     const s = content('Job Statuses  ·  Claimed', 'Claimed', 'A cleaner claimed the job, and the customer gets the cleaner\'s info.',
       'Customers can reschedule via dashboard 6+ hours before start (new bookings need 12+ hours; don\'t apply the 12-hour rule to a reschedule). A priority fee may apply if the new slot is <48 hours away. Rematch: C Dashboard > Manage Appointment > Change My Cleaner, available until 6 hours before start. CP swapping can happen (internal). The CP can file a lockout (OCW: up to 24 hrs after start; CP App: 5 min before to 1 hr after start), reschedule (with the C\'s agreement, even after the job time passed), or cancel from their dashboard if no agreement. Reschedule may be unavailable if the C had 2+ undesired changes (CP reschedules, no-shows, system cancels) in the last 7 days.');
     await twoCol(s,
