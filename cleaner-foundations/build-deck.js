@@ -8,7 +8,7 @@ const sharp = require('sharp');
 const Fi = require('react-icons/fi');
 
 const OUT = process.argv[2] || 'deck.pptx';
-const IMG = process.argv[3] || path.join(__dirname, 'img');
+const IMG = process.argv[3] || path.join(__dirname, '../img2');
 
 // One palette, taken from the Care training deck: teal accents on a light grey page,
 // white cards, and a soft yellow strip for tips.
@@ -430,7 +430,7 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
 
   // ================= 5. CP-FACING DEACTIVATION =================
   await topic('CP-Facing Deactivation Reasons', 'The exact message a cleaner sees when they are set to norequests or suspended.',
-    ['Who reads the reason', 'Job-related reason codes', 'Account and conduct codes'],
+    ['Who reads the reason', 'Where you enter it', 'The reason codes and their format'],
     'ill14.png',
     'A CP-facing deactivation reason is a specific reason code plus a templated sentence. The same code is stored as the value of the deactivation flag.');
 
@@ -454,31 +454,20 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('CP-Facing Deactivation', 'Reason codes: job issues', 'Fill in the <placeholders>. Keep the rest word for word.',
-      'Examples: cpq_cancel Your customer Joseph reported you cancelled their Monday Oct 9 job. Submit reactivation appeal through dashboard. / cpq_noshow Your customer Janis reported you didn\'t show up to their Monday Oct 9 job. ... / cpq_reschedule Your customer George reported you rescheduled their Monday Oct 9 job without permission. ... / cpq_invalid_cancel Upon review, your customer cancellation report has been deemed invalid. ... / cpq_false_invoice Customer Mary reported incorrect hours charged. Submit reactivation appeal. / cpq_overcharge Customer Kyle reported incorrect hours charged. Submit reactivation appeal.');
-    table(s, ['Reason', 'CP-facing format'], [
+    const s = content('CP-Facing Deactivation', 'Reason codes', 'Fill in the <placeholders>. Keep the rest word for word.',
+      'Examples: cpq_cash Cash Payment J 1234567 / cpq_cancel Your customer Joseph reported you cancelled their Monday Oct 9 job. Submit reactivation appeal through dashboard. / cpq_false_invoice Customer Mary reported incorrect hours charged. Submit reactivation appeal. / cpq_noshow Your customer Janis reported you didn\'t show up to their Monday Oct 9 job. Submit reactivation appeal through dashboard. / cpq_overcharge Customer Kyle reported incorrect hours charged. Submit reactivation appeal. / cpq_invalid_cancel Upon review, your customer cancellation report has been deemed invalid. Submit reactivation appeal through dashboard. / cpq_reschedule Your customer George reported you rescheduled their Monday Oct 9 job without permission. Submit reactivation appeal through dashboard. / HGTA 1234567. Rule: always use the exact reason code format; never write a freeform reason.');
+    table(s, ['Reason for deactivation', 'CP-facing reason format'], [
+      ['Accepted cash payment', 'cpq_cash Cash Payment J <JOB ID>'],
       ['Cancellation', 'cpq_cancel Your customer <C\'S NAME> reported you cancelled their <DAY, DATE> job. Submit reactivation appeal through dashboard.'],
-      ['No-show', 'cpq_noshow Your customer <C\'S NAME> reported you didn\'t show up to their <DAY, DATE> job. Submit reactivation appeal through dashboard.'],
-      ['Unauthorized reschedule', 'cpq_reschedule Your customer <C\'S NAME> reported you rescheduled their <DAY, DATE> job without permission. Submit reactivation appeal through dashboard.'],
-      ['Invalid "Report Issue" to cancel', 'cpq_invalid_cancel Upon review, your <emergency/customer cancellation> report has been deemed invalid. Submit reactivation appeal through dashboard.'],
-      ['Invalid "Report Issue" to reschedule', 'cpq_invalid_reschedule Upon review, your customer reschedule report has been deemed invalid. Submit reactivation appeal through dashboard.'],
       ['False invoice', 'cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal.'],
+      ['No-show', 'cpq_noshow Your customer <C\'S NAME> reported you didn\'t show up to their <DAY, DATE> job. Submit reactivation appeal through dashboard.'],
       ['Overcharged hours', 'cpq_overcharge Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal.'],
-    ], { y: 1.45, colW: [2.3, 6.8], fontSize: 8.5, rowH: 0.45 });
-  }
-
-  {
-    const s = content('CP-Facing Deactivation', 'Reason codes: account and conduct', null,
-      'Examples: cpq_dnr Multiple reported cancellations and no-shows. / cpq_cash Cash Payment J 1234567 / dp-c 1234567 / dp-cp 1234567 / HGTA 1234567. Code 199 is for duplicate accounts where SSN/bank info matches a suspended CP (DTC). DTC is internal; never explain it to the CP.');
-    table(s, ['Reason', 'Code', 'Reason', 'Code'], [
-      ['Permanent (repeated offenses)', 'cpq_dnr <REASON>', 'Background check not cleared yet', 'bgcheck_not_clear'],
-      ['Accepted cash payment', 'cpq_cash Cash Payment J <JOB ID>', 'Failed background check', 'bgcheck_flagged'],
-      ['Rude / unprofessional', 'cpq_quality Unprofessional behavior', 'Name doesn\'t match SSN', 'ssn_validation_failed'],
-      ['Theft', 'HGTA <JOB ID>', 'SSN not valid for employment', 'ssn_flagged'],
-      ['Duplicate (other account is a C)', 'dp-c <C_ID>', 'Duplicate: SSN/bank matches a suspended CP', '199'],
-      ['Duplicate (other account is a CP)', 'dp-cp <CP_ID>', '', ''],
-    ], { y: 1.3, colW: [2.2, 2.5, 2.5, 1.9], fontSize: 8.5, rowH: 0.36 });
-    await tip(s, 4.65, 'Rule:', 'use the code exactly as written. Fill in only the <placeholders>.', 'FiAlertCircle');
+      ['Invalid use of "Report Issue" to cancel', 'cpq_invalid_cancel Upon review, your <emergency/customer cancellation> report has been deemed invalid. Submit reactivation appeal through dashboard.'],
+      ['Invalid use of "Report Issue" to reschedule on C\'s behalf', 'cpq_invalid_reschedule Upon review, your customer reschedule report has been deemed invalid. Submit reactivation appeal through dashboard.'],
+      ['Reschedule unauthorized by the customer', 'cpq_reschedule Your customer <C\'S NAME> reported you rescheduled their <DAY, DATE> job without permission. Submit reactivation appeal through dashboard.'],
+      ['Rude/unprofessional behavior', 'cpq_quality Unprofessional behavior'],
+      ['Theft', 'HGTA <JOB ID>'],
+    ], { y: 1.4, colW: [2.75, 6.35], fontSize: 8.5, rowH: 0.33 });
   }
 
   // ================= CP PENALTY: C-SIDE HANDLING =================
@@ -860,6 +849,16 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
     await tip(s, 4.6, 'Remember:', 'the reason should match who initiated the cancellation and why.', 'FiInfo');
   }
 
+  // ---------- Close ----------
+  {
+    const s = pres.addSlide({ masterName: 'CONTENT' });
+    eyebrow(s, 'Wrap-up', 0.62, 1.9);
+    T(s, 'Questions?', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
+    T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
+    await panel(s, 'ill9.png');
+    s.addNotes('Open the floor for questions. Recap: the cleaner journey, CP CRM and Dashboard, profile statuses, deactivation codes, operating models, tiering, job statuses and the Pending Invoice action guide.');
+  }
+
   // ================= 10. KNOWLEDGE CHECK =================
   {
     topicNo++;
@@ -872,16 +871,6 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
     T(s, [{ text: 'Trainer note:  ', options: { bold: true, color: C.gold } }, { text: 'format and questions set by the trainer.' }], { x: 1.1, y: 3.5, w: 4.0, h: 0.35, fontSize: 10, valign: 'middle' });
     await panel(s, 'ill10.png');
     s.addNotes('TRAINER NOTE: The trainer decides the knowledge check format, questions and difficulty based on the cohort.');
-  }
-
-  // ---------- Close ----------
-  {
-    const s = pres.addSlide({ masterName: 'CONTENT' });
-    eyebrow(s, 'Wrap-up', 0.62, 1.9);
-    T(s, 'Questions?', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
-    T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
-    await panel(s, 'ill9.png');
-    s.addNotes('Open the floor for questions. Recap: the cleaner journey, CP CRM and Dashboard, profile statuses, deactivation codes, operating models, tiering, job statuses and the Pending Invoice action guide.');
   }
 
   await pres.writeFile({ fileName: OUT });
