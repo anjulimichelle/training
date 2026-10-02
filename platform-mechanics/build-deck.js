@@ -709,13 +709,23 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
 
   {
     const s = content('Vouchers in CRM', 'Voucher status', 'In the legacy CRM, the color tells you where the voucher stands.',
-      'Unused (issued or redeemed): assigned to the account and will apply to the next invoiced job, shown in an orange box with duration, type, price and the 16-letter code. Applied (used): a green box with a check mark, the job ID and the appointment date and time. Grayed out: canceled/invalidated (removed through a refund, dispute or admin invalidation), converted (turned into credits equal to the purchase price), or expired. The reason usually appears beside the code. Refunded: refunded to the customer\'s card on file.');
-    await cards(s, 1.45, 1.85, [
-      { ico: 'FiTag', title: 'Unused', body: 'Orange box. Applies to the next invoiced job.' },
-      { ico: 'FiCheckCircle', title: 'Applied', body: 'Green box with a check mark, job ID and date.' },
-      { ico: 'FiSlash', title: 'Grayed out', body: 'Canceled, invalidated, converted or expired. Reason shown by the code.' },
-    ]);
-    await tip(s, 3.5, 'Converted?', 'the voucher was turned into credits equal to what the customer paid for it.', 'FiRefreshCw');
+      'Unused (issued or redeemed): assigned to the account and will apply to the next invoiced job, shown in an orange box with duration, type, price and the 16-letter code. Applied (used): a green box with a check mark, the job ID and the appointment date and time. Grayed out: canceled/invalidated (removed through a refund, dispute or admin invalidation), converted (turned into credits equal to the purchase price), or expired. The reason usually appears beside the code. Refunded: refunded to the customer\'s card on file. Examples on the slide: an unused 3hr DHJ ($19.00) sitting below the card on file; a 3hr DHJ applied to Job 12242911 on 10/31/25 (green tag); a 2hr DHJ ($9.00) grayed out with the reason admin_refund on 5/1/26.');
+    const rows = [
+      ['FiTag', 'Unused', 'Orange tag. Applies to the next invoiced job.', 'v_unused.png'],
+      ['FiCheckCircle', 'Applied', 'Green tag with a check mark, job ID and date.', 'v_applied.png'],
+      ['FiSlash', 'Grayed out', 'Canceled, invalidated, converted or expired. Reason next to the code.', 'v_grayed.png'],
+    ];
+    for (let i = 0; i < 3; i++) {
+      const y = 1.45 + i * 1.02, [ico, title, body, file] = rows[i];
+      box(s, 0.45, y, 2.85, 0.92, C.white, C.border);
+      await iconDot(s, 0.6, y + 0.25, ico, 0.42);
+      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 12, breakLine: true } }, { text: body, options: { color: C.soft, fontSize: 9 } }], { x: 1.12, y: y + 0.06, w: 2.1, h: 0.8, valign: 'middle' });
+      box(s, 3.42, y, 6.13, 0.92, C.white, C.border);
+      const { width, height } = await sharp(path.join(IMG, file)).metadata();
+      const k = Math.min(5.9 / width, 0.76 / height);
+      s.addImage({ path: path.join(IMG, file), x: 3.54, y: y + (0.92 - height * k) / 2, w: width * k, h: height * k });
+    }
+    await tip(s, 4.6, 'Converted?', 'the voucher was turned into credits equal to what the customer paid for it.', 'FiRefreshCw');
   }
 
   {
