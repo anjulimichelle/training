@@ -8,7 +8,7 @@ const sharp = require('sharp');
 const Fi = require('react-icons/fi');
 
 const OUT = process.argv[2] || 'deck.pptx';
-const IMG = process.argv[3] || path.join(__dirname, 'img');
+const IMG = process.argv[3] || path.join(__dirname, '../img3');
 
 // One palette, taken from the Care training deck: teal accents on a light grey page,
 // white cards, and a soft yellow strip for tips.
@@ -240,10 +240,10 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
     const s = pres.addSlide({ masterName: 'COVER' });
     eyebrow(s, 'Homeaglow  ·  New Hire Care Training', 0.62, 0.6);
     T(s, 'Platform &\nOperating Mechanics', { x: 0.62, y: 1.0, w: 4.9, h: 1.6, fontFace: HEAD, bold: true, fontSize: 32 });
-    T(s, 'How to read what happened to a job, handle callbacks, and explain what customers pay and cleaners earn.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
+    T(s, 'How jobs, callbacks, pricing, vouchers, unverified tickets and rate caps work behind the scenes.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
     T(s, 'Internal training material', { x: 0.62, y: 5.0, w: 3, h: 0.2, fontSize: 7, color: C.soft });
     await panel(s, 'ill6.png', 0.4, 4.82);
-    s.addNotes('Welcome. This module covers Understanding Job History, Callback Handling, and C Price vs CP Pay. More topics will be added to this deck.');
+    s.addNotes('Welcome. This module covers Understanding Job History, Callback Handling, C Price vs CP Pay, Vouchers in CRM, Non-Logged-In Visitor Tickets, and Max CP Rate. More topics will be added to this deck.');
   }
 
   // ================= UNDERSTANDING JOB HISTORY =================
@@ -665,6 +665,217 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       { n: 3, title: 'First job together?', body: 'Is this the cleaner\'s first job with this customer?' },
     ]);
     await tip(s, 3.6, 'Then:', 'find the matching row in the platform fee table before you explain or refund anything.', 'FiArrowRight');
+  }
+
+  // ================= VOUCHERS IN CRM =================
+  await topic('Vouchers in CRM', 'What a voucher is, how to read it in the CRM, and how each type behaves.',
+    ['What a voucher is', 'How vouchers work', 'Reading a voucher in the CRM', 'Voucher types at a glance'],
+    'ill24.png',
+    'Vouchers show up constantly in refund, cancellation and retention tickets. Getting the type wrong leads to real mistakes, like invalidating a voucher that should have been refundable, or telling a customer their gift card triggers a membership when it does not.');
+
+  {
+    const s = content('Vouchers in CRM', 'What is a voucher?', 'A discount on a customer\'s cleaning, redeemed with a code and tied to their account.',
+      'Depending on how a customer signed up, they may have paid for it directly (Legacy DHJ), received it automatically when signing up for a membership (FCF), got it through a referral or gift, or received one from Care as a courtesy. Vouchers are the entry point for Legacy DHJ memberships: the customer\'s first interaction is "I bought a voucher." For FCF it is the reverse: the customer signs up for a membership directly, and the system issues a free DHJ voucher behind the scenes. All new customers move to FCF from August 3, 2026, so most new sign-ups won\'t have "bought a voucher" from their own perspective, even though a voucher exists on their account.');
+    await cards(s, 1.45, 1.6, [
+      { ico: 'FiShoppingCart', title: 'Bought it', body: 'Legacy DHJ: the customer paid for the voucher.' },
+      { ico: 'FiStar', title: 'With membership', body: 'FCF: issued free when they signed up.' },
+      { ico: 'FiGift', title: 'Gift or referral', body: 'Sent by a friend, or bought as a gift card.' },
+      { ico: 'FiHeart', title: 'From Care', body: 'An admin courtesy voucher issued by us.' },
+    ]);
+    await tip(s, 3.3, 'Watch your words:', 'an FCF customer who says "I never bought a voucher" is right. Don\'t contradict them.', 'FiMessageCircle');
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'How vouchers work', null,
+      'Voucher hours are deducted from a cleaning\'s total hours regardless of the CP\'s hourly rate. If the customer books longer than the voucher, the extra hours are charged at Homeaglow\'s standard rate. Customers redeem a voucher at <<Brand Name>>.com/redeem and must enter Zip code, Email and Voucher Code. One voucher per household: we generally allow one paid voucher per household; the system detects a paid voucher on the registered address and blocks another purchase.');
+    await cards(s, 1.4, 1.75, [
+      { ico: 'FiClock', title: 'Hours, not dollars', body: 'Voucher hours come off the job, whatever the cleaner\'s rate.' },
+      { ico: 'FiPlusCircle', title: 'Longer job?', body: 'Extra hours are charged at Homeaglow\'s standard rate.' },
+      { ico: 'FiKey', title: 'Redeem online', body: 'brand.com/redeem with zip code, email and voucher code.' },
+      { ico: 'FiHome', title: 'One per household', body: 'Only one paid voucher per address.' },
+    ]);
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'Reading a voucher in the new CRM', 'Once redeemed, the voucher shows on the customer\'s account.',
+      'Walk through each column. Code: the 16-letter redemption code (e.g. ABCD-EFGH-IJKL-MNOP). Merchant: the voucher type, e.g. dhj, dhj_gift, groupon. Price and Hours: what was paid and the voucher duration; free FCF DHJ vouchers have no price. Purchased and Expires. FC and Refund. Use "+ Issue voucher" to issue one, and "View all in legacy CRM" for the full voucher history. In the legacy CRM the voucher sits below the card logo in an orange box; an applied voucher shows a green box with a check mark, job ID and appointment date; canceled, invalidated or expired vouchers are grayed out with the reason next to the code.');
+    await shot(s, 'vouchers_newcrm.png', 0.45, 1.45, 9.1, 2.15, [
+      [1, 22, 76, 320, 172], [2, 320, 76, 464, 172], [3, 464, 76, 676, 172], [4, 676, 76, 980, 186], [5, 980, 76, 1190, 172], [6, 18, 182, 400, 220],
+    ]);
+    legend(s, 0.45, 3.75, 2.95, [['Code', '16-letter redemption code'], ['Merchant', 'The voucher type (dhj, groupon…)']], 0.5, 1);
+    legend(s, 3.53, 3.75, 2.95, [['Price & hours', 'Paid amount and duration'], ['Purchased & expires', 'When it was bought, when it ends']], 0.5, 3);
+    legend(s, 6.6, 3.75, 2.95, [['FC & refund', 'Tied to FC? Refunded?'], ['Actions', 'Issue a voucher, or open legacy CRM']], 0.5, 5);
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'Voucher status', 'In the legacy CRM, the color tells you where the voucher stands.',
+      'Unused (issued or redeemed): assigned to the account and will apply to the next invoiced job, shown in an orange box with duration, type, price and the 16-letter code. Applied (used): a green box with a check mark, the job ID and the appointment date and time. Grayed out: canceled/invalidated (removed through a refund, dispute or admin invalidation), converted (turned into credits equal to the purchase price), or expired. The reason usually appears beside the code. Refunded: refunded to the customer\'s card on file.');
+    await cards(s, 1.45, 1.85, [
+      { ico: 'FiTag', title: 'Unused', body: 'Orange box. Applies to the next invoiced job.' },
+      { ico: 'FiCheckCircle', title: 'Applied', body: 'Green box with a check mark, job ID and date.' },
+      { ico: 'FiSlash', title: 'Grayed out', body: 'Canceled, invalidated, converted or expired. Reason shown by the code.' },
+    ]);
+    await tip(s, 3.5, 'Converted?', 'the voucher was turned into credits equal to what the customer paid for it.', 'FiRefreshCw');
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'Voucher types at a glance', null,
+      'Use this table before you invalidate, refund or explain any voucher. DHJ refunds can be done from the C Dashboard if purchased one year ago or less, or from the CRM. A DHJ converts to credits if an unqualified customer tries to redeem a second DHJ. Third-party merchant vouchers convert to credits on expiry. Legacy DHJ is deprecated: all new customers are on the new membership model from August 3, 2026, except those who bought a DHJ before the flip and customers who came from an AD.');
+    table(s, ['Type', 'Comes from', 'Invalidate?', 'Refund?', 'Expires', 'To credits?'], [
+      ['DHJ', 'Customer purchase', 'Yes (CRM)', 'Yes (Dashboard ≤1 yr, CRM)', 'Never', 'Yes, 2nd DHJ'],
+      ['DHJ Gift', 'Referral', 'Yes (CRM)', 'No', '90 days', 'No'],
+      ['First-Time', 'System', 'Yes (CRM)', 'No', 'Never', 'N/A'],
+      ['Third-party (Groupon)', 'Customer purchase', 'Yes', 'Yes', '90 days', 'Yes, on expiry'],
+      ['CP Offer', 'Cleaner', 'Yes (CRM)', 'No', '30 days', 'No'],
+      ['After Nth Job', 'System', 'No', 'No', '3 months', 'No'],
+      ['HG 2nd', 'Customer purchase', 'No', 'Yes', '1 year', 'Yes'],
+      ['Admin Courtesy', 'CS / System', 'Yes (CRM)', 'No', '60 days', 'No'],
+      ['Homeaglow Gift Card', 'Customer purchase', 'Yes (CRM)', 'Yes', '2 years', 'No'],
+    ], { y: 1.2, colW: [1.85, 1.55, 1.2, 2.1, 1.0, 1.4], fontSize: 8.5, rowH: 0.36 });
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'Types you\'ll see most', null,
+      'Free DHJ (new membership model): instead of buying a voucher, the customer signs up for a membership, pays a $19 MF upfront, and the system issues a free 3-hour DHJ voucher with no price indicator in the CRM; the membership is charged when the DHJ is applied to the account. DHJ Gift: shown as dhj_gift on the guest\'s account; single use (only the first guest can redeem); triggers FC once used; expires in 90 days. Third-party merchant (Groupon, Living Social, Gilt City): expires 90 days after redemption; cannot be split across appointments, and no admin courtesy voucher is issued for unused hours; converts to credits on expiry. CP Offer: up to 30 minutes off from a CP the customer has worked with; claim within 2 days, use within 30 days. Admin Courtesy: issued by CS or the system for refund requests, unworked hours, reviews or retention. Homeaglow Gift Card (since December 2025): a one-time cleaning bought as a gift; does NOT trigger FC and is not tied to the buyer\'s account.');
+    const items = [
+      ['FiStar', 'Free DHJ', '$19 MF at sign-up, free 3-hr voucher, no price shown.'],
+      ['FiGift', 'DHJ Gift', 'Single use. Triggers FC. Expires in 90 days.'],
+      ['FiShoppingBag', 'Third-party (Groupon)', 'Can\'t be split. Converts to credits on expiry.'],
+      ['FiUser', 'CP Offer', 'Up to 30 min off. Claim in 2 days, use in 30.'],
+      ['FiHeart', 'Admin Courtesy', 'Issued by CS or the system. Lasts 60 days.'],
+      ['FiCreditCard', 'Homeaglow Gift Card', 'Does not trigger FC. Valid for 2 years.'],
+    ];
+    const w = (9.1 - 0.3) / 3;
+    for (let i = 0; i < 6; i++) {
+      await card(s, 0.45 + (i % 3) * (w + 0.15), 1.25 + Math.floor(i / 3) * 1.95, w, 1.8, { ico: items[i][0], title: items[i][1], body: items[i][2] });
+    }
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'When a customer wants a refund', 'Always find and fix the reason first.',
+      'Groupon: determine the reason (e.g. no show, cleaning quality) and address it; use the "Refund voucher (groupon)" macro in the comms kit for self-refund instructions; invalidate the voucher, otherwise Groupon may be unable to refund. Second <<BRAND>> voucher: first response, address the reason, encourage them to keep it, and give the self-refund link and instructions; second response, refund via C CRM > Do > Voucher > Refund > 2nd Voucher and let the customer know. Homeaglow Gift Card: first response, address the reason, remind them the card is valid for 2 years and can be gifted later, point them to the purchase confirmation email for the code, and invite them to reach out again; second response, escalate to your department\'s CSQ sheet so the charge is refunded via Stripe.');
+    table(s, ['Voucher', 'First response', 'If they ask again'], [
+      ['Groupon', 'Fix the reason, send self-refund steps (comms kit macro)', 'Invalidate the voucher so Groupon can refund'],
+      ['Second brand voucher', 'Fix the reason, encourage them to keep it, send the self-refund link', 'Refund it: C CRM › Do › Voucher › Refund › 2nd Voucher'],
+      ['Homeaglow Gift Card', 'Fix the reason. Valid for 2 years, code is in the confirmation email', 'Escalate to your CSQ sheet for a Stripe refund'],
+    ], { y: 1.5, colW: [2.1, 3.6, 3.4], fontSize: 9.5, rowH: 0.62 });
+    await tip(s, 4.15, 'Groupon:', 'invalidate the voucher, or Groupon may not be able to refund it.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content('Vouchers in CRM', 'How the system handles combos', null,
+      'Scenario 1: two Groupon vouchers, the second converts to credits. Scenario 2: Groupon or second brand voucher applied to a shorter job, no admin courtesy voucher for unused hours (unlike DHJ). Scenario 3: DHJ voucher or active FC, then a Groupon, the Groupon converts to credits. Scenario 4: past invoiced job, then a Groupon, converts to credits because third-party vouchers are for new customers only. Scenario 5: Groupon first then DHJ: allowed, so we can convert them to FC; the DHJ is applied first; both can be used on separate appointments. Scenario 6: active FC customers can buy a 2nd DHJ if only one is true: booking address previously serviced by a DHJ, a card tied to a previous DHJ, or a used DHJ on the account. Scenario 7: deactivated FC customers can buy a new DHJ via the /deals page if they have no unused vouchers, no active FC, and none of the flags disputed_stripe_charge_id, customer_disputed_voucher, known_customer_fraud.');
+    const items = [
+      ['FiCopy', 'Two Groupons', 'The second one converts to credits.'],
+      ['FiMinusCircle', 'Short job on a Groupon', 'No courtesy voucher for the unused hours.'],
+      ['FiLayers', 'DHJ or FC, then Groupon', 'The Groupon converts to credits.'],
+      ['FiRotateCcw', 'Past job, then Groupon', 'Converts to credits. New customers only.'],
+      ['FiArrowUpCircle', 'Groupon, then DHJ', 'Allowed. DHJ is applied first.'],
+      ['FiUserCheck', '2nd DHJ', 'Possible for some active or deactivated FC customers.'],
+    ];
+    const w = (9.1 - 0.15) / 2;
+    for (let i = 0; i < 6; i++) {
+      const x = 0.45 + (i % 2) * (w + 0.15), y = 1.25 + Math.floor(i / 2) * 1.2;
+      box(s, x, y, w, 1.05, C.white, C.border);
+      await iconDot(s, x + 0.18, y + 0.3, items[i][0], 0.42);
+      T(s, [{ text: items[i][1], options: { bold: true, fontFace: HEAD, fontSize: 12, breakLine: true } }, { text: items[i][2], options: { color: C.soft, fontSize: 10 } }], { x: x + 0.78, y: y + 0.1, w: w - 0.95, h: 0.85, valign: 'middle' });
+    }
+  }
+
+  // ================= NON-LOGGED-IN VISITOR =================
+  await topic('Non-Logged-In Visitor Tickets', 'Someone used an existing customer\'s email, but wasn\'t logged in.',
+    ['What the ticket looks like', 'Why it\'s a security checkpoint', 'How to respond'],
+    'ill14.png',
+    'Someone submits a ticket, usually via a public contact form or the Help Center, using an email address that already belongs to a registered customer. They haven\'t logged in, and may not actually be that customer.');
+
+  {
+    const s = content('Non-Logged-In Visitor Tickets', 'What it looks like', 'The new CRM flags these tickets for you.',
+      'Point out: 1) the Triggered ticket badge and the source (Help Center); 2) the system note: "A non-logged in visitor submitted the below ticket using this user\'s email address. To avoid leaking sensitive information, ask the user to log in and re-submit a ticket as appropriate."; 3) the visitor\'s actual message. A matching email does not prove the person is the account owner. Anyone can type an email address into a form.');
+    await shot(s, 'ticket_nonlogged.png', 0.45, 1.45, 9.1, 1.65, [
+      [1, 402, 8, 786, 60], [2, 22, 70, 1400, 128], [3, 22, 142, 650, 180],
+    ]);
+    legend(s, 0.45, 3.3, 2.95, [['Triggered ticket', 'Came in from the Help Center']], 0.62, 1);
+    legend(s, 3.53, 3.3, 2.95, [['System note', 'Sender wasn\'t logged in']], 0.62, 2);
+    legend(s, 6.6, 3.3, 2.95, [['Their message', 'What the visitor is asking']], 0.62, 3);
+    await tip(s, 4.15, 'Remember:', 'a matching email isn\'t proof. Anyone can type an email into a form.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content('Non-Logged-In Visitor Tickets', 'Why it matters', 'This is a security and privacy checkpoint, not a routine ticket.',
+      'Two different customers, or a customer and someone impersonating them, could share visibility into the same account if you respond to the wrong party as if they were the account owner. Treat verifying identity as the first step, not an afterthought.');
+    await cards(s, 1.5, 1.85, [
+      { ico: 'FiMail', title: 'Anyone can type an email', body: 'A match doesn\'t mean it\'s the account owner.' },
+      { ico: 'FiEyeOff', title: 'Wrong person, real data', body: 'Replying to the wrong person exposes the account.' },
+      { ico: 'FiShield', title: 'Verify first', body: 'Confirm who you\'re talking to before you share anything.' },
+    ]);
+  }
+
+  {
+    const s = content('Non-Logged-In Visitor Tickets', 'How to respond', 'Check the account first. What you find decides your reply.',
+      'Step 1: don\'t assume the submitter is the account owner just because the email matches. Step 2: check the account for identifying details, such as recent job details, the address, or an issue description that matches what\'s on file. Confirmed (their description matches account history, they reference specifics only the owner would know): proceed normally, no extra hoops for a genuinely verified customer. Can\'t confirm: respond generically; don\'t confirm account details, upcoming appointments or charges; ask them to log in to their dashboard or give a couple of identifying details first. Clearly not the owner (mismatched details, or asking something the real owner wouldn\'t need to ask): treat it as an unverified inquiry and share nothing account-specific.');
+    box(s, 0.45, 1.45, 9.1, 0.62, C.teal);
+    s.addImage({ data: await icon('FiSearch', C.white), x: 0.68, y: 1.63, w: 0.26, h: 0.26 });
+    T(s, [{ text: 'First, check the account:  ', options: { bold: true, fontFace: HEAD } }, { text: 'recent jobs, address, and whether their issue matches what\'s on file.' }], { x: 1.08, y: 1.45, w: 8.3, h: 0.62, fontSize: 11.5, color: C.white, valign: 'middle' });
+    await cards(s, 2.25, 2.0, [
+      { ico: 'FiCheckCircle', title: 'Details match', body: 'Proceed as normal. No extra hoops for a verified customer.' },
+      { ico: 'FiHelpCircle', title: 'Can\'t tell', body: 'Reply generically. Ask them to log in, or share a couple of identifying details.' },
+      { ico: 'FiXCircle', title: 'Clearly not them', body: 'Treat it as unverified. Share nothing about the account.' },
+    ]);
+    await tip(s, 4.45, 'Until verified:', 'never confirm account details, upcoming appointments or charges.', 'FiLock');
+  }
+
+  // ================= MAX CP RATE =================
+  await topic('Max CP Rate', 'The C-facing rate cap: the highest hourly rate a cleaner can claim this customer\'s jobs at.',
+    ['What the cap does', 'What to flag before setting it', 'How the cap behaves', 'What to tell the customer'],
+    'ill29.png',
+    'An agent can set a maximum hourly rate on a customer\'s behalf. It\'s a pricing lever with real trade-offs: a lower cap protects the customer\'s wallet, but shrinks the pool of cleaners who can claim their jobs, possibly including their current cleaner.');
+
+  {
+    const s = content('Max CP Rate', 'What the cap does', 'Set in the legacy CRM: C CRM › Do › Update Max Rate.',
+      'An agent can set a maximum hourly rate on a customer\'s behalf via the Update Max Rate action in the legacy CRM (C CRM > Do). It caps what CPs can claim the customer\'s jobs at, going forward; CPs above that rate simply can\'t claim. Trade-off: a lower cap protects the customer\'s wallet, but shrinks the pool of CPs who can claim, possibly including their current CP if that CP\'s rate is above the new cap. Setting it without understanding how it interacts with booked jobs, rescheduling and admin-locked jobs is how a well-intentioned cap turns into an unclaimed-job ticket a week later.');
+    await twoCol(s,
+      { ico: 'FiDollarSign', title: 'Protects the customer\'s wallet', items: ['Cleaners above the cap can\'t claim', 'New jobs price at or below the cap'] },
+      { ico: 'FiUsers', title: 'Shrinks the cleaner pool', items: ['Their current cleaner may be above it', 'Too low, and jobs can go unclaimed'] },
+      1.5, 2.2);
+    await tip(s, 3.9, 'Not a pure win:', 'set it carefully, or it becomes an unclaimed-job ticket a week later.', 'FiAlertTriangle');
+  }
+
+  {
+    const s = content('Max CP Rate', 'Before you set a cap', 'Flag these to the customer first.',
+      'CPs set their own rates, so a lower cap can mean losing access to some of the platform\'s best cleaners, including the customer\'s current CP if that CP\'s rate is above the new cap. Setting it too low can mean jobs go unclaimed, especially in areas with fewer CPs at that price point. Most customers ask for $19-23/hr. Before setting the cap, check the customer\'s dashboard to see what CPs in their area actually charge. Don\'t set a number blind.');
+    await cards(s, 1.45, 1.85, [
+      { ico: 'FiUserX', title: 'They may lose their cleaner', body: 'Cleaners set their own rates. Theirs may be above the cap.' },
+      { ico: 'FiCalendar', title: 'Jobs may go unclaimed', body: 'Especially where few cleaners charge that little.' },
+      { ico: 'FiMap', title: 'Check the area first', body: 'Look at what cleaners near them charge on their dashboard.' },
+    ]);
+    await tip(s, 3.5, 'Typical ask:', 'most customers ask for $19–23/hr. Don\'t set a number blind.', 'FiInfo');
+  }
+
+  {
+    const s = content('Max CP Rate', 'How the cap behaves', 'Several of these aren\'t what you\'d expect.',
+      'The two easiest mistakes: assuming raising a cap will correct an existing job\'s rate (it won\'t; a cap can never raise a rate), and forgetting that admin-locked jobs (rate set via the Django job page) bypass the cap and the nightly sweep entirely. So a customer saying "I set a cap and this job still charged more" isn\'t necessarily wrong. Check whether that job was set via Django first.');
+    table(s, ['Scenario', 'What happens'], [
+      ['Lowering the cap', 'Immediately lowers the rate on booked future jobs (submitted or claimed)'],
+      ['Raising the cap', 'Does nothing to existing jobs. A cap can never raise a rate'],
+      ['Customer reschedules', 'The job keeps its rate. The nightly recalculation can\'t push it above the cap'],
+      ['New job booked after the cap', 'Prices at or below the cap automatically'],
+      ['Cleaner tries to claim above it', 'Can\'t. The cap blocks the claim'],
+      ['Customer taps Standard / Premium', 'The cap stays in effect either way'],
+      ['Rate set on the Django job page', 'Admin-locked: skips the cap and the nightly sweep entirely'],
+    ], { y: 1.35, colW: [3.0, 6.1], fontSize: 9, rowH: 0.36 });
+    await tip(s, 4.6, 'Charged above the cap?', 'check whether that job\'s rate was set via Django first.', 'FiSearch');
+  }
+
+  {
+    const s = content('Max CP Rate', 'What to tell the customer', 'After the cap is set.',
+      'Jobs are matched to CPs at or below their selected rate whenever possible; avoid "only" or "guaranteed" language. An invoice estimate shows on their dashboard right away once a CP claims the job. They can request a rematch up to 6 hours before the appointment. If they are lowering their cap, tell them it may affect upcoming jobs they\'ve already booked, not just future ones; this is the part that most contradicts intuition. Don\'t guarantee: this is a newly shipped feature still being monitored for edge cases, and admin-locked jobs bypass the cap. Terminology: don\'t say "max CP rate" or "max rate" to the customer; use plain language, e.g. "the highest rate a cleaner can charge for your jobs".');
+    await cards(s, 1.4, 1.75, [
+      { ico: 'FiUsers', title: 'Best match', body: 'To cleaners at or below their rate. Never "only" or "guaranteed".' },
+      { ico: 'FiFileText', title: 'Estimate on claim', body: 'The invoice estimate shows on their dashboard right away.' },
+      { ico: 'FiRepeat', title: 'Rematch', body: 'They can request one up to 6 hours before the appointment.' },
+      { ico: 'FiTrendingDown', title: 'Lowering it?', body: 'It can change jobs they\'ve already booked too.' },
+    ]);
+    await tip(s, 3.35, 'Say it plainly:', '"the highest rate a cleaner can charge for your jobs", not "max CP rate".', 'FiMessageCircle');
   }
 
   // ---------- Close ----------
