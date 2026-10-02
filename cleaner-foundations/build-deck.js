@@ -234,6 +234,23 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   });
 }
 
+// Common-ticket rows: number, ticket (+ optional quote), how to handle it, optional gold chip.
+async function ticketRows(s, rows) {
+  const h = Math.min(0.68, (3.7 - 0.07 * (rows.length - 1)) / rows.length);
+  for (let i = 0; i < rows.length; i++) {
+    const [title, quote, answer, chip] = rows[i], y = 1.42 + i * (h + 0.07);
+    box(s, 0.45, y, 9.1, h, C.white, C.border);
+    badge(s, 0.6, y + 0.2, i + 1);
+    T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 10.5, breakLine: !!quote } }].concat(quote ? [{ text: quote, options: { color: C.soft, fontSize: 8.5, italic: true } }] : []),
+      { x: 1.05, y, w: 2.75, h, valign: 'middle' });
+    T(s, answer, { x: 3.9, y, w: chip ? 4.35 : 5.55, h, fontSize: 9.5, valign: 'middle' });
+    if (chip) {
+      box(s, 8.3, y + 0.2, 1.1, 0.28, C.goldSoft);
+      T(s, chip, { x: 8.3, y: y + 0.2, w: 1.1, h: 0.28, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    }
+  }
+}
+
 (async () => {
   // ---------- Cover ----------
   {
@@ -720,27 +737,16 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Job Statuses  ·  Submitted', 'Common tickets: Submitted', 'What customers ask while the job waits for a cleaner, and how to answer.',
-      '1) Match anxiety: the customer asks if their request has been claimed, or when it will be. A submitted job is automatically upgraded to a Priority Request within 24-48 hours of the start time. 2) Last-minute job request: CS may book cleaning requests as soon as 12 hours in advance. Priority markups do not apply to jobs booked via CRM. 3) Customer wants a cleaner of a specific gender: there is no option to select a gender, but customers may request to be rematched with another cleaner any time more than 6 hours before the job start time if they don\'t like the cleaner who claims. Preferences can also be added to the cleaning notes. 4) Customer wants a specific cleaner for an upcoming appointment: we can change the customer\'s Requested CPs through the Job Admin Page, only if they explicitly request it. TRAINER NOTE: walk trainees through how to change Requested CPs on the Job Admin Page. 5) Customer has a strict schedule and can only do certain dates/times: to increase the likelihood of the job being claimed, the system may automatically add alternate start times if the job is still unclaimed 24 hours before it starts. To stop this, add the flag: C CRM > Do > do_not_auto_add_alternate_start_times.');
+    const s = content('Job Statuses  ·  Submitted', 'Common tickets: Submitted Stage', 'What customers ask while the job waits for a cleaner.',
+      '1) Match anxiety: the customer asks if their request has been claimed, or when it will be. A submitted job is automatically upgraded to a Priority Request within 24-48 hours of the start time. 2) Last-minute job request: CS may book cleaning requests as soon as 12 hours in advance. Priority markups do not apply to jobs booked via CRM. 3) Customer wants a cleaner of a specific gender: there is no option to select a gender, but customers may request to be rematched with another cleaner any time more than 6 hours before the job start time if they don\'t like the cleaner who claims. Preferences can also be added to the cleaning notes. 4) Customer wants a specific cleaner for an upcoming appointment: we can change the customer\'s Requested CPs through the Job Admin Page, only if they explicitly request it. TRAINER NOTE: walk trainees through how to change Requested CPs on the Job Admin Page. 5) Customer has a strict schedule and can only do certain dates/times: to increase the likelihood of the job being claimed, the system may automatically add alternate start times if the job is still unclaimed 24 hours before it starts. To stop this, add the flag: New CRM > Flags > + Add Flags > do_not_auto_add_alternate_start_times.');
     const rows = [
       ['Match anxiety', '"Has my request been claimed? When will it be?"', 'A submitted job is automatically upgraded to a Priority Request within 24–48 hours of the start time.'],
-      ['Last-minute job request', null, 'CS can book as little as 12 hours ahead. Priority markups don\'t apply to jobs booked via the CRM.'],
+      ['Last-minute job request', null, 'CS can book a cleaning less than 12 hours in advance through the CRM. Priority markups don\'t apply to jobs booked via the CRM.'],
       ['Wants a cleaner of a specific gender', null, 'There\'s no gender option. They can rematch any time 6+ hours before start, and add preferences to the cleaning notes.'],
       ['Wants a specific cleaner', null, 'Change their Requested CPs on the Job Admin Page, only if they explicitly ask.', 'Trainer demo'],
-      ['Strict schedule, only certain dates/times', null, 'Unclaimed 24 hrs before start, the system may add alternate times. Stop it: C CRM › Do › do_not_auto_add_alternate_start_times.'],
+      ['Strict schedule, only certain dates/times', null, 'Unclaimed 24 hrs before start, the system may add alternate times. To stop it: New CRM › Flags › + Add Flags › do_not_auto_add_alternate_start_times.'],
     ];
-    for (let i = 0; i < rows.length; i++) {
-      const [title, quote, answer, chip] = rows[i], y = 1.42 + i * 0.75;
-      box(s, 0.45, y, 9.1, 0.68, C.white, C.border);
-      badge(s, 0.6, y + 0.2, i + 1);
-      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 10.5, breakLine: !!quote } }].concat(quote ? [{ text: quote, options: { color: C.soft, fontSize: 8.5, italic: true } }] : []),
-        { x: 1.05, y, w: 2.75, h: 0.68, valign: 'middle' });
-      T(s, answer, { x: 3.9, y, w: chip ? 4.35 : 5.55, h: 0.68, fontSize: 9.5, valign: 'middle' });
-      if (chip) {
-        box(s, 8.3, y + 0.2, 1.1, 0.28, C.goldSoft);
-        T(s, chip, { x: 8.3, y: y + 0.2, w: 1.1, h: 0.28, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
-      }
-    }
+    await ticketRows(s, rows);
   }
 
   {
@@ -750,6 +756,17 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
       { ico: 'FiUser', title: 'The customer can', items: ['Reschedule 6+ hrs before start (not the 12-hour new-booking rule)', 'Rematch: Manage Appointment > Change My Cleaner, until 6 hrs before', 'Cancel'] },
       { ico: 'FiTool', title: 'The cleaner can', items: ['File a lockout claim', 'Reschedule, if the customer agrees', 'Cancel from their dashboard if they can\'t agree'] }, 1.4, 2.55);
     await tip(s, 4.15, 'ZTP:', 'higher-tier cleaners may swap in. Swapping is internal: never mention it.', 'FiLock');
+  }
+
+  {
+    const s = content('Job Statuses  ·  Claimed', 'Common tickets: Claimed Stage', 'What customers ask once a cleaner has claimed the job.',
+      '1) Job is claimed at a different date than initially booked: check the job history to see if the job was claimed at an alternate date and time, or was rescheduled by the cleaner. 2) Customer reports they received confirmations from 2 different cleaners: check the job history to see if the first cleaner cancelled or was swapped out. Remember swapping is internal: never mention it to the customer. 3) Customer wants their cleaner changed: change the cleaner from the Job Admin Page. TRAINER NOTE: demo how to change the cleaner on the Job Admin Page. 4) Customer wants the appointment rescheduled: reschedule from the C Dashboard, or cancel and rebook from the CRM if rescheduling would result in a priority fee.');
+    await ticketRows(s, [
+      ['Claimed at a different date than booked', null, 'Check the job history: was it claimed at an alternate date and time, or rescheduled by the cleaner?'],
+      ['Confirmations from 2 different cleaners', null, 'Check the job history: did the first cleaner cancel, or were they swapped out?'],
+      ['Wants their cleaner changed', null, 'Change the cleaner from the Job Admin Page.', 'Trainer demo'],
+      ['Wants the appointment rescheduled', null, 'Reschedule from the C Dashboard, or cancel and rebook from the CRM if rescheduling would add a priority fee.'],
+    ]);
   }
 
   {
