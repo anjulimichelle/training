@@ -745,19 +745,39 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Vouchers in CRM', 'Types you\'ll see most', null,
-      'Free DHJ (new membership model): instead of buying a voucher, the customer signs up for a membership, pays a $19 MF upfront, and the system issues a free 3-hour DHJ voucher with no price indicator in the CRM; the membership is charged when the DHJ is applied to the account. DHJ Gift: shown as dhj_gift on the guest\'s account; single use (only the first guest can redeem); triggers FC once used; expires in 90 days. Third-party merchant (Groupon, Living Social, Gilt City): expires 90 days after redemption; cannot be split across appointments, and no admin courtesy voucher is issued for unused hours; converts to credits on expiry. CP Offer: up to 30 minutes off from a CP the customer has worked with; claim within 2 days, use within 30 days. Admin Courtesy: issued by CS or the system for refund requests, unworked hours, reviews or retention. Homeaglow Gift Card (since December 2025): a one-time cleaning bought as a gift; does NOT trigger FC and is not tied to the buyer\'s account.');
-    const items = [
-      ['FiStar', 'Free DHJ', '$19 MF at sign-up, free 3-hr voucher, no price shown.'],
-      ['FiGift', 'DHJ Gift', 'Single use. Triggers FC. Expires in 90 days.'],
-      ['FiShoppingBag', 'Third-party (Groupon)', 'Can\'t be split. Converts to credits on expiry.'],
-      ['FiUser', 'CP Offer', 'Up to 30 min off. Claim in 2 days, use in 30.'],
-      ['FiHeart', 'Admin Courtesy', 'Issued by CS or the system. Lasts 60 days.'],
-      ['FiCreditCard', 'Homeaglow Gift Card', 'Does not trigger FC. Valid for 2 years.'],
+    // Voucher types: one row per type, with how it looks in the new and legacy CRM.
+    const TYPES = [
+      ['DHJ voucher', 'Comes with a membership. The membership is only triggered once the voucher is used.', [['New CRM', 'vt_dhj_new.png'], ['Legacy', 'vt_dhj_legacy.png']]],
+      ['Free DHJ (new membership model)', 'Membership starts at sign-up: $19 discounted first MF, a free 3-hour cleaning, or a discounted first cleaning for longer jobs.', [['New CRM', 'vt_free_new.png'], ['Legacy', 'vt_free_legacy.png']]],
+      ['DHJ Gift', 'Single use. Triggers a membership. Expires in 90 days if unused.', [['Legacy', 'vt_gift.png']]],
+      ['Third-party (Groupon)', 'No membership. Can\'t be split, and converts to credits on expiry.', [['Legacy', 'vt_groupon.png']]],
+      ['CP Offer', 'Cleaners may offer up to 30 minutes off to a customer they\'ve worked with. Shows as admin courtesy.', [['Shows as', 'vt_admin_legacy.png']]],
+      ['Admin Courtesy', 'Issued by CS or the system. Expires in 60 days.', [['New CRM', 'vt_admin_new.png'], ['Legacy', 'vt_admin_legacy.png']]],
+      ['Homeaglow Gift Card', 'No membership. Valid for 2 years.', [['Legacy', 'vt_giftcard.png']]],
+      ['Second Brand Voucher', 'No membership. An identical voucher bought from Homeaglow, at the same cost as the third-party merchant\'s.', [['Legacy', 'vt_second.png']]],
     ];
-    const w = (9.1 - 0.3) / 3;
-    for (let i = 0; i < 6; i++) {
-      await card(s, 0.45 + (i % 3) * (w + 0.15), 1.25 + Math.floor(i / 3) * 1.95, w, 1.8, { ico: items[i][0], title: items[i][1], body: items[i][2] });
+    const NOTES = [
+      'Walk through each type and point to how it looks in the CRM. DHJ (Deals at Homejoy): the customer buys the voucher; the FC membership is only triggered once the voucher is used. Free DHJ (new membership model, all new customers from August 3, 2026): instead of buying a voucher, the customer signs up for a membership and is charged a $19 discounted first MF upfront; the system issues a free 3-hour DHJ voucher (or a discount on a longer first cleaning). Free DHJs have no price indicator in the CRM ($0.00 in the new CRM, no price on the legacy tag). DHJ Gift: shown as dhj_gift on the guest\'s account; single use, only the first guest can redeem it; triggers FC once used; expires in 90 days. Third-party merchant (Groupon, Living Social, Gilt City): no membership; expires 90 days after redemption; can\'t be split across appointments, and no admin courtesy voucher is issued for unused hours; converts to credits on expiry.',
+      'CP Offer: cleaners may offer up to 30 minutes off a cleaning to a customer they previously worked with; the customer must claim it within 2 days and use it within 30 days. It shows in the CRM as an admin courtesy voucher. Admin Courtesy: issued manually by CS or automatically by the system for refund requests, unworked hours, reviews or retention; expires in 60 days. The legacy example shows it applied to a job (green tag). Homeaglow Gift Card (launched December 2025): a one-time cleaning bought as a gift; does not trigger FC and isn\'t tied to the buyer\'s account; valid for 2 years. Second brand voucher (homeaglow_second_voucher): offered to customers who bought a third-party voucher, at the same cost as the third-party merchant; non-membership.',
+    ];
+    for (let p = 0; p < 2; p++) {
+      const s = content('Vouchers in CRM', `Voucher types in the CRM (${p + 1} of 2)`, null, NOTES[p]);
+      for (let i = 0; i < 4; i++) {
+        const n = p * 4 + i, [title, body, imgs] = TYPES[n], y = 1.2 + i * 0.99;
+        box(s, 0.45, y, 3.55, 0.92, C.white, C.border);
+        badge(s, 0.6, y + 0.3, n + 1);
+        T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 11, breakLine: true } }, { text: body, options: { color: C.soft, fontSize: 8.5 } }], { x: 1.05, y: y + 0.04, w: 2.88, h: 0.84, valign: 'middle' });
+        box(s, 4.1, y, 5.45, 0.92, C.white, C.border);
+        const slotH = (0.92 - 0.12 - 0.06 * (imgs.length - 1)) / imgs.length;
+        for (let j = 0; j < imgs.length; j++) {
+          const sy = y + 0.06 + j * (slotH + 0.06);
+          T(s, imgs[j][0], { x: 4.18, y: sy, w: 0.72, h: slotH, fontSize: 7.5, bold: true, color: C.teal, valign: 'middle' });
+          const f = path.join(IMG, imgs[j][1]);
+          const { width, height } = await sharp(f).metadata();
+          const k = Math.min(4.5 / width, slotH / height, 0.0058); // cap so small legacy tags don't blow up
+          s.addImage({ path: f, x: 4.95, y: sy + (slotH - height * k) / 2, w: width * k, h: height * k });
+        }
+      }
     }
   }
 
