@@ -842,12 +842,26 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
 
   {
     const s = content('Max CP Rate', 'What the cap does', 'Set in the legacy CRM: C CRM › Do › Update Max Rate.',
-      'An agent can set a maximum hourly rate on a customer\'s behalf via the Update Max Rate action in the legacy CRM (C CRM > Do). It caps what CPs can claim the customer\'s jobs at, going forward; CPs above that rate simply can\'t claim. Trade-off: a lower cap protects the customer\'s wallet, but shrinks the pool of CPs who can claim, possibly including their current CP if that CP\'s rate is above the new cap. Setting it without understanding how it interacts with booked jobs, rescheduling and admin-locked jobs is how a well-intentioned cap turns into an unclaimed-job ticket a week later.');
-    await twoCol(s,
-      { ico: 'FiDollarSign', title: 'Protects the customer\'s wallet', items: ['Cleaners above the cap can\'t claim', 'New jobs price at or below the cap'] },
-      { ico: 'FiUsers', title: 'Shrinks the cleaner pool', items: ['Their current cleaner may be above it', 'Too low, and jobs can go unclaimed'] },
-      1.5, 2.2);
-    await tip(s, 3.9, 'Not a pure win:', 'set it carefully, or it becomes an unclaimed-job ticket a week later.', 'FiAlertTriangle');
+      'An agent can set a maximum hourly rate on a customer\'s behalf via the Update Max Rate action in the legacy CRM (C CRM > Do). It caps what CPs can claim the customer\'s jobs at, going forward; CPs above that rate simply can\'t claim. Steps on the slide: 1) open the customer\'s legacy C CRM and click Do (next to View); 2) in the Do menu, find the Max Rate row, which shows the current cap, and click Update Max Rate; 3) enter the maximum hourly rate and click Update Max Rate (the form notes it caps current and future jobs). Trade-off: a lower cap protects the customer\'s wallet, but shrinks the pool of CPs who can claim, possibly including their current CP if that CP\'s rate is above the new cap. Setting it without understanding how it interacts with booked jobs, rescheduling and admin-locked jobs is how a well-intentioned cap turns into an unclaimed-job ticket a week later.');
+    const steps = [
+      ['Open the customer\'s legacy C CRM and click Do', 'maxrate_do_btn.png', [[1, 200, 20, 274, 84]]],
+      ['Find Max Rate and click Update Max Rate', 'maxrate_do_menu.png', [[2, 6, 64, 1024, 122]]],
+      ['Enter the hourly cap and click Update Max Rate', 'maxrate_form_crop.png', []],
+    ];
+    const w = (9.1 - 0.3) / 3;
+    for (let i = 0; i < 3; i++) {
+      const x = 0.45 + i * (w + 0.15);
+      badge(s, x, 1.47, i + 1);
+      T(s, steps[i][0], { x: x + 0.45, y: 1.4, w: w - 0.45, h: 0.5, fontFace: HEAD, bold: true, fontSize: 10.5, valign: 'middle' });
+      await shot(s, steps[i][1], x, 1.98, w, 1.75, steps[i][2]);
+    }
+    const tw = (9.1 - 0.15) / 2;
+    for (const [i, [ico, title, body]] of [['FiDollarSign', 'Protects the customer\'s wallet', 'Cleaners above the cap can\'t claim. New jobs price at or below it.'], ['FiUsers', 'Shrinks the cleaner pool', 'Their current cleaner may be above it. Too low, and jobs go unclaimed.']].entries()) {
+      const x = 0.45 + i * (tw + 0.15);
+      box(s, x, 3.9, tw, 0.85, C.white, C.border);
+      await iconDot(s, x + 0.18, 4.11, ico, 0.42);
+      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 11.5, breakLine: true } }, { text: body, options: { color: C.soft, fontSize: 9.5 } }], { x: x + 0.75, y: 3.95, w: tw - 0.9, h: 0.75, valign: 'middle' });
+    }
   }
 
   {
