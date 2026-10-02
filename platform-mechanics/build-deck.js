@@ -519,6 +519,40 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
+    const s = content('C Price vs CP Pay', 'Let\'s practice!', 'Calculate the job cost for all 3 customer pricing cohorts using the details below.',
+      'TRAINER: give trainees time to calculate, then click Show Answers (or press the right arrow). Each click reveals one cohort. Working: billable hours = 4 - 1.5 voucher = 2.5. FC: $25 x 2.5 = $62.50; + 15% processing = $71.88; + 8% tax = $77.63; - $12 credits = $65.63. Non-FC: ($25 + $15) x 2.5 = $100.00; + 5% = $105.00; + 8% = $113.40; - $12 = $101.40. Deactivated (cancelled) FC: ($25 + $30) x 2.5 = $137.50; + 5% = $144.38; + 8% = $155.93; - $12 = $143.93.');
+    // Scenario card
+    box(s, 0.45, 1.4, 3.3, 3.7, C.white, C.border);
+    await iconDot(s, 0.65, 1.58, 'FiFileText', 0.42);
+    T(s, 'Scenario', { x: 1.2, y: 1.58, w: 2.4, h: 0.42, fontFace: HEAD, bold: true, fontSize: 14, valign: 'middle' });
+    const rows = [['CP rate', '$25.00/hr'], ['Duration', '4 hours'], ['Voucher', '1.5 hours'], ['Sales tax', '8%'], ['Credits', '$12.00']];
+    rows.forEach(([k, v], i) => {
+      const y = 2.2 + i * 0.52;
+      box(s, 0.65, y, 2.9, 0.42, i % 2 ? C.white : C.bg, C.border);
+      T(s, k, { x: 0.8, y, w: 1.3, h: 0.42, fontSize: 10.5, color: C.soft, valign: 'middle' });
+      T(s, v, { x: 2.0, y, w: 1.45, h: 0.42, fontFace: HEAD, bold: true, fontSize: 12, align: 'right', valign: 'middle' });
+    });
+    // Show Answers button
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 3.95, y: 1.4, w: 5.6, h: 0.5, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.1 });
+    s.addImage({ data: await icon('FiEye', C.white), x: 4.15, y: 1.53, w: 0.24, h: 0.24 });
+    T(s, 'Show Answers', { x: 4.5, y: 1.4, w: 4.5, h: 0.5, fontFace: HEAD, bold: true, fontSize: 13, color: C.white, valign: 'middle' });
+    // Answers panel: empty until clicked; one cohort per click
+    box(s, 3.95, 2.0, 5.6, 3.1, C.tealSoft);
+    const ans = [
+      ['FC customer:  $65.63', '$25/hr CP rate × 2.5 hrs + 15% processing fee + 8% tax − $12 credits'],
+      ['Non-FC customer:  $101.40', '($25/hr CP rate + $15/hr platform fee) × 2.5 hrs + 5% processing fee + 8% tax − $12 credits'],
+      ['Deactivated (cancelled) FC customer:  $143.93', '($25/hr CP rate + $30/hr platform fee) × 2.5 hrs + 5% processing fee + 8% tax − $12 credits'],
+    ];
+    const runs = [];
+    ans.forEach(([head, how], i) => {
+      runs.push({ text: head, options: { bold: true, color: C.teal, fontSize: 12.5, fontFace: HEAD } });
+      runs.push({ text: how, options: { softBreakBefore: true, breakLine: i < ans.length - 1, color: C.ink, fontSize: 9.5 } });
+    });
+    T(s, runs, { x: 4.15, y: 2.15, w: 5.2, h: 2.85, paraSpaceAfter: 10, objectName: 'revealAnswers' });
+    T(s, 'Hint: take the voucher hours off the duration first.', { x: 0.65, y: 4.8, w: 3.0, h: 0.22, fontSize: 8.5, italic: true, color: C.soft });
+  }
+
+  {
     const s = content('C Price vs CP Pay', 'How the cleaner is paid', null,
       'CA/CAWA: CP\'s hourly rate x duration + tips + surge bonus, for first-time and repeat clients. General: first-time client (CP\'s hourly rate - $5.00 match fee) x duration + tips + surge bonus; repeat client CP\'s hourly rate x duration + tips + surge bonus. Key point: Homeaglow pays the CP directly via direct deposit regardless of whether the customer\'s own charge succeeds; a failed card, voucher or credits never affects CP pay. Tips: 100% go to the CP. Surge bonus: an extra $1-$50 Homeaglow may pay on certain jobs upon invoicing, positioned to CPs as "Homeaglow is especially busy."');
     table(s, ['Operating model', 'First-time client', 'Repeat client'], [
