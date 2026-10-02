@@ -566,6 +566,46 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
+    const s = content('C Price vs CP Pay', 'Let\'s practice!', 'Determine the CP pay in this scenario.',
+      'Scenario: C is a repeat client and books a cleaning for 5 hours. C has a 3-hour cleaning voucher that will be applied to the job. Calculate the total job pay of CP Sarah and CP Gab if the job also has a $12.50 surge bonus and a $10.00 tip. TRAINER: click Show Answers (or press the right arrow); each click reveals one answer, then the key takeaway. Working: the voucher only changes what the customer pays. The CP is paid for all 5 hours (Homeaglow pays the CP regardless of vouchers, credits or failed charges). Sarah (CA/CAWA, repeat rate $28): $28 x 5 = $140 + $12.50 surge + $10 tip = $162.50. Gab (General, repeat client so no $5 match fee): $24 x 5 = $120 + $12.50 + $10 = $142.50.');
+    // Job details
+    box(s, 0.45, 1.35, 4.4, 1.55, C.white, C.border);
+    await iconDot(s, 0.62, 1.48, 'FiBriefcase', 0.36);
+    T(s, 'The job', { x: 1.08, y: 1.48, w: 3, h: 0.36, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
+    const job = [['Client', 'Repeat'], ['Booked', '5 hours'], ['Voucher', '3 hours'], ['Surge bonus', '$12.50'], ['Tip', '$10.00']];
+    job.forEach(([k, v], i) => {
+      const x = 0.62 + (i % 3) * 1.38, y = 1.95 + Math.floor(i / 3) * 0.45;
+      T(s, [{ text: k + '  ', options: { color: C.soft, fontSize: 9 } }, { text: v, options: { bold: true, fontFace: HEAD, fontSize: 11 } }], { x, y, w: 1.35, h: 0.4, valign: 'middle' });
+    });
+    // CP cards
+    const cps = [['CP Sarah', 'CA/CA-WA Operating Model', ['$30.00/hr  first-time C/CP pair', '$28.00/hr  repeat C/CP pair']], ['CP Gab', 'General Operating Model', ['$24.00/hr  one rate']]];
+    for (let i = 0; i < 2; i++) {
+      const x = 0.45 + i * 2.25;
+      box(s, x, 3.05, 2.15, 2.1, C.white, C.border);
+      await iconDot(s, x + 0.15, 3.18, 'FiUser', 0.45);
+      T(s, cps[i][0], { x: x + 0.7, y: 3.18, w: 1.4, h: 0.45, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
+      T(s, cps[i][1], { x: x + 0.15, y: 3.72, w: 1.9, h: 0.3, fontSize: 9, bold: true, color: C.teal });
+      T(s, cps[i][2].map((t, j) => ({ text: t, options: { breakLine: j < cps[i][2].length - 1 } })), { x: x + 0.15, y: 4.05, w: 1.9, h: 1.0, fontSize: 9, paraSpaceAfter: 4 });
+    }
+    // Show Answers
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.0, y: 1.35, w: 4.55, h: 0.5, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.1 });
+    s.addImage({ data: await icon('FiEye', C.white), x: 5.2, y: 1.48, w: 0.24, h: 0.24 });
+    T(s, 'Show Answers', { x: 5.55, y: 1.35, w: 3.8, h: 0.5, fontFace: HEAD, bold: true, fontSize: 13, color: C.white, valign: 'middle' });
+    box(s, 5.0, 1.95, 4.55, 3.2, C.tealSoft);
+    const ans = [
+      ['CP Sarah:  $162.50', '$28/hr repeat rate × 5 hrs + $12.50 surge bonus + $10.00 tip'],
+      ['CP Gab:  $142.50', '$24/hr × 5 hrs + $12.50 surge bonus + $10.00 tip (repeat client, so no $5 match fee)'],
+      ['Key point', 'The 3-hour voucher only lowers what the customer pays. The cleaner is still paid for all 5 hours.'],
+    ];
+    const runs = [];
+    ans.forEach(([head, how], i) => {
+      runs.push({ text: head, options: { bold: true, color: C.teal, fontSize: 12.5, fontFace: HEAD } });
+      runs.push({ text: how, options: { softBreakBefore: true, breakLine: i < ans.length - 1, color: C.ink, fontSize: 9.5 } });
+    });
+    T(s, runs, { x: 5.2, y: 2.1, w: 4.15, h: 2.95, paraSpaceAfter: 12, objectName: 'revealCpPay' });
+  }
+
+  {
     const s = content('C Price vs CP Pay', 'When a "platform fee" shows up', 'FC customers have no platform fee. If one shows on an FC invoice, it\'s one of these cases. Not an error.',
       'FC, General, first C/CP pairing: customer pays the CP\'s rate; the platform fee line is the $5/hr marketing fee deducted from the cleaner\'s pay, not an extra cost to the customer. FC, General, repeat pairing: nothing. FC, CA/CAWA, CP sets different first and repeat rates: customer pays the higher of the two whichever pairing it is; the line is the difference; the CP is paid their applicable rate and the difference goes to Homeaglow. FC, CA/CAWA, one rate: nothing. Non-FC or deactivated FC: customer pays the max CP rate, not the CP\'s actual rate; the line is the cohort platform fee ($15/hr non-FC, $30/hr deactivated FC) plus the gap between max rate and the CP\'s actual rate. Why the models differ: no marketing fee in CA/CAWA (state regulation); in exchange CPs may set separate first-pairing and repeat rates and we charge the higher.');
     table(s, ['Situation', 'Customer pays', 'The "platform fee" line is'], [
