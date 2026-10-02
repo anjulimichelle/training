@@ -407,32 +407,31 @@ function legend(s, x, y, w, items, rowH = 0.55, start = 1) {
   }
 
   {
-    const s = content('Callback Handling', 'Where to call from', 'On the customer\'s page in the New C CRM. Click an option to see its screen.',
-      'Call options at the top right of Customer Information: 1 Callbox with the primary number; 2 GVoice (Google Voice); 3 Callbox with the secondary number (same Callbox button, choose the Secondary Phone in the From list). Call order: Primary CRM, then Google Voice, then Secondary CRM. Important: check the customer\'s Local Time before making a call (8 AM - 8 PM their time). Each option links to a slide with its screen; each of those has a Back link. Customer details are sample training data.');
-    const here = pres.slides.length;
-    await shot(s, 'callback_crm.png', 0.45, 1.35, 5.75, 2.95, [[1, 540, 87, 602, 112], [2, 476, 87, 539, 112], ['!', 319, 178, 436, 196]]);
-    const opts = [['Callbox: primary number', 'Call 1st, from the primary number'], ['GVoice', 'Call 2nd, with Google Voice'], ['Callbox: secondary number', 'Call 3rd, from the Secondary Phone']];
-    legend(s, 6.35, 1.35, 3.2, opts, 0.78);
-    opts.forEach((o, i) => {
-      T(s, [{ text: 'View ›', options: { hyperlink: { slide: here + 1 + i, tooltip: 'Show the ' + o[0] + ' screen' } } }], { x: 8.85, y: 1.35 + i * 0.88, w: 0.62, h: 0.78, fontSize: 9, bold: true, color: C.teal, align: 'right', valign: 'middle' });
-    });
-    box(s, 0.45, 4.45, 9.1, 0.6, C.goldSoft);
-    s.addImage({ data: await icon('FiClock', C.gold), x: 0.65, y: 4.64, w: 0.22, h: 0.22 });
-    T(s, [{ text: 'Important:  ', options: { bold: true, color: C.gold } }, { text: 'check the customer\'s Local Time (!) before making a call. Call only between 8 AM and 8 PM their time.' }], { x: 1.0, y: 4.45, w: 8.4, h: 0.6, fontSize: 10.5, valign: 'middle' });
-  }
-
-  {
-    const back = pres.slides.length; // "Where to call from" slide number
-    const screens = [
-      ['call_primary.png', 'Callbox: primary number', 'Open Callbox and make sure the From list shows the primary number.', [[1, 440, 94, 611, 120]]],
-      ['call_gvoice.png', 'GVoice', 'Sign in to Google Voice with the shared Homeaglow account, then call.', [[1, 560, 132, 1024, 192]]],
-      ['call_secondary.png', 'Callbox: secondary number', 'In Callbox, switch the From list to the Secondary Phone.', [[1, 431, 118, 604, 147]]],
-    ];
-    for (const [file, title, cap, marks] of screens) {
-      const s = content('Callback Handling  ·  Where to call from', title, cap,
-        title + ': ' + cap + ' Use the Back link to return to Where to call from.');
-      await shot(s, file, 0.45, 1.4, 9.1, 3.2, marks);
-      T(s, [{ text: '‹  Back to Where to call from', options: { hyperlink: { slide: back, tooltip: 'Back to Where to call from' } } }], { x: 0.48, y: 4.75, w: 4, h: 0.3, fontSize: 10.5, bold: true, color: C.teal, valign: 'middle' });
+    const s = content('Callback Handling', 'Where to call from', 'On the customer\'s page in the New C CRM.',
+      'Call options at the top right of Customer Information: 1 Callbox with the primary number; 2 GVoice (Google Voice); 3 Callbox with the secondary number (same Callbox button, choose the Secondary Phone in the From list). Call order: Primary CRM, then Google Voice, then Secondary CRM. TRAINER: click Show screens (or press the right arrow) to reveal each screen in order. Important: check the customer\'s Local Time before making a call (8 AM - 8 PM their time). Customer details are sample training data.');
+    // Left: CRM (top half) + options + reminder
+    await shot(s, 'callback_crm_half.png', 0.45, 1.35, 4.35, 1.25, [[1, 540, 5, 602, 30], [2, 476, 5, 539, 30], ['!', 319, 96, 436, 114]]);
+    legend(s, 0.45, 2.75, 4.35, [['Callbox: primary number', 'Call 1st, from the primary number'], ['GVoice', 'Call 2nd, with Google Voice'], ['Callbox: secondary number', 'Call 3rd, same Callbox button, Secondary Phone']], 0.5);
+    box(s, 0.45, 4.55, 4.35, 0.6, C.goldSoft);
+    s.addImage({ data: await icon('FiClock', C.gold), x: 0.6, y: 4.74, w: 0.22, h: 0.22 });
+    T(s, [{ text: 'Important:  ', options: { bold: true, color: C.gold } }, { text: 'check Local Time (!) before making a call. 8 AM – 8 PM their time.' }], { x: 0.92, y: 4.55, w: 3.8, h: 0.6, fontSize: 9.5, valign: 'middle' });
+    // Right: Show screens button + panel; each click reveals the next screen
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.95, y: 1.35, w: 4.6, h: 0.45, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.1 });
+    s.addImage({ data: await icon('FiEye', C.white), x: 5.12, y: 1.465, w: 0.22, h: 0.22 });
+    T(s, 'Show screens', { x: 5.45, y: 1.35, w: 3.8, h: 0.45, fontFace: HEAD, bold: true, fontSize: 12.5, color: C.white, valign: 'middle' });
+    box(s, 4.95, 1.9, 4.6, 3.25, C.tealSoft);
+    const screens = [['call_primary_crop.png', 'Callbox: primary number', 'From list set to the primary number'], ['call_gvoice_crop.png', 'GVoice', 'Sign in with the shared Homeaglow account'], ['call_secondary_crop.png', 'Callbox: secondary number', 'From list set to the Secondary Phone']];
+    for (let i = 0; i < 3; i++) {
+      const y = 1.98 + i * 1.06;
+      const nm = 'step' + (i + 1);
+      s.addShape(pres.shapes.OVAL, { x: 5.07, y: y + 0.01, w: 0.2, h: 0.2, fill: { color: C.teal }, line: { color: C.teal }, objectName: nm + 'a' });
+      T(s, [{ text: String(i + 1), options: { color: C.white, bold: true } }], { x: 5.07, y: y + 0.01, w: 0.2, h: 0.2, fontSize: 7.5, align: 'center', valign: 'middle', objectName: nm + 'b' });
+      T(s, [{ text: screens[i][1] + '  ', options: { bold: true, color: C.teal } }, { text: screens[i][2], options: { color: C.soft } }], { x: 5.35, y, w: 4.1, h: 0.22, fontSize: 9, valign: 'middle', objectName: nm + 'c' });
+      s.addShape(pres.shapes.RECTANGLE, { x: 5.07, y: y + 0.26, w: 4.36, h: 0.74, fill: { color: C.white }, line: { color: C.border, width: 0.5 }, objectName: nm + 'd' });
+      const p = path.join(IMG, screens[i][0]);
+      const { width, height } = await sharp(p).metadata();
+      const r = Math.min(4.28 / width, 0.68 / height), iw = width * r, ih = height * r;
+      s.addImage({ path: p, x: 5.07 + (4.36 - iw) / 2, y: y + 0.26 + (0.74 - ih) / 2, w: iw, h: ih, objectName: nm + 'e' });
     }
   }
 
