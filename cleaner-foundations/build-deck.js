@@ -805,6 +805,20 @@ async function ticketRows(s, rows) {
   }
 
   {
+    const s = content('Job Statuses  ·  Cancelled', 'Common issues: Cancelled Stage', 'The tickets you\'ll see most once a job is cancelled.',
+      'The four most common tickets at this stage: a customer last-minute cancellation, a last-minute CP cancellation, a CP no-show, and no CP claiming the appointment. Whatever the reason, the goal is the same: help the customer get a cleaning right away. Each issue has its own process guide in the Knowledge Library, covered in later sessions.');
+    await cards(s, 1.5, 1.25, [
+      { ico: 'FiUser', title: 'Customer last-minute cancellation' },
+      { ico: 'FiUserX', title: 'Last-minute CP cancellation' },
+      { ico: 'FiAlertTriangle', title: 'CP no-show' },
+      { ico: 'FiCalendar', title: 'No CP claims the appointment' },
+    ]);
+    box(s, 0.45, 2.95, 9.1, 0.9, C.teal);
+    s.addImage({ data: await icon('FiTarget', C.white), x: 0.75, y: 3.22, w: 0.36, h: 0.36 });
+    T(s, [{ text: 'Goal:  ', options: { bold: true, fontFace: HEAD } }, { text: 'help the customer get a cleaning right away.' }], { x: 1.3, y: 2.95, w: 8.0, h: 0.9, fontSize: 18, color: C.white, valign: 'middle' });
+  }
+
+  {
     const s = content('Job Statuses  ·  Pending Invoice', 'Pending Invoice', 'The booked time has passed and the job isn\'t invoiced yet. The status changes automatically.',
       'Once the scheduled duration has elapsed from the start time and the CP hasn\'t invoiced, the job moves from Claimed to Pending Invoice. It can be invoiced by the CP (Charge Client) or the customer (reports "My cleaning was completed"). Changes are still possible: reschedule (CP only), cancel, edit details. The C can cancel (LMC fee may apply), edit duration and extras, update address, edit notes, and via Report an Issue: confirm completion, ask for ETA, cancel. The CP can edit duration before Charge Client but needs the C\'s permission to add hours; can review the C; can file a lockout (OCPW up to 24 hrs after start; CP App 5 min before to 1 hr after); can reschedule with the C\'s agreement or cancel.');
     await twoCol(s,
