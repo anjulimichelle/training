@@ -11,8 +11,8 @@
  *   4. Approve the permission prompt (it only needs access to your Slides).
  *
  * Safety: the script first finds every destination slide. If any topic slide
- * is missing or ambiguous, or an Agenda slide already exists, it stops before
- * changing anything.
+ * is missing or ambiguous, it stops before changing anything. An Agenda slide
+ * left by an earlier run of this script is replaced, so it is safe to run again.
  */
 const PRESENTATION_ID = '1O3sZWqlug6jj3Fu_TmGZQNE2GYuVErRj97D2uF7ADdw';
 
@@ -47,10 +47,6 @@ function addAgenda() {
   const pres = SlidesApp.openById(PRESENTATION_ID);
   const slides = pres.getSlides();
 
-  if (slides.some(s => { const t = slideTexts(s); return t.includes('Agenda') && t.includes('OVERVIEW'); })) {
-    throw new Error('An Agenda slide already exists. Nothing was changed.');
-  }
-
   // Find each topic's title slide: its title text plus a "TOPIC ..." label.
   const dest = ITEMS.map(([label, title]) => {
     const found = slides.filter(s => {
@@ -68,6 +64,10 @@ function addAgenda() {
   if (!template) throw new Error(`Could not find the "${TEMPLATE_TITLE}" slide to copy the design from. Nothing was changed.`);
   const eyebrowText = slideTexts(template).find(t => t && t === t.toUpperCase() && /[A-Z]/.test(t));
 
+  // Remove an Agenda slide from an earlier run (complete or not) before building a new one.
+  slides.filter(x => { const t = slideTexts(x); return t.includes('Agenda') && t.includes('Click a topic to jump to it.'); })
+    .forEach(x => x.remove());
+
   const s = template.duplicate();
   s.move(1); // becomes slide 2, right after the title slide
 
@@ -82,9 +82,11 @@ function addAgenda() {
     else if (t === eyebrowText) eyebrowShape = shape;
     else el.remove();
   });
+  // Read the heading font from the title's first run (the whole range can mix styles and return null).
+  const runs = titleShape.getText().getRuns();
+  const HEAD = (runs.length && runs[0].getTextStyle().getFontFamily()) || 'Play';
   titleShape.getText().setText('Agenda');
   eyebrowShape.getText().setText('OVERVIEW');
-  const HEAD = titleShape.getText().getTextStyle().getFontFamily();
 
   const sub = s.insertTextBox('Click a topic to jump to it.', 32, 72, 655, 20);
   sub.getText().getTextStyle().setFontFamily('Arial').setFontSize(11).setForegroundColor(SOFT);
