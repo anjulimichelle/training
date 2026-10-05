@@ -803,27 +803,42 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(CASH, 'Branch B: the customer told us first', null,
-      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + 'Report found, not yet actioned: resolve it yourself, no need to wait for the CP-side queue. Same amount gate as Branch A. Pending Invoice: cancel via the C CRM ("does not want the service"); if partial, invoice the remaining balance. Invoiced: refund via the CP Dashboard; if partial, admin refund the customer for the cash-paid portion (based on CP Pay) and apply a CP Holdback for the same amount. Soft ladder. Nothing on file: ask the customer for proof (encourage, don\'t require). Call the cleaner within business hours (8AM-8PM their local time); no answer, send an SMS; outside business hours, email. Set a 48-hour Timed Reminder. Customer provides proof: resolve per the job status, hard ladder. No proof but the cleaner admits it: resolve per the job status, soft ladder. Cleaner denies and no proof: no refund, no penalty; assess for retention: high-value or retention-likely (multiple completed jobs, high LTNR): voucher covering the full job hours; otherwise $20-$50 in platform credits; Internal Reason: cash_payment. Macros: Accepted Cash (Coaching); Accepted Cash (Warning + Account Adjustment); Refund confirmation: credit card refund processed.');
-    await detailsButton(s, 7.6, 0.55);
-    const rows = [
+    // Branch B splits on what the CP CRM shows: one flowchart per path.
+    const start = [
       ['Customer says they paid the CP cash', 'penalty', 'C-side agent: the customer contacted us first. The CP-side ticket may not be worked yet, or the CP never reported it.'],
-      ['Check CP CRM for a cash report', 'decision', 'Look for an existing cash-payment report on this job/CP before doing anything else.'],
-      ['Report on file, but not yet actioned', 'action', 'Resolve it yourself. Get the amount first (or a clear "paid in full"). Pending Invoice: cancel via C CRM, or invoice the balance if partial. Invoiced: refund via CP Dashboard. Soft ladder.'],
-      ['Nothing on file: ask C for proof', 'action', 'Encourage proof, don\'t require it.'],
-      ['Contact the CP', 'action', 'Call within business hours (8AM–8PM CP local time). No answer: SMS. Outside business hours: email.'],
-      ['Set a 48-hour Timed Reminder', 'action', 'Pick the ticket back up when it triggers.'],
-      ['C provides proof → hard ladder', 'action', 'Resolve per job status, whatever the CP says. It\'s treated as getting caught, not disclosing.'],
-      ['CP admits it → soft ladder', 'action', 'Resolve per job status. It\'s still an admission, just a later one.'],
-      ['CP denies, no proof → retention', 'end', 'No refund, no penalty. High value: voucher for the full job hours. Otherwise $20–$50 credits. Reason: cash_payment.'],
     ];
-    const x = 0.5, w = 3.55, h = 0.34, gap = 0.08, y0 = 1.15;
-    for (let i = 0; i < rows.length; i++) {
-      const y = y0 + i * (h + gap);
-      await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
-      if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
-      flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
-      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.04, w: 5.45, h: h + 0.08, fontSize: 8, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
+    const paths = [
+      ['Branch B: report on file', 'Report found in the CP CRM, not yet actioned: resolve it yourself, no need to wait for the CP-side queue. Amount: did the CP say how much they received in cash? If not, contact the CP and get a number (or a clear "I got paid in full") before doing anything else, same gate as Branch A. Job status: still Pending Invoice: cancel via C CRM, reason code "does not want the service"; if it was only a partial cash payment, invoice the remaining balance instead. Already Invoiced: refund via the CP Dashboard; if partial, admin refund the customer for the cash-paid portion (based on CP Pay, not C Price) and apply a CP Holdback for the same amount, so the CP isn\'t paid twice. Penalty: apply the soft ladder; this is still a CP admission, just one a C-side agent is closing out.', [
+        ['Check CP CRM: report found', 'decision', 'A cash-payment report is on file but not yet actioned. Resolve it yourself: no need to wait for the CP-side queue.'],
+        ['Get the cash amount', 'action', 'Did the CP say how much they received? If not, contact the CP for a number (or a clear "paid in full") before doing anything else.'],
+        ['Still Pending Invoice?', 'decision', 'Cancel via C CRM, reason code "does not want the service". Partial cash: invoice the remaining balance instead.'],
+        ['Already Invoiced?', 'decision', 'Refund via the CP Dashboard. Partial cash: admin refund the cash-paid portion (based on CP Pay, not C Price) + a CP Holdback for the same amount.'],
+        ['Apply the soft ladder', 'end', 'It\'s a CP admission, just one a C-side agent is closing out. Use the soft ladder on the penalty ladder slide.'],
+      ]],
+      ['Branch B: nothing on file', 'Nothing on file in the CP CRM: nothing is confirmed yet, so treat it like any other unconfirmed claim. Ask the customer for proof (encourage it, don\'t require it). Call the CP if it\'s within business hours (8AM-8PM their local time); no answer during business hours: send an SMS; outside business hours: email instead. Set a Timed Reminder for 48 hours. Customer provides proof, whatever the CP says: resolve per the job status (C CRM cancellation or CP Dashboard refund) and apply the hard ladder; the customer\'s documentation confirmed it, so it\'s treated as getting caught, not disclosing. No proof, but the CP admits it when contacted: resolve per the job status and apply the soft ladder. CP denies and the customer never produces proof: no refund and no penalty, since nothing is confirmed; assess for retention: high-value / retention-likely (multiple completed jobs, high LTNR): voucher covering the full job hours, Internal Reason: cash_payment; not high-value: $20-$50 in platform credits, Internal Reason: cash_payment.', [
+        ['Check CP CRM: nothing on file', 'decision', 'Nothing is confirmed yet. Treat it like any other unconfirmed claim.'],
+        ['Ask C for proof', 'action', 'Encourage proof, don\'t require it.'],
+        ['Contact the CP', 'action', 'Call within business hours (8AM–8PM CP local time). No answer: SMS. Outside business hours: email.'],
+        ['Set a 48-hour Timed Reminder', 'action', 'Pick the ticket back up when it triggers.'],
+        ['C provides proof → hard ladder', 'action', 'Resolve per job status, whatever the CP says. It\'s treated as getting caught, not disclosing.'],
+        ['CP admits it → soft ladder', 'action', 'Resolve per job status. It\'s still an admission, just a later one.'],
+        ['CP denies, no proof → retention', 'end', 'No refund, no penalty. High value: voucher for the full job hours. Otherwise $20–$50 credits. Reason: cash_payment.'],
+      ]],
+    ];
+    for (const [title, notes, steps] of paths) {
+      const s = content(CASH, title, null,
+        'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + notes);
+      await detailsButton(s, 7.6, 0.55);
+      const rows = start.concat(steps);
+      const n = rows.length, gap = 0.1, h = Math.min(0.42, (3.75 - gap * (n - 1)) / n);
+      const x = 0.5, w = 3.55, y0 = 1.2;
+      for (let i = 0; i < n; i++) {
+        const y = y0 + i * (h + gap);
+        await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
+        if (i < n - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
+        flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
+        T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.04, w: 5.45, h: h + 0.08, fontSize: 8.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
+      }
     }
   }
 
