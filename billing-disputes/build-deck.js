@@ -1193,6 +1193,52 @@ async function steps(s, y, h, items) {
   }
 
   {
+    const s = content(TS, 'Escalating: the first report', 'The first time the customer reaches out about a T&S concern.',
+      'First time the C reaches out: 1) Respond to the C using the New CRM macro "Escalate Report to T&S". 2) Post in the #new-ts-safety-reports Slack channel using the format: Ticket Link: / CID | Job ID | CP ID / Background: (a short summary of what the customer reported). 3) Leave an internal note on the C account containing the Slack link of your escalation. 4) Don\'t resolve the ticket: change the queue in New CRM to T&S Safety Reports. The screenshot shows a sample post (IDs are training placeholders).');
+    // Four steps across the top; the sample post and its format below.
+    const rows = [
+      ['New CRM macro:\n"Escalate Report to T&S"', 'action'],
+      ['Post in\n#new-ts-safety-reports', 'action'],
+      ['Internal note on the C account\nwith your Slack post link', 'action'],
+      ['Don\'t resolve. Change queue\nto T&S Safety Reports', 'end'],
+    ];
+    const gap = 0.25, w = (9.1 - gap * 3) / 4;
+    for (let i = 0; i < rows.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 1.5, w, 0.72, rows[i][0], rows[i][1]);
+      badge(s, x - 0.08, 1.38, i + 1);
+      if (i < rows.length - 1) flowLine(s, [[x + w, 1.86], [x + w + gap, 1.86]], true);
+    }
+    await screen(s, 'ts_safety_report.png', 0.45, 2.45, 6.1, 1.95, 'Sample post in #new-ts-safety-reports');
+    box(s, 6.7, 2.45, 2.85, 1.95, C.white, C.border);
+    eyebrow(s, 'Post format', 6.9, 2.62, 2.5);
+    T(s, [
+      { text: 'Ticket Link:', options: { breakLine: true } },
+      { text: 'CID | Job ID | CP ID', options: { breakLine: true } },
+      { text: 'Background:' },
+    ], { x: 6.9, y: 2.95, w: 2.55, h: 1.2, fontFace: 'Courier New', fontSize: 10.5, color: C.ink, paraSpaceAfter: 8, valign: 'top' });
+  }
+
+  {
+    const s = content(TS, 'Escalating: follow-ups', 'Updates, a report made by mistake, or a triggered T&S reminder.',
+      'Use this flow when the C is asking for an update, the C says they made a mistake in reporting, or the action item is just a triggered timed reminder from T&S. 1) Check if a post for the ticket has already been made in the #trust-and-safety-follow-ups Slack channel. Yes: add a response to the original thread and tick "Also send to #trust-and-safety-follow-ups" to bump the message. No: create a new post using the format: Link to original escalation: / Link to the new comms received (if any): / Background: , then leave an internal note on the account containing the Slack link of your follow-up escalation. 2) Don\'t resolve the ticket: change the queue in New CRM to T&S Safety Reports. Screenshots: a sample follow-up post, and a triggered timed reminder from T&S.');
+    const cx = 3.1, lx = 1.75, rx = 4.45, w = 2.55;
+    await flowBox(s, 0.45, 1.4, 5.3, 0.62, 'C asks for an update, says they reported by mistake,\nor a timed reminder from T&S triggers', 'penalty');
+    flowLine(s, [[cx, 2.02], [cx, 2.17]], true);
+    await flowBox(s, cx - 1.75, 2.17, 3.5, 0.5, 'Already posted in\n#trust-and-safety-follow-ups?', 'decision');
+    flowSplit(s, cx, 2.67, 2.82, lx, rx, 2.98, 'Yes', 'No');
+    await flowBox(s, lx - w / 2, 2.98, w, 0.85, 'Reply in the original thread.\nTick "Also send to\n#trust-and-safety-follow-ups"', 'action');
+    await flowBox(s, rx - w / 2, 2.98, w, 0.85, 'New post (format at right).\nInternal note with the\nSlack link of your post', 'action');
+    flowLine(s, [[lx, 3.83], [lx, 4.0]]);
+    flowLine(s, [[rx, 3.83], [rx, 4.0]]);
+    flowLine(s, [[lx, 4.0], [rx, 4.0]]);
+    flowLine(s, [[cx, 4.0], [cx, 4.15]], true);
+    await flowBox(s, 0.45, 4.15, 5.3, 0.48, 'Don\'t resolve. Change the queue to T&S Safety Reports', 'end');
+    await screen(s, 'ts_followup.png', 5.95, 1.4, 3.6, 1.45, 'Follow-up post format');
+    await screen(s, 'ts_reminder.png', 5.95, 3.0, 3.6, 1.68, 'Triggered timed reminder from T&S');
+  }
+
+  {
     const s = content(TS, 'Policy violations and conduct', 'Also always escalate.',
       'Unwanted communication means personal, repeated, or continuing after being asked to stop. A single job-related follow-up (confirming arrival time, asking about a forgotten item) is routine and doesn\'t qualify on its own. Verbal dispute: a disagreement about the cleaning itself ("you missed a spot") isn\'t a verbal dispute for T&S purposes. It only qualifies when the interaction itself becomes heated, aggressive, or intimidating. It\'s different from harassment, which implies one party targeting the other; a verbal dispute is mutual or situational escalation between both parties. Workplace safety excludes homes with biohazardous conditions. Hurt during cleaning: unless the incident was caused by either party. Every item is always-escalate, except the conditional pattern on the next slides: don\'t assume anything else is conditional.');
     const w = (9.1 - 0.15) / 2;
