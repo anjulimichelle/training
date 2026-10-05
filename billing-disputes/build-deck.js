@@ -251,6 +251,28 @@ async function ticketRows(s, rows) {
   }
 }
 
+// Flowchart pieces in the deck palette: action (teal), decision (gold), penalty (dark), end (outline).
+async function flowBox(s, x, y, w, h, text, kind) {
+  const st = { action: [C.teal, C.teal, C.white], decision: [C.goldSoft, C.gold, C.gold], penalty: [C.ink, C.ink, C.white], end: [C.white, C.border, C.ink] }[kind];
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h, fill: { color: st[0] }, line: { color: st[1], width: 1 }, rectRadius: 0.08 });
+  T(s, text, { x, y, w, h, fontFace: HEAD, bold: true, fontSize: 10, color: st[2], align: 'center', valign: 'middle' });
+}
+function flowLine(s, pts, arrow) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x1, y1] = pts[i], [x2, y2] = pts[i + 1], last = i === pts.length - 2;
+    s.addShape(pres.shapes.LINE, { x: Math.min(x1, x2), y: Math.min(y1, y2), w: Math.abs(x2 - x1), h: Math.abs(y2 - y1), line: { color: C.soft, width: 1, endArrowType: last && arrow ? 'triangle' : undefined } });
+  }
+}
+// Decision split: down from (cx, y0) to a bar at yBar, then down to two children at lx and rx.
+function flowSplit(s, cx, y0, yBar, lx, rx, yChild, lLabel, rLabel) {
+  flowLine(s, [[cx, y0], [cx, yBar]]);
+  flowLine(s, [[lx, yBar], [rx, yBar]]);
+  flowLine(s, [[lx, yBar], [lx, yChild]], true);
+  flowLine(s, [[rx, yBar], [rx, yChild]], true);
+  T(s, lLabel, { x: lx + 0.08, y: yBar + 0.02, w: 0.6, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
+  T(s, rLabel, { x: rx + 0.08, y: yBar + 0.02, w: 0.6, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
+}
+
 // Knowledge check: question on the left, answer on the right revealed one per click (step1..step4).
 async function knowledgeCheck(eb, qa, notes) {
   const s = content(eb + '  ·  Knowledge check', 'Knowledge check', 'Ask each question, then click to reveal the answer.', notes);
@@ -329,11 +351,15 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(OCH, 'Policies', null,
-      'Claim window: only jobs completed in the last 120 days. Exception: the window does not apply when the overcharge is already clearly proven when the customer reports it (CTJ, message history or job timestamps make it obvious; "likely" or "probably" is not enough). Then refund the difference via the CP Dashboard regardless of job age or the cleaner\'s status, and follow the rest of the process including the penalty ladder. Example: CTJ shows a 45-minute visit but 2 hours invoiced, reported 150 days later: refund and apply the ladder. If not clearly proven and beyond 120 days: don\'t request documentation or refund; close the ticket as unresolved instead of escalating (this includes cases where the only reason to refund is the CP\'s Suspended + DNR history). Evidence-based refund: refund only the hours the evidence supports, not automatically the full disputed amount. Suspended + DNR exemption: if the cleaner is already suspended + DNR for repeated false invoice/overcharge offenses, refund the excess hours even without clear evidence; a documented pattern removes the benefit of the doubt.');
-    await cards(s, 1.4, 2.15, [
+      'Claim window: only jobs completed in the last 120 days. Exception: the window does not apply when the overcharge is already clearly proven when the customer reports it (CTJ, message history or job timestamps make it obvious; "likely" or "probably" is not enough). Then refund the difference via the CP Dashboard regardless of job age or the cleaner\'s status, and follow the rest of the process including the penalty ladder. Example: CTJ shows a 45-minute visit but 2 hours invoiced, reported 150 days later: refund and apply the ladder. If not clearly proven and beyond 120 days: don\'t request documentation or refund; close the ticket as unresolved instead of escalating (this includes cases where the only reason to refund is the CP\'s Suspended + DNR history). Evidence-based refund: refund only the hours the evidence supports, not automatically the full disputed amount. CP Suspended + DNR: if the cleaner is already suspended + DNR for repeated false invoice/overcharge offenses: within 120 days, refund the excess even without clear evidence, with no need to request evidence from the CP (a documented pattern removes the benefit of the doubt); beyond 120 days, refund the excess only when the issue is clearly proven.');
+    await cards(s, 1.4, 2.7, [
       { ico: 'FiCalendar', title: '120-day claim window', body: 'Unless the overcharge is clearly proven when reported. Then the job\'s age doesn\'t matter.' },
       { ico: 'FiSliders', title: 'Refund what\'s proven', body: 'Only the hours the evidence supports, not the full disputed amount.' },
-      { ico: 'FiAlertOctagon', title: 'Suspended + DNR', body: 'Already DNR for repeat offenses? Refund the excess even without clear evidence.' },
+      { ico: 'FiAlertOctagon', title: 'CP Suspended + DNR', body: [
+        { text: 'Already DNR for repeat offenses?', options: { breakLine: true } },
+        { text: 'Within 120 days: ', options: { bold: true, color: C.ink } }, { text: 'refund the excess even without clear evidence. No need to request evidence from the CP.', options: { breakLine: true } },
+        { text: 'Beyond 120 days: ', options: { bold: true, color: C.ink } }, { text: 'refund the excess only when the issue is clearly proven.' },
+      ] },
     ]);
   }
 
@@ -363,43 +389,74 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(OCH, 'What you find decides the branch', null,
-      'Customer claims a shorter duration than what you found: if CTJ confirms an overcharge, go to Branch A and refund only what CTJ supports, even if it doesn\'t match what the customer reported. If only job history or other sources (e.g. C/CP message timestamps) suggest it, go to Branch B. Known bug (Trello): don\'t treat an abnormally short CTJ interval (30 minutes or less between ARRIVED AT and COMPLETED AT) on its own as clear evidence; it\'s inconclusive unless other evidence supports it.');
-    table(s, ['What you find', 'Go to'], [
-      ['CTJ shorter than the hours invoiced', 'Branch A'],
-      ['Customer sends valid proof of the actual duration (Ring clip, timestamped photo)', 'Branch A: refund only what it supports'],
-      ['Cleaner admits the overcharge in messages', 'Branch A'],
-      ['Cleaner already refunded after the complaint', 'Branch A'],
-      ['CTJ matches the hours invoiced', 'Stop: no refund. Address other concerns'],
-      ['Customer\'s claim backed only by job history or message timestamps', 'Branch B'],
-      ['None of the above', 'Branch B'],
-    ], { y: 1.25, colW: [6.0, 3.1], fontSize: 9.5, rowH: 0.42 });
-    await tip(s, 4.55, 'Known bug:', 'a very short CTJ visit (30 min or less) alone is inconclusive, not clear evidence.', 'FiAlertTriangle');
+      'Branch A (clear evidence present): a straight line once you\'re in it: refund, check for a Premium fee, then split on the 30-minute rule. Branch B (no clear evidence present): takes longer and may span more than one contact: request documentation from the CP and resume when the Timed Reminder triggers. If CTJ matches the hours invoiced, that is clear evidence no overcharge occurred: stop, no refund, address other concerns. Known bug (Trello): do not treat an abnormally short CTJ interval (30 minutes or less between ARRIVED AT and COMPLETED AT) on its own as clear evidence; it\'s inconclusive unless other evidence proves the CP only stayed that long.');
+    const branch = (x, w, title, desc) => {
+      box(s, x, 1.15, w, 0.62, C.teal);
+      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 11.5, breakLine: true } }, { text: desc, options: { fontSize: 8.5 } }], { x: x + 0.14, y: 1.15, w: w - 0.28, h: 0.62, color: C.white, valign: 'middle' });
+    };
+    const grid = (x, y, colW, rows) => {
+      const H = ['What you find', 'What it means'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } }));
+      const R = rows.map(r => r.map((t, i) => ({ text: t, options: { color: i === 0 ? C.ink : C.soft, bold: i === 0, fill: { color: C.white } } })));
+      s.addTable([H, ...R], { x, y, w: colW[0] + colW[1], colW, fontFace: BODY, fontSize: 8, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0.03, 0.08, 0.03, 0.08] });
+    };
+    branch(0.45, 5.45, 'Branch A: clear evidence present', 'Refund, check for a Premium fee, then the 30-minute rule.');
+    grid(0.45, 1.85, [2.35, 3.1], [
+      ['CTJ shorter than hours invoiced', 'Clear evidence of overcharge → go to Branch A'],
+      ['Customer supplies valid evidence of the actual duration (e.g. Ring camera, timestamped photo)', 'Treat it as you would a CTJ record → go to Branch A, refunding only the hours the evidence supports'],
+      ['Cleaner acknowledges overcharge in messages', 'Clear evidence → go to Branch A'],
+      ['Cleaner already issued a refund in response to the complaint', 'Supports the overcharge claim (people rarely refund for something they didn\'t do) → go to Branch A'],
+      ['Customer claims a shorter cleaning duration than what you found during your investigation', 'CTJ confirms there is an overcharge, regardless of whether it matches the hours reported by the customer → go to Branch A (only refund the hours that are clearly supported by the CTJ)'],
+    ]);
+    branch(6.05, 3.5, 'Branch B: no clear evidence present', 'Request documentation, then wait for the Timed Reminder.');
+    grid(6.05, 1.85, [1.55, 1.95], [
+      ['Customer claims a shorter cleaning duration than what you found during your investigation', 'Job history or other information sources (e.g., C/CP message timestamps) → go to Branch B'],
+      ['None of the above found', 'No clear evidence → go to Branch B'],
+    ]);
+    box(s, 6.05, 4.05, 3.5, 0.95, C.goldSoft);
+    T(s, [{ text: 'CTJ matches hours invoiced', options: { bold: true, color: C.gold, breakLine: true } }, { text: 'Clear evidence NO overcharge occurred → stop, no refund, address other concerns' }], { x: 6.17, y: 4.05, w: 3.28, h: 0.95, fontSize: 8.5, valign: 'middle' });
   }
 
   {
-    const s = content(OCH, 'Branch A: clear evidence', 'A straight line: refund, check Premium, then the 30-minute rule.',
+    const s = content(OCH, 'Branch A: clear evidence present', 'A straight line once you\'re in it: refund, check for a Premium fee, then split on the 30-minute rule.',
       'Step 1: refund the overcharged hour(s) via the CP Dashboard; the evidence already settles it. Step 2: if the customer was also charged a Premium rate, refund it: a confirmed overcharge is itself the service issue, no separate request needed. Step 3: check how much was overcharged. 30 minutes or more: apply the cp_overcharged_hours flag, ban the C/CP pairing, send comms to both, then go to the Penalty section. Under 30 minutes: ban the C/CP pairing, send comms to both, done (no flag, no penalty).');
-    await steps(s, 1.4, 1.5, [
-      ['Refund the hours', 'Via the CP Dashboard.'],
-      ['Refund Premium', 'If charged. No separate request needed.'],
-      ['How much?', 'The 30-minute rule decides what\'s next.'],
-    ]);
-    const w = (9.1 - 0.15) / 2;
-    await card(s, 0.45, 3.05, w, 1.55, { ico: 'FiFlag', title: '30 min or more', body: 'cp_overcharged_hours flag, ban the pairing, comms to both, then the Penalty section.' });
-    await card(s, 0.45 + w + 0.15, 3.05, w, 1.55, { ico: 'FiCheck', title: 'Under 30 min', body: 'Ban the pairing, comms to both. Done: no flag, no penalty.' });
+    const cx = 5.0, w = 2.7, h = 0.46;
+    await flowBox(s, cx - w / 2, 1.45, w, h, 'Refund via CP Dashboard', 'action');
+    flowLine(s, [[cx, 1.45 + h], [cx, 2.08]], true);
+    await flowBox(s, cx - w / 2, 2.08, w, h, 'Check for Premium fee', 'action');
+    flowLine(s, [[cx, 2.08 + h], [cx, 2.71]], true);
+    await flowBox(s, cx - w / 2, 2.71, w, h, 'Overcharged ≥ 30 min?', 'decision');
+    flowSplit(s, cx, 2.71 + h, 3.42, 2.45, 7.55, 3.75, 'Yes', 'No');
+    await flowBox(s, 2.45 - w / 2, 3.75, w, h, 'Flag, ban, penalize', 'penalty');
+    await flowBox(s, 7.55 - w / 2, 3.75, w, h, 'Ban the pairing', 'end');
+    T(s, 'cp_overcharged_hours flag, ban the pairing, comms to both → Penalty section', { x: 2.45 - 1.6, y: 4.27, w: 3.2, h: 0.45, fontSize: 8.5, color: C.soft, align: 'center' });
+    T(s, 'Comms to both. Done: no flag, no penalty.', { x: 7.55 - 1.6, y: 4.27, w: 3.2, h: 0.45, fontSize: 8.5, color: C.soft, align: 'center' });
   }
 
   {
-    const s = content(OCH, 'Branch B: no clear evidence', 'May span more than one contact with the customer.',
-      'B1: do we know how much was allegedly overcharged? If not, ask the customer for detail and address other pain points; done for this contact. B2: is the cleaner suspended + DNR for multiple overcharged hours? If yes, skip documentation and treat it as valid: go to Branch A from step 1. If not, B3: request documentation. 1) Refund the Premium Upsell fee if charged. 2) Create a Timed Reminder on the C side: 72 hours (Action On: 72 hours from handling; Who Should Act: Any CS; Action: C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>. Follow When the Timed Reminder Triggers). 3) Tell the customer we\'ll follow up in 4-5 business days and the cleaner is blocked from their future requests (not penalized yet). 4) Block the pairing and tell the cleaner documentation is due within 3 days, or the alleged hours will be refunded on their behalf. Done for this contact.');
-    await steps(s, 1.4, 1.45, [
-      ['Know the amount?', 'No: ask the customer, then wait.'],
-      ['Suspended + DNR?', 'Yes: treat as valid, go to Branch A.'],
-      ['Request proof', 'Cleaner has 3 days to send documentation.'],
-    ]);
-    eyebrow(s, 'When you request proof', 0.48, 3.05, 5, C.soft);
-    await iconList(s, 0.45, 3.32, 4.5, [['FiDollarSign', 'Refund Premium Upsell, if charged'], ['FiBell', 'Timed Reminder on the C side: 72 hrs']], 0.5);
-    await iconList(s, 5.05, 3.32, 4.5, [['FiMail', 'Tell the customer: 4–5 business days'], ['FiSlash', 'Block the pairing, ask the cleaner (3 days)']], 0.5);
+    const s = content(OCH, 'Branch B: no clear evidence present', 'Takes longer: it pauses while we wait on the CP, and picks back up when the Timed Reminder triggers.',
+      'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
+    const lx = 3.0, rx = 7.6, w = 2.8, h = 0.52;
+    await flowBox(s, 5.0 - 1.75, 1.42, 3.5, 0.55, 'CP suspended + DNR due to multiple overcharged hours?', 'decision');
+    flowSplit(s, 5.0, 1.97, 2.2, lx, rx, 2.45, 'No', 'Yes');
+    await flowBox(s, lx - w / 2, 2.45, w, h, 'Request docs\n72-hour Timed Reminder', 'action');
+    await flowBox(s, rx - w / 2, 2.45, w, h, 'Skip to Branch A', 'action');
+    flowLine(s, [[lx, 2.45 + h], [lx, 3.22]], true);
+    await flowBox(s, lx - w / 2, 3.22, w, h, 'Reminder triggers\nCP provided valid proof?', 'decision');
+    flowSplit(s, lx, 3.22 + h, 3.98, 1.65, 4.35, 4.4, 'Yes', 'No');
+    await flowBox(s, 1.65 - 1.15, 4.4, 2.3, 0.46, 'No refund', 'end');
+    // The penalty check looks like a button: one click opens the details on this slide.
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fill: { color: C.ink }, line: { color: C.teal, width: 2 }, rectRadius: 0.08 });
+    T(s, 'Refund, then penalty check  ›', { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle' });
+    // Hidden until clicked.
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.85, y: 3.12, w: 3.7, h: 1.85, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06, shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'step1Panel' });
+    s.addShape(pres.shapes.RECTANGLE, { x: 5.85, y: 3.12, w: 3.7, h: 0.38, fill: { color: C.teal }, line: { color: C.teal }, objectName: 'step1Head' });
+    T(s, 'Penalty check', { x: 6.0, y: 3.12, w: 3.4, h: 0.38, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, valign: 'middle', objectName: 'step1Title' });
+    T(s, [
+      { text: '≥ 30 minutes overcharged', options: { bold: true, color: C.teal, breakLine: true } },
+      { text: 'Add flag cp_overcharged_hours + norequests + the Overcharged Hours macro series.', options: { breakLine: true } },
+      { text: '< 30 minutes overcharged', options: { bold: true, color: C.teal, breakLine: true } },
+      { text: 'No flag, no penalty + the Overcharged Hours macro series.' },
+    ], { x: 6.0, y: 3.55, w: 3.45, h: 1.38, fontSize: 9, paraSpaceAfter: 3, valign: 'top', objectName: 'step1Body' });
   }
 
   {
