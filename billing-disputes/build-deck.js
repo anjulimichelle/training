@@ -124,7 +124,7 @@ async function panel(s, ill, y = 0.68, h = 4.26) {
 }
 
 let topicNo = 0;
-const TOPICS = 4;
+const TOPICS = 7;
 async function topic(title, sub, learn, ill, notes) {
   topicNo++;
   const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -317,25 +317,28 @@ async function steps(s, y, h, items) {
     const s = pres.addSlide({ masterName: 'COVER' });
     eyebrow(s, 'Homeaglow  ·  New Hire Care Training', 0.62, 0.6);
     T(s, 'Billing Disputes\n& Cash Payments', { x: 0.62, y: 1.0, w: 4.9, h: 1.6, fontFace: HEAD, bold: true, fontSize: 32 });
-    T(s, 'When a customer is charged for time they didn\'t get, and when they pay the cleaner off the platform.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
+    T(s, 'Charges for time not delivered, off-platform payments, and cleaners who don\'t show, cancel or reschedule.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
     T(s, 'Internal training material', { x: 0.62, y: 5.0, w: 3, h: 0.2, fontSize: 7, color: C.soft });
     await panel(s, 'ill6.png', 0.4, 4.82);
-    s.addNotes('Welcome. This module covers four topics: Overcharged Hours, Unauthorized Addition of Hours, False Invoice, and Disintermediation (Cash Payment). Each topic ends with a knowledge check and a wrap-up with time for questions.');
+    s.addNotes('Welcome. This module covers seven topics: Overcharged Hours, Unauthorized Addition of Hours, False Invoice, Disintermediation (Cash Payment), Cleaner Didn\'t Show, Cleaner Cancellation, and Unauthorized Reschedule. Each topic ends with a knowledge check and a wrap-up with time for questions.');
   }
 
   // ---------- Agenda ----------
   {
-    const s = content('Overview', 'Agenda', 'Four topics. Each ends with a knowledge check and time for questions.',
-      'The first three topics are the "unworked hours" family: they all look the same to the customer ("I was charged for time I didn\'t get"), but each has a different question, different evidence and a different resolution. The fourth topic covers customers paying cleaners off the platform.');
+    const s = content('Overview', 'Agenda', 'Seven topics. Each ends with a knowledge check and time for questions.',
+      'The first three topics are the "unworked hours" family: they all look the same to the customer ("I was charged for time I didn\'t get"), but each has a different question, different evidence and a different resolution. The fourth topic covers customers paying cleaners off the platform. Topics 5 to 7 cover reliability issues: no-shows, cleaner cancellations, and unauthorized reschedules.');
     const rows = [
       ['01', 'Overcharged Hours (OCH)', 'The cleaner billed more time than they worked'],
       ['02', 'Unauthorized Addition of Hours', 'The cleaner added time without the customer\'s OK'],
       ['03', 'False Invoice', 'The cleaner billed a job they never did'],
       ['04', 'Disintermediation: Cash Payment', 'The customer paid the cleaner directly'],
+      ['05', 'Cleaner Didn\'t Show', 'The cleaner claimed the job but never came'],
+      ['06', 'Cleaner Cancellation', 'The cleaner cancelled a claimed job'],
+      ['07', 'Unauthorized Reschedule', 'The cleaner moved the job without the customer\'s OK'],
     ];
     const hdr = ['#', 'Topic', 'In one line'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } }));
     const body = rows.map(r => r.map((t, i) => ({ text: t, options: { color: i === 0 ? C.teal : i === 1 ? C.ink : C.soft, bold: i < 2, fill: { color: C.white } } })));
-    s.addTable([hdr, ...body], { x: 0.45, y: 1.5, w: 9.1, colW: [0.7, 3.4, 5.0], rowH: 0.5, fontFace: BODY, fontSize: 11, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0, 0.14, 0, 0.14] });
+    s.addTable([hdr, ...body], { x: 0.45, y: 1.5, w: 9.1, colW: [0.7, 3.4, 5.0], rowH: 0.42, fontFace: BODY, fontSize: 10.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0, 0.14, 0, 0.14] });
   }
 
   // ================= 1. OVERCHARGED HOURS =================
@@ -868,6 +871,225 @@ async function steps(s, y, h, items) {
     ['Never penalize the customer', 'Coach the cleaner. C-side never suspends or adds DNR.'],
   ], 'TRAINER: recap the three takeaways, then open the floor for questions on Cash Payment.');
 
+  // ================= 5. CLEANER DIDN'T SHOW =================
+  const NS = 'Cleaner Didn\'t Show';
+  await topic('Cleaner Didn\'t Show', 'The CP claimed the job, then never communicated or never showed up.',
+    ['When it\'s valid to report a no-show', 'Reschedule intent vs no-show', 'Handling by job status', 'Resolution and penalty'],
+    'ill7.png',
+    'Category: Service Issues > Reliability. A no-show is a serious reliability failure, but only report it when you\'re actually confident it happened. Reporting a no-show that didn\'t occur penalizes a CP unfairly, based on nothing more than a customer\'s assumption. The bar is certainty, not just a complaint.');
+
+  {
+    const s = content(NS, 'Certainty, not a complaint', 'Only report a no-show via the Job Admin page if at least one of these is true.',
+      'Only report a CP as a no-show via the Job Admin page if at least one is true: the customer says the CP was a no-show AND you have sufficient proof; you\'re 100% sure from customer/CP messages that the CP genuinely didn\'t show; or the customer left a review explicitly saying the CP was a no-show. Signals the system may pick up automatically (they don\'t confirm a no-show on their own, but are worth checking): the customer asked for the CP\'s ETA, or the CP sent an SMS with cancellation/reschedule intent. Reporting via the Job Admin page only works while the CP is still attached to the job (Claimed, Pending Invoice). Once the job reverts to Submitted or moves to Cancelled, there\'s no CP-job link to report against. If the CP was a no-show and the job is Invoiced, follow the False Invoice process.');
+    await cards(s, 1.4, 1.75, [
+      { ico: 'FiMessageCircle', title: 'Reported + proven', body: 'The customer says it, and you have sufficient proof.' },
+      { ico: 'FiCheckCircle', title: '100% sure', body: 'Customer/CP messages show the CP genuinely didn\'t show.' },
+      { ico: 'FiStar', title: 'In a review', body: 'The customer\'s review explicitly says the CP was a no-show.' },
+    ]);
+    await tip(s, 3.3, 'Signals to check:', 'the customer asked for the CP\'s ETA, or the CP texted cancel/reschedule intent.', 'FiSearch');
+    await tip(s, 3.85, 'Only while the CP is attached:', 'Claimed or Pending Invoice. Already Invoiced? Follow the False Invoice process.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content(NS, 'Reschedule intent or no-show?', 'If C reports a no-show, check the C/CP messages first: when did the CP say they wanted to reschedule?',
+      'If the CP showed an intent to reschedule before the scheduled start time, don\'t report it as a No Show in Job Admin. Cancel the appointment through C-CRM using the CP No Show/Reschedule code. Coaching for a no-show would normally encourage the CP to reschedule rather than cancel, and the CP already tried to, so the penalty can be waived. Before start: cancel via C-CRM (no penalty + coaching). After start: report as no-show via Job Admin (penalty + coaching). At the start time: assess whether the CP should be penalized based on the reason for rescheduling.');
+    await cards(s, 1.55, 2.05, [
+      { ico: 'FiRewind', title: 'Before the start time', body: 'Cancel via C-CRM with the CP No Show/Reschedule code. No penalty + coaching.' },
+      { ico: 'FiClock', title: 'At the start time', body: 'Assess whether a penalty fits, based on the reason for rescheduling.' },
+      { ico: 'FiFastForward', title: 'After the start time', body: 'Report as a no-show via Job Admin. Penalty + coaching.' },
+    ]);
+  }
+
+  {
+    const s = content(NS, 'Handling by job status', 'For every status: check the resolution table first, and read the customer.',
+      'Applies to all statuses: before choosing a resolution, check the Quick Reference table (next slide) for credits and free-month eligibility. Weigh the customer\'s emotional state, whether they\'re asking for a refund or hinting at cancelling, and whether they already have recent credits/vouchers. If the customer doesn\'t seem upset and isn\'t asking for a refund, consider non-credit options first (Priority Booking, blocking the C/CP pairing). Penalize per CP penalty guidance.');
+    table(s, ['Step', 'Submitted', 'Claimed or Pending Invoice', 'Cancelled'], [
+      ['1', 'Tell the customer you\'re matching them with a new cleaner.', 'Report the CP as a no-show: Job Admin Page › No Show.', 'Offer to book a Priority Booking.'],
+      ['2', 'Send comms to C and CP. Coach the CP on reliability, penalize per guidance. Block the C/CP pairing.', 'The job resolves to Cancelled or Submitted. Follow that column from here.', 'Send comms to C and CP. Coach the CP, penalize per guidance. Block the C/CP pairing.'],
+    ], { y: 1.45, colW: [0.6, 2.85, 2.85, 2.8], fontSize: 9.5, rowH: 0.7 });
+    await tip(s, 3.85, 'Customer calm, not asking for a refund?', 'try non-credit options first: Priority Booking, block the pairing.', 'FiHeart');
+  }
+
+  {
+    const s = content(NS, 'Resolution for CP issues', 'Credits and free months. The same table applies to cleaner cancellations.',
+      'Free months reminder. With service cancellation intent: agents may issue free months for unused MFs (max 3, capped at unused paid MFs or months requested, whichever is lowest). Offering is discretionary unless C names a pain point tied to the unused MFs ("I\'ve been paying but haven\'t gotten a cleaning", cost concerns); then it\'s expected and flagged in QA if skipped. With no cancellation intent: a service issue still gets the standard response (credits + help rebooking); upgrading to a free month for unused MFs only if C names them as a pain point. Example: C mentions a no-show, has 3 unused MFs, doesn\'t raise them: credits + priority rebooking. Example: C adds "I\'ve got months just sitting there unused": issue the free month instead of (or alongside) credits.');
+    table(s, ['Situation', 'Credits', 'Free month(s)'], [
+      ['Non-FC member', '$10–20 (encourage booking)', '—'],
+      ['FCF, no completed job', 'None (free/discounted cleaning already available)', 'Unused MFs: free months for those, max 3. Otherwise 1 if next MF is within 2 weeks'],
+      ['FCF, with completed job', '$10–20 (encourage booking)', 'Unused MFs: free months for those, max 3. Otherwise 1 if next MF is within 2 weeks'],
+      ['Unused DHJ', '$10–20 (encourage booking)', 'None: FC hasn\'t started yet'],
+      ['DHJ, FC started', '$10–20 (encourage booking)', 'Unused MFs: free months for those, max 3. Otherwise 1 if next MF is within 1 week'],
+      ['Late (all cases above)', '$10–25, for all', 'Unused MFs: never more than asked for, max 3. Otherwise FCF: 1 if next MF within 2 weeks; DHJ: within 1 week'],
+    ], { y: 1.4, colW: [2.0, 2.6, 4.5], fontSize: 8.5, rowH: 0.42 });
+    await tip(s, 4.45, 'Free months for unused MFs:', 'expected only when C names them as a pain point. Otherwise optional.', 'FiCalendar');
+  }
+
+  {
+    const s = content(NS, 'Changing CP status', 'Reporting the no-show (Job Admin › No Show) is what triggers the penalty.',
+      'The system usually sets norequests or suspended on its own. If the system penalized the CP, leave it: coach the CP and tell them about the penalty and how to appeal. If it didn\'t, lean towards coaching; set norequests yourself only if the CP already has a couple of no-shows or cancellations. C-side agents never suspend or add DNR for a no-show (see CP Penalty: C-Side Handling). CP-facing reason code: cpq_noshow Your customer <C\'S NAME> reported you didn\'t show up to their <DAY, DATE> job. Submit reactivation appeal through dashboard. Macros: No show (customer-facing); No Show/Cancellation (No Request) (CP-facing, <10% threshold).');
+    const w = (9.1 - 0.15) / 2;
+    await card(s, 0.45, 1.4, w, 1.6, { ico: 'FiCpu', title: 'System penalized the CP', body: 'Leave it. Coach the CP, explain the penalty and how to appeal.' });
+    await card(s, 0.45 + w + 0.15, 1.4, w, 1.6, { ico: 'FiMessageSquare', title: 'System didn\'t', body: 'Lean towards coaching. norequests only if they already have a couple of no-shows or cancellations.' });
+    box(s, 0.45, 3.15, 9.1, 0.62, C.white, C.border);
+    T(s, [{ text: 'CP-facing reason  ', options: { bold: true, color: C.teal, fontFace: HEAD } }, { text: 'cpq_noshow Your customer <C\'S NAME> reported you didn\'t show up to their <DAY, DATE> job. Submit reactivation appeal through dashboard.' }], { x: 0.65, y: 3.15, w: 8.8, h: 0.62, fontSize: 9.5, valign: 'middle' });
+    await tip(s, 3.95, 'Never:', 'C-side agents never suspend or add DNR for a no-show.', 'FiLock');
+  }
+
+  await knowledgeCheck(NS, [
+    ['C says the CP didn\'t show. Messages show the CP asked to move it to tomorrow, 2 hours before the start. Report a no-show?', 'No. Reschedule intent before the start time: cancel via C-CRM with the CP No Show/Reschedule code. No penalty, coach the CP.'],
+    ['The CP never came, but the job is already Invoiced. What now?', 'You can\'t report a no-show here. Follow the False Invoice process.'],
+    ['The job is Claimed and you\'re sure the CP didn\'t show. First step?', 'Job Admin Page › No Show. Then follow the status it resolves to: Submitted or Cancelled.'],
+    ['The system didn\'t penalize the CP. It\'s their first no-show. Set norequests?', 'Lean towards coaching. norequests only if they already have a couple of no-shows or cancellations. Never suspend or DNR.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await wrapUp(NS, [
+    ['Be certain first', 'Proof, messages or a review. Not just an assumption.'],
+    ['Reschedule intent matters', 'Before the start: cancel via C-CRM, no penalty. After: report the no-show.'],
+    ['Status decides the steps', 'Submitted, Claimed/Pending Invoice or Cancelled. Credits per the table.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Cleaner Didn\'t Show before moving on.');
+
+  // ================= 6. CLEANER CANCELLATION =================
+  const CC = 'Cleaner Cancellation';
+  await topic('Cleaner Cancellation', 'The CP cancelled a claimed job, from their dashboard or by texting the customer.',
+    ['How the system treats a cancellation', 'What happens to the job', 'The handling process', 'When the customer can reschedule'],
+    'ill30.png',
+    'Category: Service Issues > Reliability. Cleaner Cancellation is when a CP cancels a claimed job via their dashboard, or sends the customer a cancellation-intent SMS (which the system also detects). A CP with cancellation intent is supposed to try rescheduling with the customer first; cancelling outright is the fallback if the customer declines a new time. Related: Cleaner Didn\'t Show is the distinct scenario where the CP silently doesn\'t show.');
+
+  {
+    const s = content(CC, 'Not every cancellation counts the same', 'How the CP cancelled decides whether their Keep Rate is affected.',
+      'Cancelling through the dashboard normally affects a CP\'s Keep Rate. Cancelling by reporting an emergency, a safety concern, or "client wants to cancel" through the CP App does not. Treating every cancellation as equally penalizable unfairly hits CPs who were upfront about a legitimate reason. Unlike a no-show, you don\'t report anything manually: the job history logs the cancellation, so the Keep Rate impact lands whatever job status results. The system only penalizes a CP cancellation within 7 days of a 1st C/CP match, or within 2 days of a repeat match. Cancelling via CRM (you, on the CP\'s behalf) never penalizes the CP.');
+    await cards(s, 1.4, 1.85, [
+      { ico: 'FiMonitor', title: 'CP Dashboard', body: 'Counts toward Keep Rate, within 7 days (1st match) or 2 days (repeat match).' },
+      { ico: 'FiSmartphone', title: 'CP App Report Issue', body: 'Emergency, safety concern or "client wants to cancel": no Keep Rate impact.' },
+      { ico: 'FiShield', title: 'Cancelled via CRM', body: 'You cancel on the CP\'s behalf: never penalizes the CP.' },
+    ]);
+    await tip(s, 3.45, 'No manual report needed:', 'the job history logs the cancellation, so the Keep Rate impact lands either way.', 'FiList');
+  }
+
+  {
+    const s = content(CC, 'What happens to the job', 'It depends on timing and alternate start times.',
+      'If the job start time is already in the past and there are no other alternate start times: the job becomes Cancelled. If the start time is still in the future and there\'s still time to match a new CP: the job becomes Submitted again. If the customer has other available alternate start times: the job is rescheduled to one of them and returns to Submitted. The same rules apply if the CP cancelled via the CP App\'s Report Issue and chose "I have an emergency" or "My client wants to cancel."');
+    table(s, ['Situation', 'Resulting job status'], [
+      ['Start time already passed, no other alternate start times', 'Cancelled'],
+      ['Start time still in the future, time to match a new CP', 'Submitted'],
+      ['Customer has other alternate start times', 'Rescheduled to one of them: Submitted'],
+    ], { y: 1.45, colW: [5.6, 3.5], fontSize: 10.5, rowH: 0.55 });
+    await tip(s, 3.85, 'Same rules:', 'when the CP cancels via CP App Report Issue ("emergency" or "client wants to cancel").', 'FiSmartphone');
+  }
+
+  {
+    const s = content(CC, 'The handling process', null,
+      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. 1) Attempt to rematch first, not cancel outright: if there\'s still a chance to match another CP, take that route so the customer still gets their cleaning. 2) Check the Quick Reference table for credits and free months, with the same judgment as any reliability issue: emotional state, cancellation/refund intent, existing credits or vouchers. 3) Offer a Priority Booking if the customer doesn\'t get the outcome they wanted: no reschedule option, an auto-rescheduled time they didn\'t choose, or the job goes to Cancelled. 4) Block the C/CP pairing. 5) Send comms to customer and CP: coach the CP on reliability, penalize as necessary. 6) CP status: cancelling from the CP Dashboard is how the system penalizes the CP; it usually sets norequests or suspended itself. If it did, leave it, coach the CP and explain the penalty. If it didn\'t, lean towards coaching; set norequests only if the CP already has a couple of cancellations or no-shows. C-side agents never suspend or add DNR. Reason code: cpq_cancel Your customer <C\'S NAME> reported you cancelled their <DAY, DATE> job. Submit reactivation appeal through dashboard. Macros: CP Cancel > Job Cancelled (customer-facing); No Show/Cancellation (No Request) (CP-facing); No Show/Cancellation (Permanent Deactivation) (CP-facing).');
+    await detailsButton(s, 7.6, 0.55);
+    const rows = [
+      ['CP cancelled the job', 'penalty', 'From the CP Dashboard, or by texting the customer cancellation intent.'],
+      ['Attempt to rematch first', 'action', 'Still a chance to match another CP? Take that route so the customer still gets their cleaning.'],
+      ['Check the resolution table', 'decision', 'Credits and free months, weighed against emotional state, refund/cancel intent and existing credits or vouchers.'],
+      ['Offer a Priority Booking', 'action', 'If the customer didn\'t get the outcome they wanted: no reschedule option, an auto-picked time, or the job was cancelled.'],
+      ['Block the C/CP pairing', 'action', 'So this CP can\'t claim the customer\'s jobs again.'],
+      ['Send comms to C and CP', 'action', 'Coach the CP on reliability. Penalize as necessary.'],
+      ['Check the CP\'s status', 'end', 'System penalized? Leave it and coach. If not, coach; norequests only after a couple of cancellations or no-shows. Reason: cpq_cancel.'],
+    ];
+    const x = 0.5, w = 3.55, h = 0.42, gap = 0.12, y0 = 1.2;
+    for (let i = 0; i < rows.length; i++) {
+      const y = y0 + i * (h + gap);
+      await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
+      if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
+      flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
+      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.04, w: 5.45, h: h + 0.08, fontSize: 8.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
+    }
+  }
+
+  {
+    const s = content(CC, 'When the customer can reschedule', 'The CP\'s Keep Rate is impacted either way: the job history is logged.',
+      'If the customer has the option to reschedule: customer reschedules: Submitted; customer doesn\'t reschedule: Cancelled. Either way the CP\'s Keep Rate is still impacted since the job history is logged, which can still lead to norequests or suspended. When the customer doesn\'t have the option (e.g. alternate times were already added to their appointment), the job may auto-reschedule to the latest alternate time. If no alternate times exist and rescheduling isn\'t offered, the job changes to Cancelled, with the same Keep Rate impact. Free months reminder: not mandatory and won\'t fail QA either way; hold off unless there\'s cancellation intent or C brings up the unused months.');
+    const w = (9.1 - 0.15) / 2;
+    eyebrow(s, 'Customer can reschedule', 0.48, 1.45, 4, C.soft);
+    table(s, ['Customer action', 'Job status'], [['Reschedules', 'Submitted'], ['Doesn\'t reschedule', 'Cancelled']], { y: 1.72, colW: [2.6, 1.87], fontSize: 10.5, rowH: 0.45 });
+    await card(s, 0.45 + w + 0.15, 1.45, w, 1.75, { ico: 'FiCalendar', title: 'No option to reschedule', body: 'Alternate times already added? It may auto-reschedule to the latest one. None? The job is Cancelled.' });
+    await tip(s, 3.45, 'Free months:', 'not mandatory. Hold off unless there\'s cancellation intent or C raises unused months.', 'FiInfo');
+  }
+
+  await knowledgeCheck(CC, [
+    ['The CP cancelled from the CP App with "My client wants to cancel." Is their Keep Rate affected?', 'No. Emergency, safety concern or "client wants to cancel" via the CP App doesn\'t count.'],
+    ['You cancel the job in the CRM on the CP\'s behalf. Is the CP penalized?', 'No. Cancelling via CRM never penalizes the CP.'],
+    ['The CP cancels; the start time is still days away. What happens, and what\'s your first move?', 'The job goes back to Submitted. Try to rematch first so the customer still gets their cleaning.'],
+    ['The job auto-rescheduled to an alternate time the customer didn\'t pick. What do you offer?', 'A Priority Booking. Block the pairing, and check the table for credits.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await wrapUp(CC, [
+    ['How they cancelled matters', 'Dashboard counts. CP App emergency or client-cancel doesn\'t. CRM never does.'],
+    ['Rematch first', 'Then Priority Booking if the outcome isn\'t what the customer wanted.'],
+    ['Coach before you pause', 'System penalty? Leave it. Never suspend or DNR.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Cleaner Cancellation before moving on.');
+
+  // ================= 7. UNAUTHORIZED RESCHEDULE =================
+  const UR = 'Unauthorized Reschedule';
+  await topic('Unauthorized Reschedule', 'The CP rescheduled the appointment without the customer\'s consent.',
+    ['Two checks before you act', 'Still assigned: the start-time table', 'No longer assigned', 'Penalty and reason code'],
+    'ill22.png',
+    'Category: Service Issues > Reliability. Different from the routine, agreed-upon reschedule covered in Rescheduling (Bookings): here the customer never agreed to the new time.');
+
+  {
+    const s = content(UR, 'Check two things first', 'Skipping straight to a fix can create a new Priority Fee, or penalize the wrong CP.',
+      'The right response depends on two things you check before deciding anything: is the CP who rescheduled still assigned to the job, and how far away is the original start time now? Skipping these can mean rebooking into a slot that creates a new Priority Fee, or penalizing a CP who has already been swapped off the job.');
+    const w = (9.1 - 0.15) / 2;
+    await card(s, 0.45, 1.45, w, 1.85, { n: 1, title: 'Is the CP still assigned?', body: 'Is the job still with the CP who rescheduled it?' });
+    await card(s, 0.45 + w + 0.15, 1.45, w, 1.85, { n: 2, title: 'How far is the original start?', body: 'More than 48 hours, 48 hours or less, already past, or the job is closed?' });
+    await tip(s, 3.5, 'Why:', 'avoid creating a new Priority Fee, and don\'t penalize a CP who was already swapped off.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content(UR, 'Handling guide', 'Step 1: is the job still assigned to the CP who rescheduled it?',
+      'Yes, still assigned: add the cp_unauthorized_reschedule flag to the CP\'s account and update their CP Step if warranted, then check how far away the original start time is (next slide). No, no longer assigned: review the CP\'s account for prior instances and update their CP Step if warranted; send the CP coaching comms using the applicable Comms Kit macro; offer the customer a Priority Booking and address any other pain points. The flag can still be added even if the CP is no longer assigned: it documents the CP\'s own conduct.');
+    const lx = 2.55, rx = 7.45, w = 3.6;
+    await flowBox(s, 5.0 - 1.9, 1.4, 3.8, 0.55, 'Job still assigned to the CP\nwho rescheduled it?', 'decision');
+    flowSplit(s, 5.0, 1.95, 2.25, lx, rx, 2.6, 'Yes', 'No');
+    await flowBox(s, lx - w / 2, 2.6, w, 0.5, 'Add flag + check the start time', 'action');
+    await flowBox(s, rx - w / 2, 2.6, w, 0.5, 'Coach the CP + Priority Booking', 'penalty');
+    const desc = (x, items) => T(s, items.map(([b, t], i) => [{ text: b, options: { bold: true, color: C.ink } }, { text: t, options: { breakLine: i < items.length - 1 } }]).flat(),
+      { x: x - w / 2, y: 3.22, w, h: 1.5, fontSize: 9, color: C.soft, paraSpaceAfter: 3, valign: 'top' });
+    desc(lx, [['Add ', 'the cp_unauthorized_reschedule flag. Update the CP Step if warranted.'], ['Check ', 'how far away the original start time is (next slide).']]);
+    desc(rx, [['Review ', 'the CP\'s account for prior instances. Update the CP Step if warranted.'], ['Send ', 'coaching comms (Comms Kit macro).'], ['Offer ', 'the customer a Priority Booking and address other pain points.']]);
+  }
+
+  {
+    const s = content(UR, 'Still assigned: the original start time', 'Where the original start time sits now decides the fix.',
+      '>48 hours away: reschedule the job back to the original start time via the Customer Dashboard. 48 hours or less: check the customer\'s Priority Markup cohort (C CRM > View). If the cohort is 30_to_50_pct or 50_to_100_pct, cancel the job via CRM using CP no-show/reschedule as the reason code, then rebook via CRM. Add an internal note: cp_unauthorized_reschedule cancelled J <JOB ID> to avoid priority_fee and recreated J <JOB ID>. Tell the customer their appointment was rebooked to their original preferred schedule and offer to add Alternate Start Times. Already in the past: follow AG: Pending Invoice\'s completion-verification steps, whether the job is Pending Invoice or Claimed. Job already cancelled/invoiced: offer a Priority Booking and address any other pain points.');
+    table(s, ['Original start time', 'What to do'], [
+      ['More than 48 hours away', 'Reschedule back to the original start time via the Customer Dashboard'],
+      ['48 hours or less', 'Check the Priority Markup cohort (C CRM › View). 30_to_50_pct or 50_to_100_pct: cancel via CRM (CP no-show/reschedule), rebook via CRM, add the internal note, tell the customer, offer Alternate Start Times'],
+      ['Already in the past', 'Follow AG: Pending Invoice\'s completion-verification steps (Pending Invoice or Claimed)'],
+      ['Job already cancelled or invoiced', 'Offer a Priority Booking and address any other pain points'],
+    ], { y: 1.4, colW: [2.5, 6.6], fontSize: 9.5, rowH: 0.55 });
+    box(s, 0.45, 4.45, 9.1, 0.55, C.white, C.border);
+    T(s, [{ text: 'Internal note  ', options: { bold: true, color: C.teal, fontFace: HEAD } }, { text: 'cp_unauthorized_reschedule cancelled J <JOB ID> to avoid priority_fee and recreated J <JOB ID>' }], { x: 0.65, y: 4.45, w: 8.8, h: 0.55, fontSize: 9.5, valign: 'middle' });
+  }
+
+  {
+    const s = content(UR, 'Penalty and reason code', 'A first unauthorized reschedule is coaching only.',
+      '1st instance: warning macro, no status change. 2nd+ instance: norequests plus the warning macro. Before pausing a CP, check their messages and flags for an earlier warning. C-side agents never suspend or add DNR; repeat offenders are the CP-side team\'s call. CP-facing reason code: cpq_reschedule Your customer <C\'S NAME> reported you rescheduled their <DAY, DATE> job without permission. Submit reactivation appeal through dashboard. Macros: Unapproved reschedule (sample 1) (customer-facing, includes a $20 credit); Unapproved reschedule (sample 2) (customer-facing, no credit: apology + coordination note); Unauthorized Reschedule (Warning) (CP-facing, 1st instance).');
+    const w = (9.1 - 0.15) / 2;
+    await card(s, 0.45, 1.4, w, 1.55, { n: 1, title: '1st instance', body: 'Warning macro. No status change.' });
+    await card(s, 0.45 + w + 0.15, 1.4, w, 1.55, { n: 2, title: '2nd+ instance', body: 'norequests plus the warning macro. Check messages and flags for an earlier warning first.' });
+    box(s, 0.45, 3.1, 9.1, 0.62, C.white, C.border);
+    T(s, [{ text: 'CP-facing reason  ', options: { bold: true, color: C.teal, fontFace: HEAD } }, { text: 'cpq_reschedule Your customer <C\'S NAME> reported you rescheduled their <DAY, DATE> job without permission. Submit reactivation appeal through dashboard.' }], { x: 0.65, y: 3.1, w: 8.8, h: 0.62, fontSize: 9.5, valign: 'middle' });
+    await tip(s, 3.9, 'Never:', 'C-side agents never suspend or add DNR. Repeat offenders are the CP-side team\'s call.', 'FiLock');
+  }
+
+  await knowledgeCheck(UR, [
+    ['What\'s the first thing you check?', 'Whether the job is still assigned to the CP who rescheduled it.'],
+    ['Still assigned. The original start time is 4 days away. What do you do?', 'Add the cp_unauthorized_reschedule flag, then reschedule back to the original time via the Customer Dashboard.'],
+    ['Still assigned, original start in 30 hours, cohort 50_to_100_pct. What do you do?', 'Cancel via CRM (CP no-show/reschedule), rebook via CRM, add the internal note, tell the customer, offer Alternate Start Times.'],
+    ['It\'s the CP\'s first unauthorized reschedule. Change their status?', 'No. Warning macro only. 2nd+ instance: norequests plus the warning.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await wrapUp(UR, [
+    ['Check before you fix', 'Still assigned? How far is the original start?'],
+    ['Avoid a new Priority Fee', '48 hours or less: check the cohort before rebooking.'],
+    ['Coach first', '1st: warning only. 2nd+: norequests + warning.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Unauthorized Reschedule.');
+
   // ---------- Close ----------
   {
     const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -875,7 +1097,7 @@ async function steps(s, y, h, items) {
     T(s, 'Thank you!', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
     T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
     await panel(s, 'ill9.png');
-    s.addNotes('Close the module. Recap: OCH (billed more than worked), Unauthorized Hours (worked but never asked), False Invoice (never showed, check who invoiced first), and Cash Payment (job status decides the action).');
+    s.addNotes('Close the module. Recap: OCH (billed more than worked), Unauthorized Hours (worked but never asked), False Invoice (never showed, check who invoiced first), Cash Payment (job status decides the action), Cleaner Didn\'t Show (be certain; reschedule intent matters), Cleaner Cancellation (how they cancelled matters; rematch first), and Unauthorized Reschedule (still assigned? how far is the start?).');
   }
 
   await pres.writeFile({ fileName: OUT });
