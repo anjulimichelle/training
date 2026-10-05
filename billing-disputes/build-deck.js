@@ -390,16 +390,16 @@ async function steps(s, y, h, items) {
   {
     const s = content(OCH, 'What you find decides the branch', null,
       'Branch A (clear evidence present): a straight line once you\'re in it: refund, check for a Premium fee, then split on the 30-minute rule. Branch B (no clear evidence present): takes longer and may span more than one contact: request documentation from the CP and resume when the Timed Reminder triggers. If CTJ matches the hours invoiced, that is clear evidence no overcharge occurred: stop, no refund, address other concerns. Known bug (Trello): do not treat an abnormally short CTJ interval (30 minutes or less between ARRIVED AT and COMPLETED AT) on its own as clear evidence; it\'s inconclusive unless other evidence proves the CP only stayed that long.');
-    const branch = (x, w, title, desc) => {
+    const branch = (x, w, title) => {
       box(s, x, 1.15, w, 0.62, C.teal);
-      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 11.5, breakLine: true } }, { text: desc, options: { fontSize: 8.5 } }], { x: x + 0.14, y: 1.15, w: w - 0.28, h: 0.62, color: C.white, valign: 'middle' });
+      T(s, [{ text: title, options: { bold: true, fontFace: HEAD, fontSize: 11.5 } }], { x: x + 0.14, y: 1.15, w: w - 0.28, h: 0.62, color: C.white, valign: 'middle' });
     };
     const grid = (x, y, colW, rows) => {
       const H = ['What you find', 'What it means'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } }));
       const R = rows.map(r => r.map((t, i) => ({ text: t, options: { color: i === 0 ? C.ink : C.soft, bold: i === 0, fill: { color: C.white } } })));
       s.addTable([H, ...R], { x, y, w: colW[0] + colW[1], colW, fontFace: BODY, fontSize: 8, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0.03, 0.08, 0.03, 0.08] });
     };
-    branch(0.45, 5.45, 'Branch A: clear evidence present', 'Refund, check for a Premium fee, then the 30-minute rule.');
+    branch(0.45, 5.45, 'Branch A: clear evidence present');
     grid(0.45, 1.85, [2.35, 3.1], [
       ['CTJ shorter than hours invoiced', 'Clear evidence of overcharge → go to Branch A'],
       ['Customer supplies valid evidence of the actual duration (e.g. Ring camera, timestamped photo)', 'Treat it as you would a CTJ record → go to Branch A, refunding only the hours the evidence supports'],
@@ -407,7 +407,7 @@ async function steps(s, y, h, items) {
       ['Cleaner already issued a refund in response to the complaint', 'Supports the overcharge claim (people rarely refund for something they didn\'t do) → go to Branch A'],
       ['Customer claims a shorter cleaning duration than what you found during your investigation', 'CTJ confirms there is an overcharge, regardless of whether it matches the hours reported by the customer → go to Branch A (only refund the hours that are clearly supported by the CTJ)'],
     ]);
-    branch(6.05, 3.5, 'Branch B: no clear evidence present', 'Request documentation, then wait for the Timed Reminder.');
+    branch(6.05, 3.5, 'Branch B: no clear evidence');
     grid(6.05, 1.85, [1.55, 1.95], [
       ['Customer claims a shorter cleaning duration than what you found during your investigation', 'Job history or other information sources (e.g., C/CP message timestamps) → go to Branch B'],
       ['None of the above found', 'No clear evidence → go to Branch B'],
@@ -428,13 +428,13 @@ async function steps(s, y, h, items) {
     flowSplit(s, cx, 2.71 + h, 3.42, 2.45, 7.55, 3.75, 'Yes', 'No');
     await flowBox(s, 2.45 - w / 2, 3.75, w, h, 'Flag, ban, penalize', 'penalty');
     await flowBox(s, 7.55 - w / 2, 3.75, w, h, 'Ban the pairing', 'end');
-    T(s, 'cp_overcharged_hours flag, ban the pairing, comms to both → Penalty section', { x: 2.45 - 1.6, y: 4.27, w: 3.2, h: 0.45, fontSize: 8.5, color: C.soft, align: 'center' });
+    T(s, 'cp_overcharged_hours flag  → norequests status  → ban the pairing  → send comms to C & CP', { x: 2.45 - 1.6, y: 4.27, w: 3.2, h: 0.45, fontSize: 8.5, color: C.soft, align: 'center' });
     T(s, 'Comms to both. Done: no flag, no penalty.', { x: 7.55 - 1.6, y: 4.27, w: 3.2, h: 0.45, fontSize: 8.5, color: C.soft, align: 'center' });
   }
 
   {
     const s = content(OCH, 'Branch B: no clear evidence present', 'Takes longer: it pauses while we wait on the CP, and picks back up when the Timed Reminder triggers.',
-      'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
+      'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. Timed Reminder format: Action On: 72 hours from the time of ticket handling. Who Should Act: Any CS. Action: C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>. Follow When the Timed Reminder Triggers. TRAINER DEMO: show trainees how to add a Timed Reminder in the Legacy C CRM (Do > TimedReminder > Create): set it 72 hours out, assign Any CS, and paste the Action text with the real C ID, job ID and hours. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
     const lx = 3.0, rx = 7.6, w = 2.8, h = 0.52;
     await flowBox(s, 5.0 - 1.75, 1.42, 3.5, 0.55, 'CP suspended + DNR due to multiple overcharged hours?', 'decision');
     flowSplit(s, 5.0, 1.97, 2.2, lx, rx, 2.45, 'No', 'Yes');
@@ -447,16 +447,26 @@ async function steps(s, y, h, items) {
     // The penalty check looks like a button: one click opens the details on this slide.
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fill: { color: C.ink }, line: { color: C.teal, width: 2 }, rectRadius: 0.08 });
     T(s, 'Refund, then penalty check  ›', { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle' });
-    // Hidden until clicked.
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 5.85, y: 3.12, w: 3.7, h: 1.85, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06, shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'step1Panel' });
-    s.addShape(pres.shapes.RECTANGLE, { x: 5.85, y: 3.12, w: 3.7, h: 0.38, fill: { color: C.teal }, line: { color: C.teal }, objectName: 'step1Head' });
-    T(s, 'Penalty check', { x: 6.0, y: 3.12, w: 3.4, h: 0.38, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, valign: 'middle', objectName: 'step1Title' });
+    // Timed Reminder format, next to the step that creates it.
+    box(s, 4.85, 2.98, 4.7, 1.32, C.white, C.border);
+    T(s, 'Timed Reminder format', { x: 5.0, y: 3.03, w: 3.0, h: 0.28, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, valign: 'middle' });
+    box(s, 8.35, 3.06, 1.1, 0.24, C.goldSoft);
+    T(s, 'Trainer demo', { x: 8.35, y: 3.06, w: 1.1, h: 0.24, fontSize: 7.5, bold: true, color: C.gold, align: 'center', valign: 'middle' });
     T(s, [
-      { text: '≥ 30 minutes overcharged', options: { bold: true, color: C.teal, breakLine: true } },
-      { text: 'Add flag cp_overcharged_hours + norequests + the Overcharged Hours macro series.', options: { breakLine: true } },
-      { text: '< 30 minutes overcharged', options: { bold: true, color: C.teal, breakLine: true } },
-      { text: 'No flag, no penalty + the Overcharged Hours macro series.' },
-    ], { x: 6.0, y: 3.55, w: 3.45, h: 1.38, fontSize: 9, paraSpaceAfter: 3, valign: 'top', objectName: 'step1Body' });
+      { text: 'Action On  ', options: { bold: true, color: C.ink } }, { text: '72 hours from the time of ticket handling', options: { breakLine: true } },
+      { text: 'Who Should Act  ', options: { bold: true, color: C.ink } }, { text: 'Any CS', options: { breakLine: true } },
+      { text: 'Action  ', options: { bold: true, color: C.ink } }, { text: 'C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>' },
+    ], { x: 5.0, y: 3.33, w: 4.45, h: 0.88, fontSize: 8.5, color: C.soft, paraSpaceAfter: 2, valign: 'top' });
+    // Hidden until clicked: covers the Timed Reminder box like a pop-up.
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.85, y: 2.98, w: 4.7, h: 1.32, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06, shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'step1Panel' });
+    s.addShape(pres.shapes.RECTANGLE, { x: 4.85, y: 2.98, w: 4.7, h: 0.32, fill: { color: C.teal }, line: { color: C.teal }, objectName: 'step1Head' });
+    T(s, 'Penalty check', { x: 5.0, y: 2.98, w: 4.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 10.5, color: C.white, valign: 'middle', objectName: 'step1Title' });
+    T(s, [
+      { text: '≥ 30 minutes overcharged:  ', options: { bold: true, color: C.teal } },
+      { text: 'add flag cp_overcharged_hours + norequests + the Overcharged Hours macro series.', options: { breakLine: true } },
+      { text: '< 30 minutes overcharged:  ', options: { bold: true, color: C.teal } },
+      { text: 'no flag, no penalty + the Overcharged Hours macro series.' },
+    ], { x: 5.0, y: 3.36, w: 4.45, h: 0.9, fontSize: 9, paraSpaceAfter: 5, valign: 'top', objectName: 'step1Body' });
   }
 
   {
@@ -498,10 +508,23 @@ async function steps(s, y, h, items) {
   {
     const s = content(OCH, 'Related scenarios', null,
       'Cleaner brought a helper, worked half the duration, charged in full: if the customer authorized it, tell them records show they did, address other pain points, don\'t penalize. If not, go to Branch B: request documentation and coach that helpers need permission and can\'t justify full-rate billing. Cleaner refunds after being notified: treat the refund as a sign the overcharge happened unless evidence proves otherwise; if 30 minutes or more, still apply the flag (a voluntary refund confirms the violation, it doesn\'t erase it); if it happens before the first-response Timed Reminder triggers, invalidate that reminder; tell the customer the cleaner refunded. Spotted a likely overcharge before the customer reported it? Reach out proactively. Sample: "Just checking in to see how your recent cleaning with <<Cleaner Name>> on <<Date>> went. We also wanted to quickly confirm the number of hours worked during the visit, just to make sure everything looks right on your end. Let us know if you have any questions or if anything seems off - we\'re happy to help!"');
-    await cards(s, 1.4, 2.4, [
-      { ico: 'FiUsers', title: 'Helper, full charge', body: 'Customer authorized it? No penalty. If not: Branch B, and coach the cleaner.' },
-      { ico: 'FiRotateCcw', title: 'Cleaner refunds first', body: 'Treat it as confirmation. 30 min or more still gets the flag.' },
-      { ico: 'FiEye', title: 'You spot it first', body: 'Reach out proactively to confirm the hours worked.' },
+    await cards(s, 1.3, 3.75, [
+      { ico: 'FiUsers', title: 'Helper, half the time', body: [
+        { text: 'The cleaner brought a helper, worked half the duration, and charged in full.', options: { breakLine: true } },
+        { text: 'Customer authorized it: ', options: { bold: true, color: C.ink } }, { text: 'tell them records show they did, address other pain points. Don\'t penalize the cleaner.', options: { breakLine: true } },
+        { text: 'Not authorized: ', options: { bold: true, color: C.ink } }, { text: 'go to Branch B and request documentation. Coach that helpers need permission and can\'t justify full-rate billing.' },
+      ] },
+      { ico: 'FiRotateCcw', title: 'Cleaner refunds first', body: [
+        { text: 'The cleaner refunds after being told about the report.', options: { breakLine: true } },
+        { text: 'Treat the refund as confirmation the overcharge happened, unless evidence proves otherwise.', options: { breakLine: true } },
+        { text: '30 min or more: ', options: { bold: true, color: C.ink } }, { text: 'still apply the cp_overcharged_hours flag.', options: { breakLine: true } },
+        { text: 'Before the first-response Timed Reminder triggers: ', options: { bold: true, color: C.ink } }, { text: 'invalidate that reminder. Tell the customer the cleaner refunded.' },
+      ] },
+      { ico: 'FiEye', title: 'You spot it first', body: [
+        { text: 'A job looks overcharged, but the customer hasn\'t contacted us.', options: { breakLine: true } },
+        { text: 'Don\'t wait: ', options: { bold: true, color: C.ink } }, { text: 'reach out to check how the cleaning went and confirm the number of hours worked.', options: { breakLine: true } },
+        { text: 'Why: ', options: { bold: true, color: C.ink } }, { text: 'it builds trust and catches the discrepancy before it becomes a dispute.' },
+      ] },
     ]);
   }
 
@@ -519,7 +542,7 @@ async function steps(s, y, h, items) {
     ['Booked and invoiced 3 hrs. CTJ shows the cleaner on site for 1 hr 40 min. Which branch, and what happens?', 'Branch A. Refund 1 hr 20 min via the CP Dashboard (and Premium if charged). It\'s 30 min or more: flag, ban the pairing, comms to both, Penalty section.'],
     ['No CTJ or other evidence. The customer says the cleaner left an hour early. What now?', 'Branch B. Refund Premium if charged, set a 72-hr Timed Reminder, tell the customer 4–5 business days, block the pairing, give the cleaner 3 days for proof.'],
     ['The job is 150 days old, but CTJ clearly shows 45 minutes against 2 hours invoiced. Refund?', 'Yes. Clearly proven, so the 120-day window doesn\'t apply. Refund the difference and follow the penalty ladder.'],
-    ['The customer self-invoiced 2 hrs for a job the cleaner worked 1 hr 11 min. Penalize the cleaner?', 'No. Refund the difference. The customer entered the hours, so there\'s no penalty for the cleaner.'],
+    ['The customer self-invoiced 2 hrs for a job the cleaner worked 1 hr 11 min. Penalize the cleaner?', 'No. Just refund the difference. The customer billed the hours, so this is not the cleaner’s fault.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
   await wrapUp(OCH, [
