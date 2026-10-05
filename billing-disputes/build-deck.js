@@ -1058,35 +1058,44 @@ async function steps(s, y, h, items) {
     'Category: Service Issues > Reliability. Different from the routine, agreed-upon reschedule covered in Rescheduling (Bookings): here the customer never agreed to the new time.');
 
   {
-    const s = content(UR, 'Handling guide', 'Step 1: is the job still assigned to the CP who rescheduled it?',
-      'Yes, still assigned: add the cp_unauthorized_reschedule flag to the CP\'s account and update their CP Step if warranted, then check how far away the original start time is: click the Check the start time button to jump to the next slide. No, no longer assigned: review the CP\'s account for prior instances and update their CP Step if warranted; send the CP coaching comms using the applicable Comms Kit macro; offer the customer a Priority Booking and address any other pain points. The flag can still be added even if the CP is no longer assigned: it documents the CP\'s own conduct.');
-    // No branch on the left, Yes branch on the right.
-    const lx = 2.55, rx = 7.45, w = 3.6;
-    await flowBox(s, 5.0 - 1.9, 1.4, 3.8, 0.55, 'Job still assigned to the CP\nwho rescheduled it?', 'decision');
-    flowSplit(s, 5.0, 1.95, 2.25, lx, rx, 2.6, 'No', 'Yes');
-    await flowBox(s, lx - w / 2, 2.6, w, 0.5, 'Coach the CP + Priority Booking', 'penalty');
-    await flowBox(s, rx - w / 2, 2.6, w, 0.5, 'Add flag + check the start time', 'action');
-    const desc = (x, items) => T(s, items.map(([b, t], i) => [{ text: b, options: { bold: true, color: C.ink } }, { text: t, options: { breakLine: i < items.length - 1 } }]).flat(),
-      { x: x - w / 2, y: 3.22, w, h: 1.5, fontSize: 9, color: C.soft, paraSpaceAfter: 3, valign: 'top' });
-    desc(lx, [['Review ', 'the CP\'s account for prior instances. Update the CP Step if warranted.'], ['Send ', 'coaching comms (Comms Kit macro).'], ['Offer ', 'the customer a Priority Booking and address other pain points.']]);
-    desc(rx, [['Add ', 'the cp_unauthorized_reschedule flag. Update the CP Step if warranted.'], ['Check ', 'how far away the original start time is.']]);
-    // Clickable button: jumps to the start-time slide that follows.
-    s.addText('Check the start time  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - 1.2, y: 3.9, w: 2.4, h: 0.4, rectRadius: 0.08,
-      fill: { color: C.teal }, line: { color: C.teal }, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, align: 'center', valign: 'middle',
-      hyperlink: { slide: s._slideNum + 1, tooltip: 'Go to the next slide' } });
-  }
-
-  {
-    const s = content(UR, 'Still assigned: the original start time', 'Where the original start time sits now decides the fix.',
-      '>48 hours away: reschedule the job back to the original start time via the Customer Dashboard. 48 hours or less: check the customer\'s Priority Markup cohort (C CRM > View). If the cohort is 30_to_50_pct or 50_to_100_pct, cancel the job via CRM using CP no-show/reschedule as the reason code, then rebook via CRM. Add an internal note: cp_unauthorized_reschedule cancelled J <JOB ID> to avoid priority_fee and recreated J <JOB ID>. Tell the customer their appointment was rebooked to their original preferred schedule and offer to add Alternate Start Times. Already in the past: follow AG: Pending Invoice\'s completion-verification steps, whether the job is Pending Invoice or Claimed. Job already cancelled/invoiced: offer a Priority Booking and address any other pain points.');
-    table(s, ['Original start time', 'What to do'], [
-      ['More than 48 hours away', 'Reschedule back to the original start time via the Customer Dashboard'],
-      ['48 hours or less', 'Check the Priority Markup cohort (C CRM › View). 30_to_50_pct or 50_to_100_pct: cancel via CRM (CP no-show/reschedule), rebook via CRM, add the internal note, tell the customer, offer Alternate Start Times'],
-      ['Already in the past', 'Follow AG: Pending Invoice\'s completion-verification steps (Pending Invoice or Claimed)'],
-      ['Job already cancelled or invoiced', 'Offer a Priority Booking and address any other pain points'],
-    ], { y: 1.4, colW: [2.5, 6.6], fontSize: 9.5, rowH: 0.55 });
-    box(s, 0.45, 4.45, 9.1, 0.55, C.white, C.border);
-    T(s, [{ text: 'Internal note  ', options: { bold: true, color: C.teal, fontFace: HEAD } }, { text: 'cp_unauthorized_reschedule cancelled J <JOB ID> to avoid priority_fee and recreated J <JOB ID>' }], { x: 0.65, y: 4.45, w: 8.8, h: 0.55, fontSize: 9.5, valign: 'middle' });
+    const s = content(UR, 'Handling guide', null,
+      'Step 1: is the job still assigned to the CP who rescheduled it? No, no longer assigned: review the CP\'s account for prior instances and update their CP Step if warranted; send the CP coaching comms using the applicable Comms Kit macro and ban (block) the C/CP pairing; offer the customer a Priority Booking and address any other pain points. Yes, still assigned: add the cp_unauthorized_reschedule flag to the CP\'s account, update their CP Step if warranted, coach and ban the CP, then check how far away the original start time is. >48 hours away: reschedule the job back to the original start time via the Customer Dashboard. 48 hours or less: check the customer\'s Priority Markup cohort (C CRM > View). If the cohort is 30_to_50_pct or 50_to_100_pct, cancel the job via CRM using CP no-show/reschedule as the reason code, then rebook via CRM. Add an internal note: cp_unauthorized_reschedule cancelled J <JOB ID> to avoid priority_fee and recreated J <JOB ID>. Tell the customer their appointment was rebooked to their original preferred schedule and offer to add Alternate Start Times. If no priority fee will apply, reschedule via the Customer Dashboard instead. Already in the past: follow AG: Pending Invoice\'s completion-verification steps, whether the job is Pending Invoice or Claimed. Job already cancelled/invoiced: offer a Priority Booking and address any other pain points. The flag can still be added even if the CP is no longer assigned: it documents the CP\'s own conduct.');
+    // Spine: issue > decision > Yes action, with the No branch off to the right.
+    const cx = 4.0;
+    await flowBox(s, cx - 1.4, 1.1, 2.8, 0.34, 'UNAUTHORIZED RESCHEDULE', 'penalty');
+    flowLine(s, [[cx, 1.44], [cx, 1.6]], true);
+    await flowBox(s, cx - 1.75, 1.6, 3.5, 0.5, 'Is the job still assigned to the CP\nwho rescheduled it?', 'decision');
+    flowLine(s, [[cx + 1.75, 1.85], [6.45, 1.85]], true);
+    T(s, 'NO', { x: cx + 1.85, y: 1.62, w: 0.5, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
+    box(s, 6.45, 1.15, 3.1, 1.4, C.white, C.border);
+    T(s, [
+      { text: 'Update CP Step if warranted', options: { bullet: true, breakLine: true } },
+      { text: 'Coach and ban the CP', options: { bullet: true, breakLine: true } },
+      { text: 'Offer the C a Priority Booking and address any other pain points', options: { bullet: true } },
+    ], { x: 6.55, y: 1.15, w: 2.95, h: 1.4, fontSize: 9, color: C.ink, paraSpaceAfter: 3, valign: 'middle' });
+    flowLine(s, [[cx, 2.1], [cx, 2.3]], true);
+    T(s, 'YES', { x: cx + 0.08, y: 2.08, w: 0.5, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
+    box(s, cx - 2.1, 2.3, 4.2, 0.55, C.tealSoft, C.teal);
+    T(s, [
+      { text: 'Add the ' }, { text: 'cp_unauthorized_reschedule', options: { italic: true } },
+      { text: ' flag, update their CP Step if warranted, coach and ban the CP.' },
+    ], { x: cx - 2.0, y: 2.3, w: 4.0, h: 0.55, fontSize: 9, color: C.ink, align: 'center', valign: 'middle' });
+    // Four outcomes by where the original start time sits now.
+    const cols = [
+      ['Original start time is\n>48 hours away', 'Reschedule back to the original job start time.'],
+      ['Original start time is\n≤48 hours away', 'Cancel and rebook the job via the C CRM, or reschedule via the C Dashboard if no priority fee will apply.'],
+      ['Original start time is\nin the past', 'Follow AG: Pending Invoice completion verification steps.'],
+      ['Cancelled / Invoiced', 'Offer a Priority Booking and address other concerns.'],
+    ];
+    const cw = 2.15, gap = 0.15, x0 = 0.45, xs = cols.map((_, i) => x0 + i * (cw + gap) + cw / 2);
+    flowLine(s, [[cx, 2.85], [cx, 3.0]]);
+    flowLine(s, [[xs[0], 3.0], [xs[3], 3.0]]);
+    for (let i = 0; i < cols.length; i++) {
+      flowLine(s, [[xs[i], 3.0], [xs[i], 3.15]], true);
+      await flowBox(s, xs[i] - cw / 2, 3.15, cw, 0.5, cols[i][0], 'action');
+      box(s, xs[i] - cw / 2, 3.65, cw, 1.2, C.tealSoft, C.teal);
+      T(s, cols[i][1], { x: xs[i] - cw / 2 + 0.08, y: 3.65, w: cw - 0.16, h: 1.2, fontSize: 9, color: C.ink, align: 'center', valign: 'middle' });
+    }
   }
 
   {
