@@ -759,13 +759,14 @@ async function ticketRows(s, rows) {
   }
 
   {
-    const s = content('Job Statuses  ·  Claimed', 'Common tickets: Claimed Stage', 'What customers ask once a cleaner has claimed the job.',
-      '1) Job is claimed at a different date than initially booked: check the job history to see if the job was claimed at an alternate date and time, or was rescheduled by the cleaner. 2) Customer reports they received confirmations from 2 different cleaners: check the job history to see if the first cleaner cancelled or was swapped out. Remember swapping is internal: never mention it to the customer. 3) Customer wants their cleaner changed: change the cleaner from the Job Admin Page. TRAINER NOTE: demo how to change the cleaner on the Job Admin Page. 4) Customer wants the appointment rescheduled: reschedule from the C Dashboard, or cancel and rebook from the CRM if rescheduling would result in a priority fee.');
+    const s = content('Job Statuses  ·  Claimed', 'Common issues: Claimed Stage', 'What customers ask once a cleaner has claimed the job.',
+      '1) Job is claimed at a different date than initially booked: check the job history to see if the job was claimed at an alternate date and time, or was rescheduled by the cleaner. 2) Customer reports they received confirmations from 2 different cleaners: check the job history to see if the first cleaner cancelled or was swapped out. Remember swapping is internal: never mention it to the customer. 3) Customer wants their cleaner changed: change the cleaner from the Job Admin Page. TRAINER NOTE: demo how to change the cleaner on the Job Admin Page. 4) Customer wants the appointment rescheduled: reschedule from the C Dashboard, or cancel and rebook from the CRM if rescheduling would result in a priority fee. 5) CP cancellations: help the customer get a new cleaner if the request is still active, or offer priority cleaning if the appointment was canceled.');
     await ticketRows(s, [
       ['Claimed at a different date than booked', null, 'Check the job history: was it claimed at an alternate date and time, or rescheduled by the cleaner?'],
       ['Confirmations from 2 different cleaners', null, 'Check the job history: did the first cleaner cancel, or were they swapped out?'],
       ['Wants their cleaner changed', null, 'Change the cleaner from the Job Admin Page.', 'Trainer demo'],
       ['Wants the appointment rescheduled', null, 'Reschedule from the C Dashboard, or cancel and rebook from the CRM if rescheduling would add a priority fee.'],
+      ['CP Cancellations', null, 'Help the customer get a new cleaner if the request is still active, or offer priority cleaning if the appointment was canceled.'],
     ]);
   }
 
@@ -776,6 +777,18 @@ async function ticketRows(s, rows) {
       { ico: 'FiUser', title: 'The customer can', items: ['Leave a review and tip', 'Request a refund if there\'s an issue'] },
       { ico: 'FiTool', title: 'The cleaner can', items: ['Issue a refund', 'Review the customer in the CP App'] }, 1.4, 2.0);
     await tip(s, 3.65, 'Note:', 'a full refund changes an Invoiced job to Cancelled.', 'FiInfo');
+  }
+
+  {
+    const s = content('Job Statuses  ·  Invoiced', 'Common issues: Invoiced Stage', 'What customers raise once the job has been charged.',
+      'Each of these has its own KB page and is covered in more depth later; this slide is the first-look version. 1) Poor Cleaning Quality (PCQ): the customer is not satisfied with the cleaning. Gather facts before offering anything: job admin and history, customer/CP messages, refund status, and whether an admin_courtesy voucher was auto-issued. Customers can self-submit a refund request within 72 hours of invoice (the 96-hour system limit is internal only; disclosing it is a ZTP Level 2). No cancellation intent = no ETF or cancellation talk; if they want to cancel, move to the PCQ Retention Framework. 2) Overcharged Hours (OCH): the customer reports an incorrect number of hours billed. Check whether the cleaner actually worked the hours billed (CTJ, GPS, messages, job timestamps). Refund only the hours the evidence supports, via the CP Dashboard. Claim window: jobs completed in the last 120 days, unless the overcharge is clearly proven. 3) False Invoice: the cleaner billed even though they didn\'t show up. Check the Job History first for who invoiced: if the customer invoiced it, refund but don\'t penalize the cleaner. Full refund via the CP Dashboard; 120-day window unless clearly proven. 4) Lockout (LO): the cleaner couldn\'t get in and submitted a lockout, so the job is invoiced and the customer is charged in full. Validate the claim: did the customer still want the appointment, did the cleaner arrive within 30 minutes of start, were they at the address, and did they try (2+ contact attempts 5+ minutes apart, waited 15+ minutes, followed entry notes)? If invalid, refund via the CP Dashboard. Always leave an internal note. 5) Billing Inquiry: the customer asks for an explanation of their charges. Walk through the price: (CP hourly rate + platform hourly rate) x duration + processing fee + sales tax + premium fee, with voucher hours taken off first and credits off the total (see C Price vs CP Pay in Platform & Operating Mechanics).');
+    await ticketRows(s, [
+      ['Poor Cleaning Quality', 'Not satisfied with the cleaning', 'Gather the facts before offering anything. Refund requests: within 72 hrs of invoice. No cancellation intent = no ETF talk.'],
+      ['Overcharged Hours', 'Billed for the wrong number of hours', 'Did the cleaner work the hours billed? Check CTJ, GPS and messages. Refund only the hours the evidence supports.'],
+      ['False Invoice', 'Billed, but the cleaner never showed', 'Check the job history first: who invoiced? If the customer did, refund but don\'t penalize the cleaner.'],
+      ['Lockout', 'Cleaner couldn\'t get in and filed a lockout', 'Validate it: still wanted? On time? At the address? 2+ contact attempts, 15+ min wait? Invalid: refund.'],
+      ['Billing Inquiry', 'Wants their charges explained', 'Walk through how the price is built: rate, platform fee, processing fee, tax, then vouchers and credits.'],
+    ]);
   }
 
   {
