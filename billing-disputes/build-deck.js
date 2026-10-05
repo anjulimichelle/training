@@ -887,7 +887,7 @@ async function steps(s, y, h, items) {
       { ico: 'FiStar', title: 'In a review', body: 'The customer\'s review explicitly says the CP was a no-show.' },
     ]);
     await tip(s, 3.3, 'Signals to check:', 'the customer asked for the CP\'s ETA, or the CP texted cancel/reschedule intent.', 'FiSearch');
-    await tip(s, 3.85, 'Only while the CP is attached:', 'Claimed or Pending Invoice. Already Invoiced? Follow the False Invoice process.', 'FiAlertCircle');
+    await tip(s, 3.85, 'No show via Admin Page:', 'Claimed or Pending Invoice. Already Invoiced? Follow the False Invoice process.', 'FiAlertCircle');
   }
 
   {
@@ -901,13 +901,33 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(NS, 'Handling by job status', 'For every status: check the resolution table first, and read the customer.',
-      'Applies to all statuses: before choosing a resolution, check the Quick Reference table (next slide) for credits and free-month eligibility. Weigh the customer\'s emotional state, whether they\'re asking for a refund or hinting at cancelling, and whether they already have recent credits/vouchers. If the customer doesn\'t seem upset and isn\'t asking for a refund, consider non-credit options first (Priority Booking, blocking the C/CP pairing). Penalize per CP penalty guidance.');
-    table(s, ['Step', 'Submitted', 'Claimed or Pending Invoice', 'Cancelled'], [
-      ['1', 'Tell the customer you\'re matching them with a new cleaner.', 'Report the CP as a no-show: Job Admin Page › No Show.', 'Offer to book a Priority Booking.'],
-      ['2', 'Send comms to C and CP. Coach the CP on reliability, penalize per guidance. Block the C/CP pairing.', 'The job resolves to Cancelled or Submitted. Follow that column from here.', 'Send comms to C and CP. Coach the CP, penalize per guidance. Block the C/CP pairing.'],
-    ], { y: 1.45, colW: [0.6, 2.85, 2.85, 2.8], fontSize: 9.5, rowH: 0.7 });
-    await tip(s, 3.85, 'Customer calm, not asking for a refund?', 'try non-credit options first: Priority Booking, block the pairing.', 'FiHeart');
+    const s = content(NS, 'Handling by job status', 'Then, for every status: check the resolution table, fix the unreliability issue, and send comms.',
+      'Applies to all statuses: before choosing a resolution, check the Quick Reference table (next slide) for credits and free-month eligibility. Weigh the customer\'s emotional state, whether they\'re asking for a refund or hinting at cancelling, and whether they already have recent credits/vouchers. If the customer doesn\'t seem upset and isn\'t asking for a refund, consider non-credit options first (Priority Booking, blocking the C/CP pairing). Penalize per CP penalty guidance. Claimed or Pending Invoice: if the CP should be penalized, report the no-show (Job Admin Page > No Show); after reporting, the job resolves to Cancelled or Submitted, so follow that column. If no penalty applies (e.g. reschedule intent before the start time), cancel the job from C-CRM with the CP No Show/Reschedule code.');
+    // Flowchart: one no-show, three job statuses, one shared set of next steps.
+    await flowBox(s, 5.0 - 1.4, 1.45, 2.8, 0.42, 'CLEANER NO SHOW', 'penalty');
+    const cols = [
+      [1.75, 'SUBMITTED', 'Advise that we\'re matching them with a new cleaner.'],
+      [5.0, 'CLAIMED / PENDING INVOICE', 'Penalize CP? Report the CP as a no-show: Job Admin Page › No Show.\nNo penalty? Cancel the job from C-CRM with the CP No Show/Reschedule code.'],
+      [8.25, 'CANCELLED', 'Offer to book a Priority Booking.'],
+    ];
+    const cw = 3.0;
+    flowLine(s, [[5.0, 1.87], [5.0, 2.07]]);
+    flowLine(s, [[1.75, 2.07], [8.25, 2.07]]);
+    for (const [cx, head, body] of cols) {
+      flowLine(s, [[cx, 2.07], [cx, 2.25]], true);
+      await flowBox(s, cx - cw / 2, 2.25, cw, 0.38, head, 'action');
+      box(s, cx - cw / 2, 2.63, cw, 0.92, C.tealSoft, C.teal);
+      T(s, body, { x: cx - cw / 2 + 0.1, y: 2.63, w: cw - 0.2, h: 0.92, fontSize: body.length > 80 ? 8.5 : 9.5, color: C.ink, align: 'center', valign: 'middle' });
+      flowLine(s, [[cx, 3.55], [cx, 3.72]]);
+    }
+    flowLine(s, [[1.75, 3.72], [8.25, 3.72]]);
+    flowLine(s, [[5.0, 3.72], [5.0, 3.88]], true);
+    box(s, 1.6, 3.88, 6.8, 1.15, C.goldSoft, C.gold);
+    T(s, [
+      { text: 'See the quick reference for credits / free months', options: { bullet: true, breakLine: true } },
+      { text: 'Address the unreliability issue: ban the C/CP pairing, penalize as necessary, offer to book a Priority Booking', options: { bullet: true, breakLine: true } },
+      { text: 'Send comms to C and CP', options: { bullet: true } },
+    ], { x: 1.8, y: 3.9, w: 6.45, h: 1.1, fontSize: 9.5, color: C.ink, paraSpaceAfter: 3, valign: 'middle' });
   }
 
   {
