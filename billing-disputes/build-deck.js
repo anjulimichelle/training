@@ -1058,26 +1058,22 @@ async function steps(s, y, h, items) {
     'Category: Service Issues > Reliability. Different from the routine, agreed-upon reschedule covered in Rescheduling (Bookings): here the customer never agreed to the new time.');
 
   {
-    const s = content(UR, 'Check two things first', 'Skipping straight to a fix can create a new Priority Fee, or penalize the wrong CP.',
-      'The right response depends on two things you check before deciding anything: is the CP who rescheduled still assigned to the job, and how far away is the original start time now? Skipping these can mean rebooking into a slot that creates a new Priority Fee, or penalizing a CP who has already been swapped off the job.');
-    const w = (9.1 - 0.15) / 2;
-    await card(s, 0.45, 1.45, w, 1.85, { n: 1, title: 'Is the CP still assigned?', body: 'Is the job still with the CP who rescheduled it?' });
-    await card(s, 0.45 + w + 0.15, 1.45, w, 1.85, { n: 2, title: 'How far is the original start?', body: 'More than 48 hours, 48 hours or less, already past, or the job is closed?' });
-    await tip(s, 3.5, 'Why:', 'avoid creating a new Priority Fee, and don\'t penalize a CP who was already swapped off.', 'FiAlertCircle');
-  }
-
-  {
     const s = content(UR, 'Handling guide', 'Step 1: is the job still assigned to the CP who rescheduled it?',
-      'Yes, still assigned: add the cp_unauthorized_reschedule flag to the CP\'s account and update their CP Step if warranted, then check how far away the original start time is (next slide). No, no longer assigned: review the CP\'s account for prior instances and update their CP Step if warranted; send the CP coaching comms using the applicable Comms Kit macro; offer the customer a Priority Booking and address any other pain points. The flag can still be added even if the CP is no longer assigned: it documents the CP\'s own conduct.');
+      'Yes, still assigned: add the cp_unauthorized_reschedule flag to the CP\'s account and update their CP Step if warranted, then check how far away the original start time is: click the Check the start time button to jump to the next slide. No, no longer assigned: review the CP\'s account for prior instances and update their CP Step if warranted; send the CP coaching comms using the applicable Comms Kit macro; offer the customer a Priority Booking and address any other pain points. The flag can still be added even if the CP is no longer assigned: it documents the CP\'s own conduct.');
+    // No branch on the left, Yes branch on the right.
     const lx = 2.55, rx = 7.45, w = 3.6;
     await flowBox(s, 5.0 - 1.9, 1.4, 3.8, 0.55, 'Job still assigned to the CP\nwho rescheduled it?', 'decision');
-    flowSplit(s, 5.0, 1.95, 2.25, lx, rx, 2.6, 'Yes', 'No');
-    await flowBox(s, lx - w / 2, 2.6, w, 0.5, 'Add flag + check the start time', 'action');
-    await flowBox(s, rx - w / 2, 2.6, w, 0.5, 'Coach the CP + Priority Booking', 'penalty');
+    flowSplit(s, 5.0, 1.95, 2.25, lx, rx, 2.6, 'No', 'Yes');
+    await flowBox(s, lx - w / 2, 2.6, w, 0.5, 'Coach the CP + Priority Booking', 'penalty');
+    await flowBox(s, rx - w / 2, 2.6, w, 0.5, 'Add flag + check the start time', 'action');
     const desc = (x, items) => T(s, items.map(([b, t], i) => [{ text: b, options: { bold: true, color: C.ink } }, { text: t, options: { breakLine: i < items.length - 1 } }]).flat(),
       { x: x - w / 2, y: 3.22, w, h: 1.5, fontSize: 9, color: C.soft, paraSpaceAfter: 3, valign: 'top' });
-    desc(lx, [['Add ', 'the cp_unauthorized_reschedule flag. Update the CP Step if warranted.'], ['Check ', 'how far away the original start time is (next slide).']]);
-    desc(rx, [['Review ', 'the CP\'s account for prior instances. Update the CP Step if warranted.'], ['Send ', 'coaching comms (Comms Kit macro).'], ['Offer ', 'the customer a Priority Booking and address other pain points.']]);
+    desc(lx, [['Review ', 'the CP\'s account for prior instances. Update the CP Step if warranted.'], ['Send ', 'coaching comms (Comms Kit macro).'], ['Offer ', 'the customer a Priority Booking and address other pain points.']]);
+    desc(rx, [['Add ', 'the cp_unauthorized_reschedule flag. Update the CP Step if warranted.'], ['Check ', 'how far away the original start time is.']]);
+    // Clickable button: jumps to the start-time slide that follows.
+    s.addText('Check the start time  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - 1.2, y: 3.9, w: 2.4, h: 0.4, rectRadius: 0.08,
+      fill: { color: C.teal }, line: { color: C.teal }, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, align: 'center', valign: 'middle',
+      hyperlink: { slide: s._slideNum + 1, tooltip: 'Go to the next slide' } });
   }
 
   {

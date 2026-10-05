@@ -46,6 +46,13 @@ for item in zin.infolist():
     data = zin.read(item.filename)
     if re.match(r'ppt/slides/slide\d+\.xml$', item.filename):
         x = data.decode('utf8')
+        # Slide-jump buttons: the link lives on the shape, so drop pptxgenjs's
+        # duplicate run-level link and its forced underline.
+        if 'ppaction://hlinksldjump' in x:
+            x = re.sub(r'<a:hlinkClick r:id="rId\d+" action="ppaction://hlinksldjump"[^>]*>(.*?)</a:hlinkClick>', r'\1', x, flags=re.S)
+            x = re.sub(r'(<a:rPr[^>]*?) u="sng"([^>]*>(?:(?!</a:rPr>).)*?ahyp:hlinkClr)', r'\1 u="none"\2', x, flags=re.S)
+            x = re.sub(r'\s*<a:extLst>\s*<a:ext uri="\{A12FA001-AC4F-418D-AE19-62706E023703\}">.*?</a:extLst>', '', x, flags=re.S)
+            data = x.encode('utf8')
         clicks, bld, cid = [], [], 3
         m = re.search(r'<p:cNvPr id="(\d+)" name="reveal', x)
         if m:
