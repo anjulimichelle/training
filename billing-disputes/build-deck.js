@@ -124,7 +124,7 @@ async function panel(s, ill, y = 0.68, h = 4.26) {
 }
 
 let topicNo = 0;
-const TOPICS = 7;
+const TOPICS = 9;
 async function topic(title, sub, learn, ill, notes) {
   topicNo++;
   const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -1116,11 +1116,245 @@ async function steps(s, y, h, items) {
     ['It\'s the CP\'s first unauthorized reschedule. Change their status?', 'No. Warning macro only. 2nd+ instance: norequests plus the warning.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
+  // Practice slide the trainer added in Google (a copy of the Cash Payment one).
+  {
+    const s = content(CASH + '  ·  Practice', 'Let\'s practice!', 'Review the live ticket and investigate.',
+      'TRAINER: provide a live ticket for trainees to review. Give them time to investigate (job history, CTJ, C/CP messages, Premium charge), then discuss. Ask: Did the CP already report the cash payment (check the CP CRM)? How much was paid in cash, full or partial? What is the job status? What actions will you take (cancel via C CRM, invoice the balance, refund via CP Dashboard, or admin refund + CP Holdback), and which ladder applies? How will you respond to the customer?');
+    await card(s, 0.45, 1.45, 3.9, 3.0, { ico: 'FiInbox', title: 'Live ticket', body: 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.' });
+    box(s, 0.65, 3.85, 1.35, 0.3, C.goldSoft);
+    T(s, 'Trainer provides', { x: 0.65, y: 3.85, w: 1.35, h: 0.3, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    await card(s, 4.5, 1.45, 5.05, 1.42, { n: 1, title: 'What will be your actions?', body: 'Which issue is it, and what will you do on the account?' });
+    await card(s, 4.5, 3.03, 5.05, 1.42, { n: 2, title: 'How will you respond to the customer?', body: 'Write the reply you would send.' });
+  }
+
   await wrapUp(UR, [
     ['Check before you fix', 'Still assigned? How far is the original start?'],
     ['Avoid a new Priority Fee', '48 hours or less: check the cohort before rebooking.'],
     ['Coach first', '1st: warning only. 2nd+: norequests + warning.'],
   ], 'TRAINER: recap the three takeaways, then open the floor for questions on Unauthorized Reschedule.');
+
+  // ================= 8. TRUST AND SAFETY =================
+  const TS = 'Trust and Safety';
+  // Bulleted list inside a white panel with a small heading.
+  const listPanel = (s, x, y, w, h, head, items, fontSize = 9.5) => {
+    box(s, x, y, w, h, C.white, C.border);
+    eyebrow(s, head, x + 0.2, y + 0.16, w - 0.4);
+    T(s, bullets(items), { x: x + 0.2, y: y + 0.45, w: w - 0.4, h: h - 0.55, fontSize, color: C.ink, paraSpaceAfter: 3 });
+  };
+  // Horizontal flow: boxes joined by arrows, with a description under each.
+  const hFlow = async (s, y, items) => {
+    const n = items.length, gap = 0.3, w = (9.1 - gap * (n - 1)) / n;
+    for (let i = 0; i < n; i++) {
+      const x = 0.45 + i * (w + gap), [label, kind, desc] = items[i];
+      await flowBox(s, x, y, w, 0.62, label, kind);
+      if (i < n - 1) flowLine(s, [[x + w, y + 0.31], [x + w + gap, y + 0.31]], true);
+      T(s, desc, { x, y: y + 0.72, w, h: 1.3, fontSize: 9, color: C.soft, valign: 'top', align: 'center' });
+    }
+  };
+
+  await topic('Trust and Safety', 'Reports that put a person\'s safety, property or wellbeing at risk.',
+    ['What T&S covers', 'What always escalates', 'When the customer must ask', 'Who decides refunds, ETF and retention'],
+    'ill11.png',
+    'Category: Specialized Escalation Teams. Most Service Issues are things Care can fully own and close out: refund it, re-clean it, coach the CP, done. Trust & Safety cases are different: they involve real risk to a person\'s physical safety, property, or wellbeing, not just a bad service experience. Getting one wrong (moving too fast, resolving it like a routine complaint, or missing that it qualifies) creates a liability a refund can\'t fix.');
+
+  {
+    const s = content(TS, 'What is Trust and Safety?', 'Any report of behavior that could compromise one of these three.',
+      'T&S covers any situation where a customer or cleaner reports behavior that could compromise personal safety, property security, or professional conduct. If a report suggests any risk (physical, emotional, or property-related), the case gets escalated. Only the T&S team is authorized to handle these situations directly. Care\'s responsibility is to recognize the issue and escalate it, not investigate or resolve it. T&S is a separate, specially-trained track because these situations need a level of investigation and judgment a standard support resolution isn\'t built for. That\'s also why T&S, not Care, gets final say on refunds, ETF and retention once a case is theirs. If you\'re unsure whether a case meets the bar but it feels risky, you can still raise it through the T&S channel: you don\'t need certainty to escalate.');
+    await cards(s, 1.45, 1.7, [
+      { ico: 'FiShield', title: 'Personal safety', body: 'Physical or emotional risk to the customer or the cleaner.' },
+      { ico: 'FiHome', title: 'Property security', body: 'Theft, damage, or a home left unsecured.' },
+      { ico: 'FiUserCheck', title: 'Professional conduct', body: 'Harassment, discrimination, unwanted contact, substances.' },
+    ]);
+    await tip(s, 3.4, 'Your role:', 'recognize the issue and escalate it. Don\'t investigate it or resolve it.', 'FiFlag');
+    await tip(s, 3.95, 'Unsure?', 'if it feels risky, escalate. You don\'t need certainty.', 'FiHelpCircle');
+  }
+
+  {
+    const s = content(TS, 'Safety concerns', 'Always escalate.',
+      'Every item on this slide is an always-escalate item. Law enforcement requests also go to T&S: never share customer or cleaner information yourself.');
+    const items = [
+      ['FiAlertOctagon', 'On-platform death'],
+      ['FiAlertTriangle', 'Physical violence or threats of violence'],
+      ['FiUserX', 'Unwanted physical contact'],
+      ['FiEyeOff', 'Any sexually related complaint'],
+      ['FiUsers', 'Reports of human trafficking'],
+      ['FiEye', 'Reports of stalking'],
+      ['FiFileText', 'Law enforcement requests'],
+    ];
+    const w = (9.1 - 0.15) / 2, rowH = 0.5;
+    for (let i = 0; i < items.length; i++) {
+      const x = 0.45 + (i % 2) * (w + 0.15), y = 1.45 + Math.floor(i / 2) * (rowH + 0.1);
+      box(s, x, y, w, rowH, C.white, C.border);
+      await iconDot(s, x + 0.12, y + (rowH - 0.32) / 2, items[i][0], 0.32);
+      T(s, items[i][1], { x: x + 0.55, y, w: w - 0.65, h: rowH, fontFace: HEAD, bold: true, fontSize: 10.5, valign: 'middle' });
+    }
+    T(s, 'Sexually related: solicitation, indecent exposure, inappropriate photos, sexual requests about attire, sexual messaging.', { x: 0.45 + w + 0.15, y: 3.25, w, h: 0.5, fontSize: 8.5, color: C.soft, valign: 'middle' });
+    await tip(s, 4.0, 'No judgment call:', 'every item here goes straight to T&S.', 'FiArrowUpRight');
+  }
+
+  {
+    const s = content(TS, 'Policy violations and conduct', 'Also always escalate.',
+      'Unwanted communication means personal, repeated, or continuing after being asked to stop. A single job-related follow-up (confirming arrival time, asking about a forgotten item) is routine and doesn\'t qualify on its own. Verbal dispute: a disagreement about the cleaning itself ("you missed a spot") isn\'t a verbal dispute for T&S purposes. It only qualifies when the interaction itself becomes heated, aggressive, or intimidating. It\'s different from harassment, which implies one party targeting the other; a verbal dispute is mutual or situational escalation between both parties. Workplace safety excludes homes with biohazardous conditions. Hurt during cleaning: unless the incident was caused by either party. Every item is always-escalate, except the conditional pattern on the next slides: don\'t assume anything else is conditional.');
+    const w = (9.1 - 0.15) / 2;
+    listPanel(s, 0.45, 1.45, w, 2.45, 'Conduct', [
+      'Discrimination (race, age, nationality, etc.)',
+      'Unwanted communication, on or off platform*',
+      'C/CP harassment (more than just rude)',
+      'Verbal dispute: raised voices, aggressive confrontation†',
+      'Unauthorized return to C\'s residence',
+      'C felt unsafe: CP brought a helper without permission',
+    ], 9.5);
+    listPanel(s, 0.45 + w + 0.15, 1.45, w, 2.45, 'Safety and substances', [
+      'Drugs or weapons present at the workplace',
+      'Possessing or using illegal substances',
+      'Distributing (or trying to) illegal substances',
+      'Soliciting or drinking alcohol',
+      'CP failed to secure C\'s residence',
+      'Animal involvement (bite, injury, lost animal)',
+      'C/CP hurt during cleaning',
+    ], 9.5);
+    T(s, [
+      { text: '* Not a single job-related follow-up (arrival time, forgotten item).', options: { breakLine: true } },
+      { text: '† Not a disagreement about the cleaning itself, unless it turns heated or intimidating.' },
+    ], { x: 0.45, y: 3.98, w: 9.1, h: 0.45, fontSize: 8.5, color: C.soft, italic: true });
+  }
+
+  {
+    const s = content(TS, 'Theft and damage', 'Which claims are covered.',
+      'Theft and damage claims go to T&S. Covered claims: the job was paid in full on the platform; the requester\'s account is in good standing with no outstanding balances (no failed or disputed charges); the claim was reported within 30 days of the cleaning; the requester hasn\'t violated the Terms of Service. Excluded: cleaning done outside the platform; losses of cash, third-party gift cards/vouchers and securities, as well as fine arts, antiques and jewelry; losses of pets, personal liability, damage to common areas, and sentimental or undocumented intangible value; items already recovered by the police or replaced by the cleaner; items that still work (minor cosmetic damage, scratches, ordinary wear and tear).');
+    await twoCol(s,
+      { ico: 'FiCheckCircle', title: 'Included', items: ['Job paid in full on the platform', 'Account in good standing: no failed or disputed charges', 'Reported within 30 days of the cleaning', 'Requester hasn\'t violated the Terms of Service'] },
+      { ico: 'FiXCircle', title: 'Excluded', items: ['Cleaning done off the platform', 'Cash, gift cards, securities, fine art, antiques, jewelry', 'Pets, liability, common areas, sentimental value', 'Already recovered by police or replaced by the CP', 'Items that still work (scratches, wear and tear)'] },
+      1.45, 3.0);
+  }
+
+  {
+    const s = content(TS, 'Conditional escalation', 'A few real concerns escalate only if the customer explicitly asks.',
+      'A small number of situations are genuine T&S concerns, but only get escalated to the T&S team if the customer explicitly asks to be escalated for that reason. If the customer doesn\'t ask, handle it as BAU, but it still qualifies as a T&S scenario for ETF waiver purposes, because the underlying safety issue is real either way. Known examples: CP brought a minor to the appointment; CP brought or sent an unauthorized/third-party person. The list isn\'t exhaustive: other situations may fit the same pattern (a genuine safety concern a customer mentions in passing). Before treating a new situation this way, confirm it\'s genuinely comparable: a real safety concern, not just something vaguely safety-adjacent. When unsure, escalate to T&S rather than deciding solo. Note the difference from the always-escalate item: if C says they felt unsafe because the CP brought a helper without permission, escalate.');
+    const lx = 2.55, rx = 7.45, w = 3.6;
+    await flowBox(s, 5.0 - 2.3, 1.45, 4.6, 0.5, 'CP brought a minor, or brought/sent an unauthorized person', 'penalty');
+    flowLine(s, [[5.0, 1.95], [5.0, 2.12]], true);
+    await flowBox(s, 5.0 - 1.9, 2.12, 3.8, 0.45, 'Did the customer explicitly ask to escalate?', 'decision');
+    flowSplit(s, 5.0, 2.57, 2.77, lx, rx, 3.0, 'No', 'Yes');
+    await flowBox(s, lx - w / 2, 3.0, w, 0.45, 'Handle as BAU', 'end');
+    await flowBox(s, rx - w / 2, 3.0, w, 0.45, 'Escalate to T&S', 'action');
+    T(s, 'Still counts as a T&S scenario for an ETF waiver.', { x: lx - w / 2, y: 3.5, w, h: 0.3, fontSize: 9, color: C.soft, align: 'center' });
+    T(s, 'T&S owns the case from here.', { x: rx - w / 2, y: 3.5, w, h: 0.3, fontSize: 9, color: C.soft, align: 'center' });
+    await tip(s, 4.1, 'Not exhaustive:', 'a new case must be a real safety concern. Unsure? Escalate.', 'FiHelpCircle');
+  }
+
+  {
+    const s = content(TS, 'Who decides', 'Once a case is T&S, they have final say.',
+      'All T&S concerns (once escalation applies) must be routed to the T&S team. Care agents must not make refund or compensation decisions for T&S cases, waive or reduce ETF unless directed by T&S, or attempt retention or offer membership-related incentives. T&S independently investigates and owns the final resolution: refund handling is determined solely by T&S after investigation; T&S may waive up to the full ETF following review; no retention attempt by Care, defer to the T&S outcome. If T&S declines the case ("this is not a T&S concern"), the ticket returns to the original agent and is handled as BAU. The T&S constraints lift with it: run the normal playbook for the underlying issue and apply the ordinary ETF and retention rules.');
+    await twoCol(s,
+      { ico: 'FiSlash', title: 'Care must not', items: ['Decide refunds or compensation', 'Waive or reduce the ETF (unless T&S directs)', 'Attempt retention or offer membership incentives', 'Contact the cleaner directly'] },
+      { ico: 'FiShield', title: 'T&S owns', items: ['Refund scope, after investigation', 'ETF: may waive up to the full amount', 'Retention and membership outcome'] },
+      1.45, 2.35);
+    await tip(s, 4.0, 'T&S declines?', 'it\'s yours again as BAU: normal playbook, ordinary ETF and retention rules.', 'FiCornerDownLeft');
+  }
+
+  {
+    const s = content(TS, 'The handling process', 'Escalate as soon as a T&S indicator is confirmed.',
+      'Escalate immediately once a T&S indicator is confirmed. Don\'t attempt retention: T&S leads the investigation and resolution. Don\'t issue refunds or contact the cleaner directly: T&S evaluates liability, coordinates the investigation and determines the resolution (including a possible full ETF waiver). Agents must send an email to the customer when escalating a ticket to T&S. Macro: Escalate report to T&S. Related articles: ETF Waivers; Service Recovery Overview.');
+    await hFlow(s, 1.6, [
+      ['T&S indicator confirmed', 'penalty', 'Matches an always-escalate item, or the customer asked (conditional cases).'],
+      ['Escalate to T&S', 'action', 'Right away. Macro: Escalate report to T&S.'],
+      ['Email the customer', 'action', 'Required every time you escalate.'],
+      ['Hands off', 'end', 'No refund, no contact with the cleaner, no retention attempt.'],
+    ]);
+    await tip(s, 3.3, 'Why:', 'T&S evaluates liability and may waive the full ETF. Acting first can undercut that.', 'FiInfo');
+  }
+
+  await knowledgeCheck(TS, [
+    ['C mentions in passing that the CP brought their teenager along, but doesn\'t ask to escalate. What do you do?', 'Handle as BAU. It still counts as a T&S scenario for an ETF waiver.'],
+    ['C says "you missed a spot" and the CP disagreed calmly. Is this a T&S verbal dispute?', 'No. A disagreement about the cleaning only qualifies if it turns heated, aggressive or intimidating.'],
+    ['C reports the CP sent sexual messages and asks for a refund. What do you offer?', 'Nothing yourself. Escalate to T&S and email the customer; T&S decides the refund.'],
+    ['T&S replies: "This is not a T&S concern." Now what?', 'It\'s yours again as BAU: normal playbook, ordinary ETF and retention rules.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await wrapUp(TS, [
+    ['Recognize and escalate', 'Care doesn\'t investigate or resolve T&S cases.'],
+    ['Hands off', 'No refunds, ETF changes, retention or cleaner contact.'],
+    ['Unsure? Escalate', 'You don\'t need certainty to raise a risk.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Trust and Safety.');
+
+  // ================= 9. SERVICE RECOVERY =================
+  const SR = 'Service Recovery';
+  await topic('Service Recovery', 'Cases with legal, reputational or relationship risk.',
+    ['What Service Recovery handles', 'Material vs. general legal threats', 'How to escalate', 'When a case comes back'],
+    'ill10.png',
+    'Category: Specialized Escalation Teams. T&S exists because some situations carry real physical or safety risk. Service Recovery exists for a different reason: some situations carry real legal, reputational, or relationship risk. A customer unhappy enough to leave negative feedback and ask for a callback, or one invoking legal action or the FTC, needs higher-touch handling: the stakes go beyond one bad interaction. Care\'s role, same as with T&S, is recognition and handoff, not resolution.');
+
+  {
+    const s = content(SR, 'What Service Recovery handles', 'Care recognizes and hands off. SR decides the resolution.',
+      'Service Recovery handles: customers who left negative CSAT survey feedback and opted in to be contacted by phone or email; and high-risk general legal threats (e.g. "I will contact a lawyer") or FTC threats, when the risk of escalation is significantly high. SR determines refund eligibility, scope and any ETF waiver for the cases they own. BBB: a BBB threat alone is handled as BAU, not escalated to SR. An actual filed BBB complaint follows the HDR Ticket Handling Process, not Service Recovery.');
+    const w = (9.1 - 0.15) / 2;
+    await card(s, 0.45, 1.45, w, 1.7, { ico: 'FiThumbsDown', title: 'Negative CSAT, opted in', body: 'The customer left negative survey feedback and asked to be contacted by phone or email.' });
+    await card(s, 0.45 + w + 0.15, 1.45, w, 1.7, { ico: 'FiAlertTriangle', title: 'High-risk legal or FTC threat', body: '"I\'ll get a lawyer" or an FTC mention, when the risk of escalation is significantly high.' });
+    await tip(s, 3.35, 'SR decides:', 'refund eligibility, scope and any ETF waiver for the cases they own.', 'FiCheckCircle');
+    await tip(s, 3.9, 'BBB:', 'a threat is BAU. A filed complaint follows the HDR Ticket Handling Process.', 'FiInfo');
+  }
+
+  {
+    const s = content(SR, 'Material vs. general legal threats', 'Only some legal language needs Service Recovery.',
+      'Material legal threats (Attorney General threat, formal legal letter, lawyer CC\'d on comms, class action threat, email from a law firm, threat to join ongoing litigation, small claims court threat): no SR escalation needed. The agent waives the ETF and cancels FC immediately. See ETF Waivers > Material Legal Threats for the full reasoning. General legal threats ("I\'ll get a lawyer," FTC mention, social media threat): handle as BAU; escalate to SR only if the risk of escalation is significant. BBB is a special case: a threat is BAU with no escalation; an actual filed complaint follows the HDR Ticket Handling Process, not SR.');
+    table(s, ['', 'Material legal threat', 'General legal threat', 'BBB (special case)'], [
+      ['Examples', 'Attorney General, formal legal letter, lawyer CC\'d, class action, email from a law firm, joining litigation, small claims court', '"I\'ll get a lawyer," FTC mention, social media threat', '"I\'ll report this to the BBB" vs. an actual filed complaint'],
+      ['What you do', 'No SR needed. Waive the ETF and cancel FC immediately.', 'Handle as BAU. Escalate to SR only if the risk is significant.', 'Threat: BAU, no escalation. Filed complaint: HDR ticket process.'],
+    ], { y: 1.45, colW: [1.3, 2.6, 2.6, 2.6], fontSize: 9.5, rowH: [0.4, 1.25, 0.85] });
+    await tip(s, 4.25, 'Remember:', 'material threats skip SR. The waiver is immediate.', 'FiZap');
+  }
+
+  {
+    const s = content(SR + '  ·  Practice', 'Material or general?', 'Read each message, decide, then click to reveal.',
+      'TRAINER: read each message aloud and have trainees call it: material, general, or BBB. Each click reveals the next answer. Material: waive the ETF and cancel FC immediately, no SR. General: BAU, escalate to SR only if the risk is significant. BBB threat: BAU.');
+    const qa = [
+      ['"I\'m going to file a complaint with the Attorney General about this."', 'Material. Waive the ETF, cancel FC. No SR.'],
+      ['"If this doesn\'t get fixed, I\'m getting a lawyer involved."', 'General. BAU; SR only if the risk is significant.'],
+      ['"My lawyer has been CC\'d on this email and will be following up."', 'Material. Waive the ETF, cancel FC. No SR.'],
+      ['"I\'m reporting this to the Better Business Bureau."', 'BBB threat. BAU, no escalation.'],
+      ['"If this isn\'t resolved, I\'m filing in small claims court."', 'Material. Waive the ETF, cancel FC. No SR.'],
+      ['"I\'ll be filing a complaint with the FTC."', 'General. BAU; SR only if the risk is significant.'],
+    ];
+    const n = qa.length, h = (3.75 - 0.08 * (n - 1)) / n;
+    for (let i = 0; i < n; i++) {
+      const y = 1.4 + i * (h + 0.08);
+      box(s, 0.45, y, 5.05, h, C.white, C.border);
+      badge(s, 0.6, y + (h - 0.3) / 2, i + 1);
+      T(s, qa[i][0], { x: 1.05, y, w: 4.35, h, fontSize: 9.5, italic: true, valign: 'middle' });
+      box(s, 5.6, y, 3.95, h, C.tealSoft);
+      T(s, qa[i][1], { x: 5.75, y, w: 3.7, h, fontSize: 9.5, valign: 'middle', objectName: `step${i + 1}Ans` });
+    }
+  }
+
+  {
+    const s = content(SR, 'How to escalate', null,
+      'Escalate by submitting the Transformation to SR Reassignment Form. Exemption: if the ticket is "C responded to SR," no form is needed: message/DM the last SR agent who handled it to let them know the customer responded. If that agent is offline, reach out to any available SR agent on shift (currently Avegaile "Avie" Gaco, Liz, LorraineYvone, Ann); check the SR schedule sheet linked in the Knowledge Library. Cases marked Handle as BAU or Invalid Escalation are sent back automatically via the Slack channel with SWAT notes: the original agent takes ownership back, reviews the notes, and proceeds accordingly.');
+    const lx = 2.55, rx = 7.45, w = 3.6;
+    await flowBox(s, 5.0 - 1.4, 1.15, 2.8, 0.38, 'ESCALATE TO SR', 'penalty');
+    flowLine(s, [[5.0, 1.53], [5.0, 1.7]], true);
+    await flowBox(s, 5.0 - 1.9, 1.7, 3.8, 0.45, 'Is the ticket "C responded to SR"?', 'decision');
+    flowSplit(s, 5.0, 2.15, 2.35, lx, rx, 2.55, 'No', 'Yes');
+    await flowBox(s, lx - w / 2, 2.55, w, 0.5, 'Submit the Transformation to\nSR Reassignment Form', 'action');
+    await flowBox(s, rx - w / 2, 2.55, w, 0.5, 'DM the last SR agent who handled it', 'action');
+    flowLine(s, [[rx, 3.05], [rx, 3.22]], true);
+    await flowBox(s, rx - w / 2, 3.22, w, 0.45, 'Offline? Any SR agent on shift', 'end');
+    T(s, 'No form needed: just let them know the customer responded.', { x: lx - w / 2, y: 3.12, w, h: 0.5, fontSize: 9, color: C.soft, align: 'center', valign: 'top' });
+    await tip(s, 4.0, 'Sent back?', '"Handle as BAU" or "Invalid Escalation": it\'s yours again. Review the SWAT notes and proceed.', 'FiCornerDownLeft');
+  }
+
+  await knowledgeCheck(SR, [
+    ['C left negative CSAT feedback and opted in to a call. Where does it go?', 'Service Recovery, via the Transformation to SR Reassignment Form.'],
+    ['C writes: "I\'ll report this to the BBB." Escalate to SR?', 'No. A BBB threat is BAU. A filed complaint follows the HDR ticket process.'],
+    ['C\'s email CCs their lawyer. Do you escalate to SR?', 'No. It\'s a material threat: waive the ETF and cancel FC immediately.'],
+    ['The ticket says "C responded to SR." Do you fill out the form?', 'No. DM the last SR agent who handled it; if offline, any SR agent on shift.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await wrapUp(SR, [
+    ['Recognize and hand off', 'SR decides refunds, scope and ETF waivers.'],
+    ['Know the threat type', 'Material: waive now. General: BAU unless high risk. BBB threat: BAU.'],
+    ['Use the form', 'Except "C responded to SR": DM the last SR agent.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Service Recovery.');
 
   // ---------- Close ----------
   {
@@ -1129,7 +1363,7 @@ async function steps(s, y, h, items) {
     T(s, 'Thank you!', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
     T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
     await panel(s, 'ill9.png');
-    s.addNotes('Close the module. Recap: OCH (billed more than worked), Unauthorized Hours (worked but never asked), False Invoice (never showed, check who invoiced first), Cash Payment (job status decides the action), Cleaner Didn\'t Show (be certain; reschedule intent matters), Cleaner Cancellation (how they cancelled matters; rematch first), and Unauthorized Reschedule (still assigned? how far is the start?).');
+    s.addNotes('Close the module. Recap: OCH (billed more than worked), Unauthorized Hours (worked but never asked), False Invoice (never showed, check who invoiced first), Cash Payment (job status decides the action), Cleaner Didn\'t Show (be certain; reschedule intent matters), Cleaner Cancellation (how they cancelled matters; rematch first), Unauthorized Reschedule (still assigned? how far is the start?), Trust and Safety (recognize and escalate, hands off), and Service Recovery (know the threat type; use the form).');
   }
 
   await pres.writeFile({ fileName: OUT });
