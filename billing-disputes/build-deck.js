@@ -611,12 +611,6 @@ async function steps(s, y, h, items) {
     ['The cleaner is permanently suspended. Do you request documentation?', 'No. There\'s no reactivation path, so resolve directly with the customer.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
-  await wrapUp(UAH, [
-    ['Permission is the question', 'The work was real. What\'s missing is the customer\'s OK.'],
-    ['Refund first, verify after', 'Only the added hours, plus Premium if charged.'],
-    ['Coach and close the loop', '3 days for proof. Block the pairing.'],
-  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Unauthorized Addition of Hours before moving on.');
-
   {
     const s = content(UAH + '  ·  Practice', 'Let\'s practice!', 'Review the live ticket and investigate.',
       'TRAINER: provide a live ticket for trainees to review. Give them time to investigate (job history, CTJ, C/CP messages, Premium charge), then discuss. Ask: Is it Unauthorized Hours, Overcharged Hours, or something else? Did the customer authorize the extra time? What actions will you take (refund only the added hours via the CP Dashboard, refund Premium if charged, coach the CP and request evidence within 3 days, block the C/CP pairing)? How will you respond to the customer?');
@@ -626,6 +620,12 @@ async function steps(s, y, h, items) {
     await card(s, 4.5, 1.45, 5.05, 1.42, { n: 1, title: 'What will be your actions?', body: 'Which issue is it, and what will you do on the account?' });
     await card(s, 4.5, 3.03, 5.05, 1.42, { n: 2, title: 'How will you respond to the customer?', body: 'Write the reply you would send.' });
   }
+
+  await wrapUp(UAH, [
+    ['Permission is the question', 'The work was real. What\'s missing is the customer\'s OK.'],
+    ['Refund first, verify after', 'Only the added hours, plus Premium if charged.'],
+    ['Coach and close the loop', '3 days for proof. Block the pairing.'],
+  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Unauthorized Addition of Hours before moving on.');
 
   // ================= 3. FALSE INVOICE =================
   const FI = 'False Invoice';
@@ -666,15 +666,25 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(FI, 'Confirmed (cleaner-caused): 8 steps', null,
-      '1) Issue a full refund via the CP Dashboard. 2) Check the cleaner\'s Flags table for an existing cp_false_invoice flag on this job. 3) If the system already flagged it, validate that the Job ID matches; on the flag\'s Django page set Value to {"admin": "<YOUR CRM NAME>", "admin_flag_comments": "<THE ID TRIPLET>", "cp_false_invoice_job_id": <THE JOB ID>}. If no flag exists, add one: CP CRM > Do > Flag > cp_false_invoice. Always include the ID triplet (Customer ID | CP ID | Job ID) and a short summary. 4) Check the Issues Table for prior false invoice / overcharge history and penalize accordingly. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal. 5) Coach the cleaner: don\'t claim jobs you can\'t complete or invoice without working; ask the customer to reschedule, or cancel from your dashboard if they disagree. Guardian Angel or Tier 10 banner with pending items: acknowledge, don\'t clear, reassign to allentolentino. 6) Refund the Premium fee if charged (AG - Refund: Premium Upsell). 7) Block the C/CP pairing unless the customer wants the same cleaner. 8) Tell the customer the refund was issued and arrives in 5-10 business days; address other pain points. Macros: False Invoice (C-facing); False Invoice (With Penalty) (CP-facing).');
-    const items = [
-      ['Full refund', 'Via the CP Dashboard'], ['Check the flag', 'cp_false_invoice on this job?'], ['Validate or add it', 'Include the ID triplet'], ['Penalize', 'Check the Issues Table first'],
-      ['Coach the cleaner', 'Reschedule or cancel, never invoice'], ['Refund Premium', 'If charged'], ['Block the pairing', 'Unless the customer wants them'], ['Tell the customer', 'Refund in 5–10 business days'],
+    const s = content(FI, 'Confirmed false invoice: the process', null,
+      '1) Issue a full refund via the CP Dashboard. 2) Check the cleaner\'s Flags table for an existing cp_false_invoice flag on this job. 3) If the system already flagged it, validate that the Job ID matches; on the flag\'s Django page set Value to {"admin": "<YOUR CRM NAME>", "admin_flag_comments": "<THE ID TRIPLET>", "cp_false_invoice_job_id": <THE JOB ID>}. If no flag exists, add one: CP CRM > Do > Flag > cp_false_invoice. Always include the ID triplet (Customer ID | CP ID | Job ID) and a short summary. 4) Check the Issues Table for prior false invoice / overcharge history and penalize accordingly. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal. 5) Coach the cleaner: don\'t claim jobs you can\'t complete or invoice without working; ask the customer to reschedule, or cancel from your dashboard if they disagree. Guardian Angel or Tier 10 banner with pending items: acknowledge, don\'t clear, reassign to allentolentino. 6) Refund the Premium fee if charged (AG - Refund: Premium Upsell). 7) Block the C/CP pairing unless the customer wants the same cleaner. 8) Tell the customer the refund was issued and arrives in 5-10 business days; address other pain points. Macros: False Invoice (C-facing); False Invoice (With Penalty) (CP-facing). Final step: confirm the refund with the customer and offer a priority booking.');
+    const rows = [
+      ['FALSE INVOICE (CP-fault)', 'penalty', 'The CP invoiced a job they never cleaned. Confirm the CP, not the customer, invoiced it.'],
+      ['Issue a full refund via the CP dashboard', 'action', 'Full refund of the job via the CP Dashboard.'],
+      ['Check for cp_false_invoice flag (Validate or Add)', 'decision', 'Already flagged? Check the Job ID matches. No flag? CP CRM › Do › Flag › cp_false_invoice. Include the ID triplet (C | CP | Job).'],
+      ['Apply penalty', 'action', 'Check the Issues Table for past false invoices or overcharges. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged.'],
+      ['Coach / penalize the CP', 'action', 'Don\'t claim jobs you can\'t do or invoice without working: reschedule, or cancel from your dashboard. GA/Tier 10 with pending items: reassign to allentolentino.'],
+      ['Check for Premium fee and refund accordingly', 'action', 'If the customer paid a Premium fee, refund it (AG – Refund: Premium Upsell).'],
+      ['Ban the C/CP pairing', 'action', 'Always, unless the customer wants to keep the same CP.'],
+      ['Confirm refund with C + offer priority booking', 'end', 'Refund arrives in 5–10 business days. Address any other pain points.'],
     ];
-    const w = (9.1 - 0.45) / 4;
-    for (let i = 0; i < 8; i++) {
-      await card(s, 0.45 + (i % 4) * (w + 0.15), 1.25 + Math.floor(i / 4) * 1.9, w, 1.75, { n: i + 1, title: items[i][0], body: items[i][1] });
+    const x = 0.5, w = 3.55, h = 0.38, gap = 0.1, y0 = 1.15;
+    for (let i = 0; i < rows.length; i++) {
+      const y = y0 + i * (h + gap);
+      await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
+      if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
+      flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
+      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.03, w: 5.45, h: h + 0.06, fontSize: 8.5, color: C.soft, valign: 'middle' });
     }
   }
 
@@ -695,6 +705,16 @@ async function steps(s, y, h, items) {
     ['It was a Legacy DHJ customer\'s first and only job. What happens after the refund?', 'The DHJ voucher is reinstated and MFs within 120 days are auto-refunded. On FCF, only the job is refunded.'],
     ['It\'s the cleaner\'s first false invoice. What status do you set?', 'norequests, using the False Invoice (With Penalty) macro. Never add DNR.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  {
+    const s = content(FI + '  ·  Practice', 'Let\'s practice!', 'Review the live ticket and investigate.',
+      'TRAINER: provide a live ticket for trainees to review. Give them time to investigate (job history, CTJ, C/CP messages, Premium charge), then discuss. Ask: Who invoiced the job? Is it a False Invoice, Overcharged Hours, or something else? What actions will you take (full refund via the CP Dashboard, validate or add the cp_false_invoice flag, apply the penalty, coach the CP, refund Premium if charged, block the C/CP pairing)? How will you respond to the customer?');
+    await card(s, 0.45, 1.45, 3.9, 3.0, { ico: 'FiInbox', title: 'Live ticket', body: 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.' });
+    box(s, 0.65, 3.85, 1.35, 0.3, C.goldSoft);
+    T(s, 'Trainer provides', { x: 0.65, y: 3.85, w: 1.35, h: 0.3, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    await card(s, 4.5, 1.45, 5.05, 1.42, { n: 1, title: 'What will be your actions?', body: 'Which issue is it, and what will you do on the account?' });
+    await card(s, 4.5, 3.03, 5.05, 1.42, { n: 2, title: 'How will you respond to the customer?', body: 'Write the reply you would send.' });
+  }
 
   await wrapUp(FI, [
     ['Who invoiced, first', 'Customer invoiced it? Refund, no penalty.'],
