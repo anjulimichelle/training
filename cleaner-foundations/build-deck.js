@@ -917,6 +917,46 @@ async function ticketRows(s, rows) {
     await tip(s, 4.6, 'Remember:', 'the reason should match who initiated the cancellation and why.', 'FiInfo');
   }
 
+  {
+    const s = content('AG: Pending Invoice  ·  Practice', 'Let\'s practice!', 'How will you handle the following scenario?',
+      'TRAINER: give trainees a few minutes, then discuss. Read the comms: the customer told the cleaner "I\'m going to cancel it because I have some things to do myself", and the cleaner agreed ("Yeah, no problem"). The job has been in Pending Invoice for 75 hours. Suggested answer (trainer to confirm): the comms clearly show the cleaning did not happen and the customer initiated the cancellation, so per the action guide cancel the job from the C CRM (no CP penalty) with the matching customer reason code, and send the C and/or CP comms. It is also past 72 hours since the job end time. Also discuss the cleaner\'s message about not being paid: it is not part of resolving this job, but should be noted and routed appropriately.');
+    box(s, 0.45, 1.42, 9.1, 0.5, C.goldSoft);
+    s.addImage({ data: await icon('FiClock', C.gold), x: 0.65, y: 1.56, w: 0.22, h: 0.22 });
+    T(s, [{ text: 'Scenario:  ', options: { bold: true, color: C.gold } }, { text: 'the job has already been in Pending Invoice for 75 hours. Here are the C/CP comms.' }], { x: 1.0, y: 1.42, w: 8.4, h: 0.5, fontSize: 11, valign: 'middle' });
+    await shot(s, 'pi_comms.png', 0.45, 2.05, 9.1, 2.45);
+    T(s, 'Hint: check the action guide. Was the job completed, and who initiated the change?', { x: 0.45, y: 4.62, w: 9.1, h: 0.3, fontSize: 9, italic: true, color: C.soft });
+  }
+
+  {
+    const s = content('AG: Pending Invoice  ·  Practice', 'Practice writing', '5-minute writing drill',
+      'Give trainees 5 minutes to write their comms, then click Show Sample Comms (or press the right arrow) to reveal the sample. Discuss differences. Sample: Hi <C>, Just checking in about your cleaning on <Date> with <CP Name>. Were you able to get the cleaning done? If not, I\'d be happy to help find you another cleaner through priority booking. Just let me know what date and time works best for you, and I\'ll take care of it. Let me know if you need anything else! -CS, Homeaglow HQ');
+    // Scenario
+    box(s, 0.45, 1.4, 4.2, 3.7, C.white, C.border);
+    await iconDot(s, 0.65, 1.58, 'FiEdit3', 0.42);
+    T(s, 'Scenario', { x: 1.2, y: 1.58, w: 2.0, h: 0.42, fontFace: HEAD, bold: true, fontSize: 14, valign: 'middle' });
+    box(s, 3.55, 1.65, 0.9, 0.3, C.goldSoft);
+    T(s, '5 min', { x: 3.55, y: 1.65, w: 0.9, h: 0.3, fontSize: 9, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    T(s, [
+      { text: 'You\'re working on a ticket with a Pending Invoice job.', options: { breakLine: true } },
+      { text: 'The evidence is insufficient to confirm whether the cleaning was completed: there was only a call exchange between the C and the CP.', options: { breakLine: true } },
+      { text: 'The job has been in Pending Invoice for 22 hours.', options: { breakLine: true } },
+      { text: 'Write the comms to confirm with the C whether the job was completed.', options: { bold: true } },
+    ], { x: 0.65, y: 2.15, w: 3.85, h: 2.8, fontSize: 10.5, paraSpaceAfter: 8, valign: 'top' });
+    // Show Sample Comms button
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.8, y: 1.4, w: 4.75, h: 0.5, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.1 });
+    s.addImage({ data: await icon('FiEye', C.white), x: 5.0, y: 1.53, w: 0.24, h: 0.24 });
+    T(s, 'Show Sample Comms', { x: 5.35, y: 1.4, w: 4.0, h: 0.5, fontFace: HEAD, bold: true, fontSize: 13, color: C.white, valign: 'middle' });
+    // Sample comms: hidden until clicked (appears as one block)
+    box(s, 4.8, 2.0, 4.75, 3.1, C.tealSoft);
+    T(s, [
+      { text: 'Hi <C>,', options: { breakLine: true } },
+      { text: 'Just checking in about your cleaning on <Date> with <CP Name>. Were you able to get the cleaning done?', options: { breakLine: true } },
+      { text: 'If not, I\'d be happy to help find you another cleaner through priority booking. Just let me know what date and time works best for you, and I\'ll take care of it.', options: { breakLine: true } },
+      { text: 'Let me know if you need anything else!', options: { breakLine: true } },
+      { text: '-CS, Homeaglow HQ', options: { bold: true, color: C.teal } },
+    ], { x: 5.0, y: 2.12, w: 4.35, h: 2.9, fontSize: 10.5, paraSpaceAfter: 8, valign: 'top', objectName: 'step1Comms' });
+  }
+
   // ---------- Close ----------
   {
     const s = pres.addSlide({ masterName: 'CONTENT' });
