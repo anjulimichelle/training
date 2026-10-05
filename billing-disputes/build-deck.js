@@ -908,7 +908,7 @@ async function steps(s, y, h, items) {
     const cols = [
       [1.75, 'SUBMITTED', 'Advise that we\'re matching them with a new cleaner.'],
       [5.0, 'CLAIMED / PENDING INVOICE', 'Penalize CP? Report the CP as a no-show: Job Admin Page › No Show.\nNo penalty? Cancel the job from C-CRM with the CP No Show/Reschedule code.'],
-      [8.25, 'CANCELLED', 'Offer to book a Priority Booking.'],
+      [8.25, 'CANCELLED', 'Offer Priority Booking.'],
     ];
     const cw = 3.0;
     flowLine(s, [[5.0, 1.87], [5.0, 2.07]]);
@@ -998,26 +998,33 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(CC, 'The handling process', null,
-      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. 1) Attempt to rematch first, not cancel outright: if there\'s still a chance to match another CP, take that route so the customer still gets their cleaning. 2) Check the Quick Reference table for credits and free months, with the same judgment as any reliability issue: emotional state, cancellation/refund intent, existing credits or vouchers. 3) Offer a Priority Booking if the customer doesn\'t get the outcome they wanted: no reschedule option, an auto-rescheduled time they didn\'t choose, or the job goes to Cancelled. 4) Block the C/CP pairing. 5) Send comms to customer and CP: coach the CP on reliability, penalize as necessary. 6) CP status: cancelling from the CP Dashboard is how the system penalizes the CP; it usually sets norequests or suspended itself. If it did, leave it, coach the CP and explain the penalty. If it didn\'t, lean towards coaching; set norequests only if the CP already has a couple of cancellations or no-shows. C-side agents never suspend or add DNR. Reason code: cpq_cancel Your customer <C\'S NAME> reported you cancelled their <DAY, DATE> job. Submit reactivation appeal through dashboard. Macros: CP Cancel > Job Cancelled (customer-facing); No Show/Cancellation (No Request) (CP-facing); No Show/Cancellation (Permanent Deactivation) (CP-facing).');
-    await detailsButton(s, 7.6, 0.55);
-    const rows = [
-      ['CP cancelled the job', 'penalty', 'From the CP Dashboard, or by texting the customer cancellation intent.'],
-      ['Attempt to rematch first', 'action', 'Still a chance to match another CP? Take that route so the customer still gets their cleaning.'],
-      ['Check the resolution table', 'decision', 'Credits and free months, weighed against emotional state, refund/cancel intent and existing credits or vouchers.'],
-      ['Offer a Priority Booking', 'action', 'If the customer didn\'t get the outcome they wanted: no reschedule option, an auto-picked time, or the job was cancelled.'],
-      ['Block the C/CP pairing', 'action', 'So this CP can\'t claim the customer\'s jobs again.'],
-      ['Send comms to C and CP', 'action', 'Coach the CP on reliability. Penalize as necessary.'],
-      ['Check the CP\'s status', 'end', 'System penalized? Leave it and coach. If not, coach; norequests only after a couple of cancellations or no-shows. Reason: cpq_cancel.'],
+    const s = content(CC, 'The handling process', 'Then, for every status: check the resolution table, fix the unreliability issue, and send comms.',
+      '1) Attempt to rematch first, not cancel outright: if there\'s still a chance to match another CP, take that route so the customer still gets their cleaning. 2) Check the Quick Reference table for credits and free months, with the same judgment as any reliability issue: emotional state, cancellation/refund intent, existing credits or vouchers. 3) Offer a Priority Booking if the customer doesn\'t get the outcome they wanted: no reschedule option, an auto-rescheduled time they didn\'t choose, or the job goes to Cancelled. 4) Block the C/CP pairing. 5) Send comms to customer and CP: coach the CP on reliability, penalize as necessary. 6) CP status: cancelling from the CP Dashboard is how the system penalizes the CP; it usually sets norequests or suspended itself. If it did, leave it, coach the CP and explain the penalty. If it didn\'t, lean towards coaching; set norequests only if the CP already has a couple of cancellations or no-shows. C-side agents never suspend or add DNR. Reason code: cpq_cancel Your customer <C\'S NAME> reported you cancelled their <DAY, DATE> job. Submit reactivation appeal through dashboard. Macros: CP Cancel > Job Cancelled (customer-facing); No Show/Cancellation (No Request) (CP-facing); No Show/Cancellation (Permanent Deactivation) (CP-facing).');
+    // Flowchart: one cancellation, three job statuses, one shared set of next steps.
+    await flowBox(s, 5.0 - 1.4, 1.45, 2.8, 0.42, 'CLEANER CANCELLATION', 'penalty');
+    const cols = [
+      [1.75, 'SUBMITTED', 'Advise that we\'re matching them with a new cleaner.'],
+      [5.0, 'CLAIMED / PENDING INVOICE', 'Cancel via the CP Dashboard or rematch the CP.'],
+      [8.25, 'CANCELLED', 'Offer Priority Booking.'],
     ];
-    const x = 0.5, w = 3.55, h = 0.42, gap = 0.12, y0 = 1.2;
-    for (let i = 0; i < rows.length; i++) {
-      const y = y0 + i * (h + gap);
-      await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
-      if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
-      flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
-      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.04, w: 5.45, h: h + 0.08, fontSize: 8.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
+    const cw = 3.0;
+    flowLine(s, [[5.0, 1.87], [5.0, 2.07]]);
+    flowLine(s, [[1.75, 2.07], [8.25, 2.07]]);
+    for (const [cx, head, body] of cols) {
+      flowLine(s, [[cx, 2.07], [cx, 2.25]], true);
+      await flowBox(s, cx - cw / 2, 2.25, cw, 0.38, head, 'action');
+      box(s, cx - cw / 2, 2.63, cw, 0.92, C.tealSoft, C.teal);
+      T(s, body, { x: cx - cw / 2 + 0.1, y: 2.63, w: cw - 0.2, h: 0.92, fontSize: 9.5, color: C.ink, align: 'center', valign: 'middle' });
+      flowLine(s, [[cx, 3.55], [cx, 3.72]]);
     }
+    flowLine(s, [[1.75, 3.72], [8.25, 3.72]]);
+    flowLine(s, [[5.0, 3.72], [5.0, 3.88]], true);
+    box(s, 1.6, 3.88, 6.8, 1.15, C.goldSoft, C.gold);
+    T(s, [
+      { text: 'See the quick reference for credits / free months', options: { bullet: true, breakLine: true } },
+      { text: 'Address the unreliability issue: ban the C/CP pairing, penalize as necessary, offer Priority Booking', options: { bullet: true, breakLine: true } },
+      { text: 'Send comms to C and CP', options: { bullet: true } },
+    ], { x: 1.8, y: 3.9, w: 6.45, h: 1.1, fontSize: 9.5, color: C.ink, paraSpaceAfter: 3, valign: 'middle' });
   }
 
   {
