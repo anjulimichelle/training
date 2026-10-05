@@ -1,6 +1,7 @@
 """Add on-click builds Google Slides keeps:
 - a shape named reveal*: its paragraphs fade in one per click (line by line);
-- shapes named stepN*: everything with the same N appears together, one step per click, in N order."""
+- shapes named stepN*: everything with the same N appears together, one step per click, in N order;
+- shapes named typeN*: one per click, typed in letter by letter (PowerPoint typewriter; Google may show it whole)."""
 import re, sys, zipfile
 
 src, dst = sys.argv[1], sys.argv[2]
@@ -12,6 +13,15 @@ def effect(cid, tgt, node):
             f'<p:set><p:cBhvr><p:cTn id="{cid+1}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>{tgt}'
             f'<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>'
             f'<p:animEffect transition="in" filter="fade"><p:cBhvr><p:cTn id="{cid+2}" dur="600"/>{tgt}</p:cBhvr></p:animEffect>'
+            f'</p:childTnLst></p:cTn></p:par>')
+
+
+def typed(cid, tgt, node):
+    """Appear, iterated by letter (40 ms apart): the PowerPoint typewriter build."""
+    return (f'<p:par><p:cTn id="{cid}" presetID="1" presetClass="entr" presetSubtype="0" fill="hold" grpId="0" nodeType="{node}">'
+            f'<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:iterate type="lt"><p:tmAbs val="40"/></p:iterate><p:childTnLst>'
+            f'<p:set><p:cBhvr><p:cTn id="{cid+1}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>{tgt}'
+            f'<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>'
             f'</p:childTnLst></p:cTn></p:par>')
 
 
@@ -63,6 +73,10 @@ for item in zin.infolist():
                 # build entries only for sp shapes (pictures don't take one)
                 if re.search(rf'<p:sp>(?:(?!</p:sp>).)*?<p:cNvPr id="{sid}"', x, re.S):
                     bld.append(f'<p:bldP spid="{sid}" grpId="0" animBg="1"/>')
+        for sid, n in sorted(re.findall(r'<p:cNvPr id="(\d+)" name="type(\d+)[^"]*"', x), key=lambda t: int(t[1])):
+            clicks.append(click(cid, typed(cid + 2, f'<p:tgtEl><p:spTgt spid="{sid}"/></p:tgtEl>', 'clickEffect')))
+            cid += 4
+            bld.append(f'<p:bldP spid="{sid}" grpId="0" animBg="1"/>')
         if clicks:
             x = x.replace('</p:sld>', timing(clicks, bld) + '</p:sld>')
             data = x.encode('utf8')

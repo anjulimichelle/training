@@ -273,6 +273,13 @@ function flowSplit(s, cx, y0, yBar, lx, rx, yChild, lLabel, rLabel) {
   T(s, rLabel, { x: rx + 0.08, y: yBar + 0.02, w: 0.6, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
 }
 
+// Button that cues the click-to-reveal descriptions on a flowchart slide.
+async function detailsButton(s, x, y) {
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: 1.95, h: 0.4, fill: { color: C.teal }, line: { color: C.teal }, rectRadius: 0.08 });
+  s.addImage({ data: await icon('FiPlayCircle', C.white), x: x + 0.15, y: y + 0.1, w: 0.2, h: 0.2 });
+  T(s, 'Show details', { x: x + 0.42, y, w: 1.45, h: 0.4, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, valign: 'middle' });
+}
+
 // Knowledge check: question on the left, answer on the right revealed one per click (step1..step4).
 async function knowledgeCheck(eb, qa, notes) {
   const s = content(eb + '  ·  Knowledge check', 'Knowledge check', 'Ask each question, then click to reveal the answer.', notes);
@@ -572,20 +579,21 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(UAH, 'The process', 'Refund first, verify after.',
-      'Step 1: refund only the alleged unauthorized hours via the cleaner\'s dashboard, not the full job; the base appointment was authorized and worked. Step 2: coach the cleaner on asking permission before extending; send comms about the action taken; give them 3 days to provide documentation proving the customer authorized the extra hours. Refunding first protects the customer\'s money without making them wait on an investigation. Step 3: if a Premium fee was charged, refund it; unauthorized hours is itself the service issue. Step 4: tell the customer a refund was processed on their cleaner\'s behalf, remind them to leave clear instructions for future cleaners, and block the C/CP pairing. Macros: Unauthorized Addition of Hours (customer refund); Unauthorized Addition of Hours > CP Coaching.');
+      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + 'Step 1: refund only the alleged unauthorized hours via the cleaner\'s dashboard, not the full job; the base appointment was authorized and worked. Step 2: coach the cleaner on asking permission before extending; send comms about the action taken; give them 3 days to provide documentation proving the customer authorized the extra hours. Refunding first protects the customer\'s money without making them wait on an investigation. Step 3: if a Premium fee was charged, refund it; unauthorized hours is itself the service issue. Step 4: tell the customer a refund was processed on their cleaner\'s behalf, remind them to leave clear instructions for future cleaners, and block the C/CP pairing. Macros: Unauthorized Addition of Hours (customer refund); Unauthorized Addition of Hours > CP Coaching.');
     const steps = [
       ['Refund the unauthorized hours only', 'action', 'Refund via the CP Dashboard for the alleged unauthorized hours only, not the full job.'],
       ['Coach CP + request evidence', 'action', 'Coach the CP to ask before extending. Send comms about the action taken. The CP has 3 days to prove the customer authorized the extra hours.'],
       ['Check for Premium charge', 'decision', 'If a Premium fee was charged, refund it. Unauthorized hours is itself the service issue, so the customer doesn\'t need to ask.'],
       ['Close the loop with the customer, done', 'penalty', 'Tell the customer the refund was processed on their cleaner\'s behalf. Remind them to leave clear instructions for future cleaners. Block the C/CP pairing.'],
     ];
+    await detailsButton(s, 7.6, 0.95);
     const x = 0.6, w = 3.2, h = 0.6, gap = 0.27;
     for (let i = 0; i < steps.length; i++) {
       const y = 1.5 + i * (h + gap);
       await flowBox(s, x, y, w, h, steps[i][0], steps[i][1]);
       if (i < steps.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
       flowLine(s, [[x + w, y + h / 2], [x + w + 0.3, y + h / 2]]);
-      T(s, steps[i][2], { x: x + w + 0.4, y, w: 5.15, h, fontSize: 9.5, color: C.soft, valign: 'middle' });
+      T(s, steps[i][2], { x: x + w + 0.4, y, w: 5.15, h, fontSize: 9.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
     }
   }
 
@@ -667,7 +675,7 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(FI, 'Confirmed false invoice: the process', null,
-      '1) Issue a full refund via the CP Dashboard. 2) Check the cleaner\'s Flags table for an existing cp_false_invoice flag on this job. 3) If the system already flagged it, validate that the Job ID matches; on the flag\'s Django page set Value to {"admin": "<YOUR CRM NAME>", "admin_flag_comments": "<THE ID TRIPLET>", "cp_false_invoice_job_id": <THE JOB ID>}. If no flag exists, add one: CP CRM > Do > Flag > cp_false_invoice. Always include the ID triplet (Customer ID | CP ID | Job ID) and a short summary. 4) Check the Issues Table for prior false invoice / overcharge history and penalize accordingly. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal. 5) Coach the cleaner: don\'t claim jobs you can\'t complete or invoice without working; ask the customer to reschedule, or cancel from your dashboard if they disagree. Guardian Angel or Tier 10 banner with pending items: acknowledge, don\'t clear, reassign to allentolentino. 6) Refund the Premium fee if charged (AG - Refund: Premium Upsell). 7) Block the C/CP pairing unless the customer wants the same cleaner. 8) Tell the customer the refund was issued and arrives in 5-10 business days; address other pain points. Macros: False Invoice (C-facing); False Invoice (With Penalty) (CP-facing). Final step: confirm the refund with the customer and offer a priority booking.');
+      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + '1) Issue a full refund via the CP Dashboard. 2) Check the cleaner\'s Flags table for an existing cp_false_invoice flag on this job. 3) If the system already flagged it, validate that the Job ID matches; on the flag\'s Django page set Value to {"admin": "<YOUR CRM NAME>", "admin_flag_comments": "<THE ID TRIPLET>", "cp_false_invoice_job_id": <THE JOB ID>}. If no flag exists, add one: CP CRM > Do > Flag > cp_false_invoice. Always include the ID triplet (Customer ID | CP ID | Job ID) and a short summary. 4) Check the Issues Table for prior false invoice / overcharge history and penalize accordingly. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal. 5) Coach the cleaner: don\'t claim jobs you can\'t complete or invoice without working; ask the customer to reschedule, or cancel from your dashboard if they disagree. Guardian Angel or Tier 10 banner with pending items: acknowledge, don\'t clear, reassign to allentolentino. 6) Refund the Premium fee if charged (AG - Refund: Premium Upsell). 7) Block the C/CP pairing unless the customer wants the same cleaner. 8) Tell the customer the refund was issued and arrives in 5-10 business days; address other pain points. Macros: False Invoice (C-facing); False Invoice (With Penalty) (CP-facing). Final step: confirm the refund with the customer and offer a priority booking.');
     const rows = [
       ['FALSE INVOICE (CP-fault)', 'penalty', 'The CP invoiced a job they never cleaned. Confirm the CP, not the customer, invoiced it.'],
       ['Issue a full refund via the CP dashboard', 'action', 'Full refund of the job via the CP Dashboard.'],
@@ -678,13 +686,14 @@ async function steps(s, y, h, items) {
       ['Ban the C/CP pairing', 'action', 'Always, unless the customer wants to keep the same CP.'],
       ['Confirm refund with C + offer priority booking', 'end', 'Refund arrives in 5–10 business days. Address any other pain points.'],
     ];
+    await detailsButton(s, 7.6, 0.55);
     const x = 0.5, w = 3.55, h = 0.38, gap = 0.1, y0 = 1.15;
     for (let i = 0; i < rows.length; i++) {
       const y = y0 + i * (h + gap);
       await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
       if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
       flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
-      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.03, w: 5.45, h: h + 0.06, fontSize: 8.5, color: C.soft, valign: 'middle' });
+      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.03, w: 5.45, h: h + 0.06, fontSize: 8.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
     }
   }
 
