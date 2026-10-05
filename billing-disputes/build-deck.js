@@ -1175,7 +1175,7 @@ async function steps(s, y, h, items) {
     await hFlow(s, 1.6, [
       ['T&S indicator confirmed', 'penalty', 'Matches an always-escalate item, or the customer asked (conditional cases).'],
       ['Escalate to T&S', 'action', 'Right away. Macro: Escalate report to T&S.'],
-      ['Email the customer', 'action', 'Required every time you escalate.'],
+      ['Email the customer', 'action', 'Required the first time you escalate.'],
       ['Hands off', 'end', 'No refund, no contact with the cleaner, no retention attempt.'],
     ]);
     await tip(s, 3.3, 'Why:', 'T&S evaluates liability and may waive the full ETF. Acting first can undercut that.', 'FiInfo');
@@ -1402,25 +1402,36 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(SR, 'How to escalate', null,
-      'Escalate by submitting the Transformation to SR Reassignment Form. Exemption: if the ticket is "C responded to SR," no form is needed: message/DM the last SR agent who handled it to let them know the customer responded. If that agent is offline, reach out to any available SR agent on shift (currently Avegaile "Avie" Gaco, Liz, LorraineYvone, Ann); check the SR schedule sheet linked in the Knowledge Library. Cases marked Handle as BAU or Invalid Escalation are sent back automatically via the Slack channel with SWAT notes: the original agent takes ownership back, reviews the notes, and proceeds accordingly.');
+      'First time this issue is being escalated: submit it through the Transformation to SR Reassignment Form (the green button opens the form). Not the first time, because the C is responding to SR: no form needed. DM the previous SR agent in Slack to let them know the customer responded; if they\'re offline, any SR agent online (currently Avegaile "Avie" Gaco, Liz, LorraineYvone, Ann; check the SR schedule sheet linked in the Knowledge Library). Either way, don\'t resolve the ticket: change the queue to SWAT/Service Recovery in New CRM. Cases marked Handle as BAU or Invalid Escalation are sent back automatically via the Slack channel with SWAT notes: the original agent takes ownership back, reviews the notes (Open SWAT notes button), and proceeds accordingly.');
+    const FORM = 'https://forms.gle/LzPKYjneeVsAXpbf9';
+    const SWAT = 'https://docs.google.com/spreadsheets/d/1Fn3KZLtrux1RKbrATji5G06gs3uVLljK0xJe1rbQFfk/edit?resourcekey=&gid=213718827#gid=213718827';
+    // Clickable pill that opens a link when presenting.
+    const linkButton = (x, y, w, label, url) => s.addText(label, { shape: pres.shapes.ROUNDED_RECTANGLE, x, y, w, h: 0.34, rectRadius: 0.08,
+      fill: { color: C.teal }, line: { color: C.teal }, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle',
+      hyperlink: { url, tooltip: label } });
     const lx = 2.55, rx = 7.45, w = 3.6;
     await flowBox(s, 5.0 - 1.4, 1.15, 2.8, 0.38, 'ESCALATE TO SR', 'penalty');
-    flowLine(s, [[5.0, 1.53], [5.0, 1.7]], true);
-    await flowBox(s, 5.0 - 1.9, 1.7, 3.8, 0.45, 'Is the ticket "C responded to SR"?', 'decision');
-    flowSplit(s, 5.0, 2.15, 2.35, lx, rx, 2.55, 'No', 'Yes');
-    await flowBox(s, lx - w / 2, 2.55, w, 0.5, 'Submit the Transformation to\nSR Reassignment Form', 'action');
-    await flowBox(s, rx - w / 2, 2.55, w, 0.5, 'DM the last SR agent who handled it', 'action');
-    flowLine(s, [[rx, 3.05], [rx, 3.22]], true);
-    await flowBox(s, rx - w / 2, 3.22, w, 0.45, 'Offline? Any SR agent on shift', 'end');
-    T(s, 'No form needed: just let them know the customer responded.', { x: lx - w / 2, y: 3.12, w, h: 0.5, fontSize: 9, color: C.soft, align: 'center', valign: 'top' });
-    await tip(s, 4.0, 'Sent back?', '"Handle as BAU" or "Invalid Escalation": it\'s yours again. Review the SWAT notes and proceed.', 'FiCornerDownLeft');
+    flowLine(s, [[5.0, 1.53], [5.0, 1.68]], true);
+    await flowBox(s, 5.0 - 1.95, 1.68, 3.9, 0.45, '1st time this issue is being escalated?', 'decision');
+    flowSplit(s, 5.0, 2.13, 2.3, lx, rx, 2.5, 'Yes', '');
+    T(s, 'No: C is responding to SR', { x: rx + 0.08, y: 2.32, w: 2.4, h: 0.22, fontSize: 8.5, bold: true, color: C.soft });
+    await flowBox(s, lx - w / 2, 2.5, w, 0.55, 'Submit through the Transformation\nto SR Reassignment Form', 'action');
+    linkButton(lx - 0.95, 3.13, 1.9, 'Open the form  ↗', FORM);
+    await flowBox(s, rx - w / 2, 2.5, w, 0.55, 'DM the previous SR agent in Slack,\nor any SR agent online', 'action');
+    T(s, 'No need to submit the form.', { x: rx - w / 2, y: 3.12, w, h: 0.34, fontSize: 9, color: C.soft, align: 'center', valign: 'middle' });
+    for (const cx of [lx, rx]) {
+      flowLine(s, [[cx, 3.47], [cx, 3.62]], true);
+      await flowBox(s, cx - w / 2, 3.62, w, 0.5, 'Don\'t resolve. Change the queue to\nSWAT/Service Recovery in New CRM', 'end');
+    }
+    await tip(s, 4.35, 'Sent back?', '"Handle as BAU" or "Invalid Escalation": it\'s yours again. Review the SWAT notes.', 'FiCornerDownLeft');
+    linkButton(7.75, 4.39, 1.7, 'Open SWAT notes  ↗', SWAT);
   }
 
   await knowledgeCheck(SR, [
     ['C left negative CSAT feedback and opted in to a call. Where does it go?', 'Service Recovery, via the Transformation to SR Reassignment Form.'],
     ['C writes: "I\'ll report this to the BBB." Escalate to SR?', 'No. A BBB threat is BAU. A filed complaint follows the HDR ticket process.'],
     ['C\'s email CCs their lawyer. Do you escalate to SR?', 'No. It\'s a material threat: waive the ETF and cancel FC immediately.'],
-    ['The ticket says "C responded to SR." Do you fill out the form?', 'No. DM the last SR agent who handled it; if offline, any SR agent on shift.'],
+    ['The ticket says "C responded to SR." Do you fill out the form?', 'No. DM the previous SR agent in Slack, or any SR agent online.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
   await wrapUp(SR, [

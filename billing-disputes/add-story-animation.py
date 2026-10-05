@@ -46,12 +46,17 @@ for item in zin.infolist():
     data = zin.read(item.filename)
     if re.match(r'ppt/slides/slide\d+\.xml$', item.filename):
         x = data.decode('utf8')
-        # Slide-jump buttons: the link lives on the shape, so drop pptxgenjs's
-        # duplicate run-level link and its forced underline.
-        if 'ppaction://hlinksldjump' in x:
-            x = re.sub(r'<a:hlinkClick r:id="rId\d+" action="ppaction://hlinksldjump"[^>]*>(.*?)</a:hlinkClick>', r'\1', x, flags=re.S)
-            x = re.sub(r'(<a:rPr[^>]*?) u="sng"([^>]*>(?:(?!</a:rPr>).)*?ahyp:hlinkClr)', r'\1 u="none"\2', x, flags=re.S)
-            x = re.sub(r'\s*<a:extLst>\s*<a:ext uri="\{A12FA001-AC4F-418D-AE19-62706E023703\}">.*?</a:extLst>', '', x, flags=re.S)
+        # Linked buttons: the link lives on the shape, so drop pptxgenjs's duplicate
+        # run-level link and its forced underline.
+        if '<a:hlinkClick' in x:
+            def clean(m):
+                sp = m.group(0)
+                if not re.search(r'<p:cNvPr[^>]*>\s*<a:hlinkClick', sp):
+                    return sp
+                sp = re.sub(r'(<a:rPr[^>]*>)(.*?)<a:hlinkClick[^>]*?(?:/>|>.*?</a:hlinkClick>)', r'\1\2', sp, flags=re.S)
+                sp = re.sub(r'(<a:rPr[^>]*?) u="sng"', r'\1 u="none"', sp)
+                return re.sub(r'\s*<a:extLst>\s*<a:ext uri="\{A12FA001-AC4F-418D-AE19-62706E023703\}">.*?</a:extLst>', '', sp, flags=re.S)
+            x = re.sub(r'<p:sp>.*?</p:sp>', clean, x, flags=re.S)
             data = x.encode('utf8')
         clicks, bld, cid = [], [], 3
         m = re.search(r'<p:cNvPr id="(\d+)" name="reveal', x)
