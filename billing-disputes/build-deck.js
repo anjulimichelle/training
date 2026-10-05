@@ -582,8 +582,8 @@ async function steps(s, y, h, items) {
       'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + 'Step 1: refund only the alleged unauthorized hours via the cleaner\'s dashboard, not the full job; the base appointment was authorized and worked. Step 2: coach the cleaner on asking permission before extending; send comms about the action taken; give them 3 days to provide documentation proving the customer authorized the extra hours. Refunding first protects the customer\'s money without making them wait on an investigation. Step 3: if a Premium fee was charged, refund it; unauthorized hours is itself the service issue. Step 4: tell the customer a refund was processed on their cleaner\'s behalf, remind them to leave clear instructions for future cleaners, and block the C/CP pairing. Macros: Unauthorized Addition of Hours (customer refund); Unauthorized Addition of Hours > CP Coaching.');
     const steps = [
       ['Refund the unauthorized hours only', 'action', 'Refund via the CP Dashboard for the alleged unauthorized hours only, not the full job.'],
-      ['Coach CP + request evidence', 'action', 'Coach the CP to ask before extending. Send comms about the action taken. The CP has 3 days to prove the customer authorized the extra hours.'],
-      ['Check for Premium charge', 'decision', 'If a Premium fee was charged, refund it. Unauthorized hours is itself the service issue, so the customer doesn\'t need to ask.'],
+      ['Coach CP + request evidence', 'action', 'Send coaching comms to the CP. The CP has 3 days to prove the customer authorized the extra hours.'],
+      ['Check for Premium charge', 'decision', 'If a Premium fee was charged, refund it.'],
       ['Close the loop with the customer, done', 'penalty', 'Tell the customer the refund was processed on their cleaner\'s behalf. Remind them to leave clear instructions for future cleaners. Block the C/CP pairing.'],
     ];
     await detailsButton(s, 7.6, 0.95);
@@ -677,11 +677,11 @@ async function steps(s, y, h, items) {
     const s = content(FI, 'Confirmed false invoice: the process', null,
       'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + '1) Issue a full refund via the CP Dashboard. 2) Check the cleaner\'s Flags table for an existing cp_false_invoice flag on this job. 3) If the system already flagged it, validate that the Job ID matches; on the flag\'s Django page set Value to {"admin": "<YOUR CRM NAME>", "admin_flag_comments": "<THE ID TRIPLET>", "cp_false_invoice_job_id": <THE JOB ID>}. If no flag exists, add one: CP CRM > Do > Flag > cp_false_invoice. Always include the ID triplet (Customer ID | CP ID | Job ID) and a short summary. 4) Check the Issues Table for prior false invoice / overcharge history and penalize accordingly. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged. Submit reactivation appeal. 5) Coach the cleaner: don\'t claim jobs you can\'t complete or invoice without working; ask the customer to reschedule, or cancel from your dashboard if they disagree. Guardian Angel or Tier 10 banner with pending items: acknowledge, don\'t clear, reassign to allentolentino. 6) Refund the Premium fee if charged (AG - Refund: Premium Upsell). 7) Block the C/CP pairing unless the customer wants the same cleaner. 8) Tell the customer the refund was issued and arrives in 5-10 business days; address other pain points. Macros: False Invoice (C-facing); False Invoice (With Penalty) (CP-facing). Final step: confirm the refund with the customer and offer a priority booking.');
     const rows = [
-      ['FALSE INVOICE (CP-fault)', 'penalty', 'The CP invoiced a job they never cleaned. Confirm the CP, not the customer, invoiced it.'],
+      ['FALSE INVOICE (CP-fault)', 'penalty', 'Confirm if it was the CP who invoiced the job.'],
       ['Issue a full refund via the CP dashboard', 'action', 'Full refund of the job via the CP Dashboard.'],
       ['Check for cp_false_invoice flag (Validate or Add)', 'decision', 'Already flagged? Check the Job ID matches. No flag? CP CRM › Do › Flag › cp_false_invoice. Include the ID triplet (C | CP | Job).'],
-      ['Apply penalty', 'action', 'Check the Issues Table for past false invoices or overcharges. Reason: cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged.'],
-      ['Coach / penalize the CP', 'action', 'Don\'t claim jobs you can\'t do or invoice without working: reschedule, or cancel from your dashboard. GA/Tier 10 with pending items: reassign to allentolentino.'],
+      ['Apply penalty', 'action', 'If CP invoiced: penalty (cp facing reason cpq_false_invoice Customer <C\'S NAME> reported incorrect hours charged) + false invoice flag'],
+      ['Coach / penalize the CP', 'action', 'Send coaching comms to CP'],
       ['Check for Premium fee and refund accordingly', 'action', 'If the customer paid a Premium fee, refund it (AG – Refund: Premium Upsell).'],
       ['Ban the C/CP pairing', 'action', 'Always, unless the customer wants to keep the same CP.'],
       ['Confirm refund with C + offer priority booking', 'end', 'Refund arrives in 5–10 business days. Address any other pain points.'],
@@ -763,12 +763,21 @@ async function steps(s, y, h, items) {
   {
     const s = content(CASH, 'Key principles', null,
       'Don\'t penalize customers for paying off-platform: they\'re not breaking the rules, the cleaner is. Don\'t act as an investigator when there\'s nothing to go on: with no cleaner report and no proof from the customer, focus on the customer\'s experience. How the cash payment was confirmed changes the tone of the coaching, not the cleaner\'s status. Remind the customer that payment runs through the platform, not cash, unless it\'s a tip: many don\'t realise the job still has to be invoiced, and a cash payment today can still turn into a charge later.');
-    await cards(s, 1.4, 2.25, [
-      { ico: 'FiHeart', title: 'Not the customer', body: 'The cleaner broke the rule, not them.' },
-      { ico: 'FiSearch', title: 'Nothing to go on?', body: 'Nothing to go on? Focus on the customer\'s experience.' },
-      { ico: 'FiMessageSquare', title: 'Tone, not status', body: 'How it was confirmed changes the coaching tone.' },
-      { ico: 'FiCreditCard', title: 'Remind the customer', body: 'Pay through the platform. Cash is only for tips.' },
-    ]);
+    // Titles here run long, so give them two lines before the body.
+    const items = [
+      { ico: 'FiHeart', title: 'Don’t penalize the  customer', body: 'The cleaner broke the rule, not them.' },
+      { ico: 'FiSearch', title: 'Don’t act as investigator', body: 'Nothing to go on? Focus on the customer\'s experience.' },
+      { ico: 'FiMessageSquare', title: 'Coaching tone - based on how cash payment was confirmed', body: 'How it was confirmed changes the coaching tone.' },
+      { ico: 'FiCreditCard', title: 'Remind the customer where payment runs', body: 'Pay through the platform. Cash is only for tips.' },
+    ];
+    const cw = (9.1 - 0.45) / 4;
+    for (let i = 0; i < items.length; i++) {
+      const x = 0.45 + i * (cw + 0.15), y = 1.4;
+      box(s, x, y, cw, 2.6, C.white, C.border);
+      await iconDot(s, x + 0.18, y + 0.18, items[i].ico, 0.36);
+      T(s, items[i].title, { x: x + 0.18, y: y + 0.66, w: cw - 0.36, h: 0.92, fontFace: HEAD, bold: true, fontSize: 12, valign: 'top' });
+      T(s, items[i].body, { x: x + 0.18, y: y + 1.65, w: cw - 0.36, h: 0.9, fontSize: 9.5, color: C.soft, valign: 'top' });
+    }
   }
 
   {
@@ -794,16 +803,28 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(CASH, 'Branch B: the customer told us first', 'C-side agent. Check the CP CRM before anything else.',
-      'Report found, not yet actioned: resolve it yourself, no need to wait for the CP-side queue. Same amount gate as Branch A. Pending Invoice: cancel via the C CRM ("does not want the service"); if partial, invoice the remaining balance. Invoiced: refund via the CP Dashboard; if partial, admin refund the customer for the cash-paid portion (based on CP Pay) and apply a CP Holdback for the same amount. Soft ladder. Nothing on file: ask the customer for proof (encourage, don\'t require). Call the cleaner within business hours (8AM-8PM their local time); no answer, send an SMS; outside business hours, email. Set a 48-hour Timed Reminder. Customer provides proof: resolve per the job status, hard ladder. No proof but the cleaner admits it: resolve per the job status, soft ladder. Cleaner denies and no proof: no refund, no penalty; assess for retention: high-value or retention-likely (multiple completed jobs, high LTNR): voucher covering the full job hours; otherwise $20-$50 in platform credits; Internal Reason: cash_payment. Macros: Accepted Cash (Coaching); Accepted Cash (Warning + Account Adjustment); Refund confirmation: credit card refund processed.');
-    const w = (9.1 - 0.15) / 2;
-    await card(s, 0.45, 1.4, w, 1.45, { ico: 'FiFileText', title: 'Report on file', body: 'Resolve it yourself. Get the amount, act on the status, soft ladder.' });
-    await card(s, 0.45 + w + 0.15, 1.4, w, 1.45, { ico: 'FiPhoneCall', title: 'Nothing on file', body: 'Ask the customer for proof. Call or text the cleaner. 48-hr Timed Reminder.' });
-    table(s, ['Outcome', 'What to do'], [
-      ['Customer provides proof', 'Resolve per job status. Hard ladder'],
-      ['Cleaner admits it', 'Resolve per job status. Soft ladder'],
-      ['Cleaner denies, no proof', 'No refund, no penalty. Retention: voucher (high value) or $20–$50 credits'],
-    ], { y: 3.0, colW: [2.8, 6.3], fontSize: 9.5, rowH: 0.4 });
+    const s = content(CASH, 'Branch B: the customer told us first', null,
+      'TRAINER: descriptions are hidden. Click Show details (or press the right arrow): each click types out the next step\'s description. ' + 'Report found, not yet actioned: resolve it yourself, no need to wait for the CP-side queue. Same amount gate as Branch A. Pending Invoice: cancel via the C CRM ("does not want the service"); if partial, invoice the remaining balance. Invoiced: refund via the CP Dashboard; if partial, admin refund the customer for the cash-paid portion (based on CP Pay) and apply a CP Holdback for the same amount. Soft ladder. Nothing on file: ask the customer for proof (encourage, don\'t require). Call the cleaner within business hours (8AM-8PM their local time); no answer, send an SMS; outside business hours, email. Set a 48-hour Timed Reminder. Customer provides proof: resolve per the job status, hard ladder. No proof but the cleaner admits it: resolve per the job status, soft ladder. Cleaner denies and no proof: no refund, no penalty; assess for retention: high-value or retention-likely (multiple completed jobs, high LTNR): voucher covering the full job hours; otherwise $20-$50 in platform credits; Internal Reason: cash_payment. Macros: Accepted Cash (Coaching); Accepted Cash (Warning + Account Adjustment); Refund confirmation: credit card refund processed.');
+    await detailsButton(s, 7.6, 0.55);
+    const rows = [
+      ['Customer says they paid the CP cash', 'penalty', 'C-side agent: the customer contacted us first. The CP-side ticket may not be worked yet, or the CP never reported it.'],
+      ['Check CP CRM for a cash report', 'decision', 'Look for an existing cash-payment report on this job/CP before doing anything else.'],
+      ['Report on file, but not yet actioned', 'action', 'Resolve it yourself. Get the amount first (or a clear "paid in full"). Pending Invoice: cancel via C CRM, or invoice the balance if partial. Invoiced: refund via CP Dashboard. Soft ladder.'],
+      ['Nothing on file: ask C for proof', 'action', 'Encourage proof, don\'t require it.'],
+      ['Contact the CP', 'action', 'Call within business hours (8AM–8PM CP local time). No answer: SMS. Outside business hours: email.'],
+      ['Set a 48-hour Timed Reminder', 'action', 'Pick the ticket back up when it triggers.'],
+      ['C provides proof → hard ladder', 'action', 'Resolve per job status, whatever the CP says. It\'s treated as getting caught, not disclosing.'],
+      ['CP admits it → soft ladder', 'action', 'Resolve per job status. It\'s still an admission, just a later one.'],
+      ['CP denies, no proof → retention', 'end', 'No refund, no penalty. High value: voucher for the full job hours. Otherwise $20–$50 credits. Reason: cash_payment.'],
+    ];
+    const x = 0.5, w = 3.55, h = 0.34, gap = 0.08, y0 = 1.15;
+    for (let i = 0; i < rows.length; i++) {
+      const y = y0 + i * (h + gap);
+      await flowBox(s, x, y, w, h, rows[i][0], rows[i][1]);
+      if (i < rows.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
+      flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
+      T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.04, w: 5.45, h: h + 0.08, fontSize: 8, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
+    }
   }
 
   await knowledgeCheck(CASH, [
