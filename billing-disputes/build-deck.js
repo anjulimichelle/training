@@ -324,21 +324,46 @@ async function steps(s, y, h, items) {
   }
 
   // ---------- Agenda ----------
+  // Each row links to its topic's title slide. Slide numbers aren't known yet,
+  // so the links are filled in from topicSlides once every slide is built.
+  const agendaLinks = [], topicSlides = [];
+  let agendaSlide;
+  const addTopic = topic;
+  topic = async (...args) => { const t = await addTopic(...args); topicSlides.push(t._slideNum); return t; };
   {
-    const s = content('Overview', 'Agenda', 'Seven topics. Each ends with a knowledge check and time for questions.',
-      'The first three topics are the "unworked hours" family: they all look the same to the customer ("I was charged for time I didn\'t get"), but each has a different question, different evidence and a different resolution. The fourth topic covers customers paying cleaners off the platform. Topics 5 to 7 cover reliability issues: no-shows, cleaner cancellations, and unauthorized reschedules.');
+    const s = agendaSlide = content('Overview', 'Agenda', 'Nine topics. Click a topic to jump to it.',
+      'The first three topics are the "unworked hours" family: they all look the same to the customer ("I was charged for time I didn\'t get"), but each has a different question, different evidence and a different resolution. The fourth topic covers customers paying cleaners off the platform. Topics 5 to 7 cover reliability issues: no-shows, cleaner cancellations, and unauthorized reschedules. Topics 8 and 9 cover the specialized escalation teams: Trust and Safety, and Service Recovery. In slideshow mode, click any topic to jump straight to it.');
     const rows = [
-      ['01', 'Overcharged Hours (OCH)', 'The cleaner billed more time than they worked'],
-      ['02', 'Unauthorized Addition of Hours', 'The cleaner added time without the customer\'s OK'],
-      ['03', 'False Invoice', 'The cleaner billed a job they never did'],
-      ['04', 'Disintermediation: Cash Payment', 'The customer paid the cleaner directly'],
-      ['05', 'Cleaner Didn\'t Show', 'The cleaner claimed the job but never came'],
-      ['06', 'Cleaner Cancellation', 'The cleaner cancelled a claimed job'],
-      ['07', 'Unauthorized Reschedule', 'The cleaner moved the job without the customer\'s OK'],
+      ['Overcharged Hours (OCH)', 'The cleaner billed more time than they worked'],
+      ['Unauthorized Addition of Hours', 'The cleaner added time without the customer\'s OK'],
+      ['False Invoice', 'The cleaner billed a job they never did'],
+      ['Disintermediation: Cash Payment', 'The customer paid the cleaner directly'],
+      ['Cleaner Didn\'t Show', 'The cleaner claimed the job but never came'],
+      ['Cleaner Cancellation', 'The cleaner cancelled a claimed job'],
+      ['Unauthorized Reschedule', 'The cleaner moved the job without the customer\'s OK'],
+      ['Trust and Safety', 'Safety, property or conduct risk: escalate it'],
+      ['Service Recovery', 'Legal, reputational or relationship risk: hand off'],
     ];
-    const hdr = ['#', 'Topic', 'In one line'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } }));
-    const body = rows.map(r => r.map((t, i) => ({ text: t, options: { color: i === 0 ? C.teal : i === 1 ? C.ink : C.soft, bold: i < 2, fill: { color: C.white } } })));
-    s.addTable([hdr, ...body], { x: 0.45, y: 1.5, w: 9.1, colW: [0.7, 3.4, 5.0], rowH: 0.42, fontFace: BODY, fontSize: 10.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0, 0.14, 0, 0.14] });
+    const gap = 0.15, w = (9.1 - gap) / 2, h = 0.62, gy = 0.09;
+    rows.forEach(([title, line], i) => {
+      const col = i < 5 ? 0 : 1, row = i < 5 ? i : i - 5;
+      const x = 0.45 + col * (w + gap), y = 1.45 + row * (h + gy);
+      const link = { slide: 1, tooltip: 'Go to ' + title };
+      agendaLinks.push(link);
+      // One shape per row, so a click anywhere on it follows the link. The runs share
+      // the link object, so pptxgenjs registers one relationship for the whole card.
+      s.addText([
+        { text: title, options: { color: C.ink, bold: true, fontFace: HEAD, fontSize: 11.5, breakLine: true, hyperlink: link } },
+        { text: line, options: { color: C.soft, fontSize: 9, hyperlink: link } },
+      ], { shape: pres.shapes.ROUNDED_RECTANGLE, x, y, w, h, rectRadius: 0.06, fill: { color: C.white }, line: { color: C.border, width: 0.75 },
+        fontFace: BODY, valign: 'middle', margin: [45, 36, 0, 0], hyperlink: link });  // points: left, right, bottom, top
+      const num = { slide: 1, tooltip: 'Go to ' + title };
+      agendaLinks.push(num);
+      s.addText(String(i + 1).padStart(2, '0'), { x: x + 0.1, y, w: 0.45, h, fontFace: HEAD, bold: true, fontSize: 12, color: C.teal, align: 'center', valign: 'middle', hyperlink: num });
+      const arrow = { slide: 1, tooltip: 'Go to ' + title };
+      agendaLinks.push(arrow);
+      s.addText('›', { x: x + w - 0.42, y, w: 0.3, h, fontFace: HEAD, bold: true, fontSize: 18, color: C.teal, align: 'center', valign: 'middle', hyperlink: arrow });
+    });
   }
 
   // ================= 1. OVERCHARGED HOURS =================
@@ -1450,6 +1475,10 @@ async function steps(s, y, h, items) {
     s.addNotes('Close the module. Recap: OCH (billed more than worked), Unauthorized Hours (worked but never asked), False Invoice (never showed, check who invoiced first), Cash Payment (job status decides the action), Cleaner Didn\'t Show (be certain; reschedule intent matters), Cleaner Cancellation (how they cancelled matters; rematch first), Unauthorized Reschedule (still assigned? how far is the start?), Trust and Safety (recognize and escalate, hands off), and Service Recovery (know the threat type; use the form).');
   }
 
+  // Point every agenda row (card, number and arrow) at its topic's title slide.
+  if (topicSlides.length * 3 !== agendaLinks.length) throw new Error(`agenda has ${agendaLinks.length / 3} rows but the deck has ${topicSlides.length} topics`);
+  // pptxgenjs fixes a link's target when it's added, so update the stored relationship.
+  agendaLinks.forEach((l, i) => { agendaSlide._rels.find(r => r.rId === l._rId).Target = String(topicSlides[Math.floor(i / 3)]); });
   await pres.writeFile({ fileName: OUT });
   console.log('wrote', OUT);
 })();
