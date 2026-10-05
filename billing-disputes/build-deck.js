@@ -507,13 +507,8 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(OCH, 'Related scenarios', null,
-      'Cleaner brought a helper, worked half the duration, charged in full: if the customer authorized it, tell them records show they did, address other pain points, don\'t penalize. If not, go to Branch B: request documentation and coach that helpers need permission and can\'t justify full-rate billing. Cleaner refunds after being notified: treat the refund as a sign the overcharge happened unless evidence proves otherwise; if 30 minutes or more, still apply the flag (a voluntary refund confirms the violation, it doesn\'t erase it); if it happens before the first-response Timed Reminder triggers, invalidate that reminder; tell the customer the cleaner refunded. Spotted a likely overcharge before the customer reported it? Reach out proactively. Sample: "Just checking in to see how your recent cleaning with <<Cleaner Name>> on <<Date>> went. We also wanted to quickly confirm the number of hours worked during the visit, just to make sure everything looks right on your end. Let us know if you have any questions or if anything seems off - we\'re happy to help!"');
-    await cards(s, 1.3, 3.75, [
-      { ico: 'FiUsers', title: 'Helper, half the time', body: [
-        { text: 'The cleaner brought a helper, worked half the duration, and charged in full.', options: { breakLine: true } },
-        { text: 'Customer authorized it: ', options: { bold: true, color: C.ink } }, { text: 'tell them records show they did, address other pain points. Don\'t penalize the cleaner.', options: { breakLine: true } },
-        { text: 'Not authorized: ', options: { bold: true, color: C.ink } }, { text: 'go to Branch B and request documentation. Coach that helpers need permission and can\'t justify full-rate billing.' },
-      ] },
+      'Cleaner refunds after being notified: treat the refund as a sign the overcharge happened unless evidence proves otherwise; if 30 minutes or more, still apply the flag (a voluntary refund confirms the violation, it doesn\'t erase it); if it happens before the first-response Timed Reminder triggers, invalidate that reminder; tell the customer the cleaner refunded. Spotted a likely overcharge before the customer reported it? Reach out proactively. Sample: "Just checking in to see how your recent cleaning with <<Cleaner Name>> on <<Date>> went. We also wanted to quickly confirm the number of hours worked during the visit, just to make sure everything looks right on your end. Let us know if you have any questions or if anything seems off - we\'re happy to help!"');
+    await cards(s, 1.3, 3.0, [
       { ico: 'FiRotateCcw', title: 'Cleaner refunds first', body: [
         { text: 'The cleaner refunds after being told about the report.', options: { breakLine: true } },
         { text: 'Treat the refund as confirmation the overcharge happened, unless evidence proves otherwise.', options: { breakLine: true } },
@@ -578,22 +573,35 @@ async function steps(s, y, h, items) {
   {
     const s = content(UAH, 'The process', 'Refund first, verify after.',
       'Step 1: refund only the alleged unauthorized hours via the cleaner\'s dashboard, not the full job; the base appointment was authorized and worked. Step 2: coach the cleaner on asking permission before extending; send comms about the action taken; give them 3 days to provide documentation proving the customer authorized the extra hours. Refunding first protects the customer\'s money without making them wait on an investigation. Step 3: if a Premium fee was charged, refund it; unauthorized hours is itself the service issue. Step 4: tell the customer a refund was processed on their cleaner\'s behalf, remind them to leave clear instructions for future cleaners, and block the C/CP pairing. Macros: Unauthorized Addition of Hours (customer refund); Unauthorized Addition of Hours > CP Coaching.');
-    await steps(s, 1.4, 2.2, [
-      ['Refund added hours', 'Via the CP Dashboard. Only the added time, not the full job.'],
-      ['Coach the cleaner', 'Ask first, every time. They have 3 days to prove consent.'],
-      ['Refund Premium', 'If charged. No separate request needed.'],
-      ['Close the loop', 'Tell the customer, remind them to leave clear notes, block the pairing.'],
-    ]);
-    await tip(s, 3.8, 'Why refund first?', 'it protects the customer\'s money without making them wait on an investigation.', 'FiShield');
+    const steps = [
+      ['Refund the unauthorized hours only', 'action', 'Refund via the CP Dashboard for the alleged unauthorized hours only, not the full job. The booked time was authorized and worked.'],
+      ['Coach CP + request evidence', 'action', 'Coach the CP to ask before extending. Send comms about the action taken. The CP has 3 days to prove the customer authorized the extra hours.'],
+      ['Check for Premium charge', 'decision', 'If a Premium fee was charged, refund it. Unauthorized hours is itself the service issue, so the customer doesn\'t need to ask.'],
+      ['Close the loop with the customer, done', 'penalty', 'Tell the customer the refund was processed on their cleaner\'s behalf. Remind them to leave clear instructions for future cleaners. Block the C/CP pairing.'],
+    ];
+    const x = 0.6, w = 3.2, h = 0.6, gap = 0.27;
+    for (let i = 0; i < steps.length; i++) {
+      const y = 1.5 + i * (h + gap);
+      await flowBox(s, x, y, w, h, steps[i][0], steps[i][1]);
+      if (i < steps.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
+      flowLine(s, [[x + w, y + h / 2], [x + w + 0.3, y + h / 2]]);
+      T(s, steps[i][2], { x: x + w + 0.4, y, w: 5.15, h, fontSize: 9.5, color: C.soft, valign: 'middle' });
+    }
   }
 
   {
-    const s = content(UAH, 'Scenario: the helper', 'The cleaner brought a helper, worked half the duration, and charged in full.',
-      'Is there evidence the customer authorized the helper and the reduced hours? Yes: tell the customer records show they authorized it, address other pain points, don\'t penalize the cleaner. No: follow the main flow: request documentation from the cleaner and coach that helpers require permission and can\'t justify full-rate billing. If the cleaner\'s document wasn\'t just weak but faked, stop and go to AG - Fraud > CP Document Fraud.');
-    const w = (9.1 - 0.15) / 2;
-    await card(s, 0.45, 1.45, w, 1.9, { ico: 'FiCheckCircle', title: 'Customer authorized it', body: 'Tell them records show they did. Address other pain points. No penalty.' });
-    await card(s, 0.45 + w + 0.15, 1.45, w, 1.9, { ico: 'FiXCircle', title: 'No authorization', body: 'Main flow: request documentation. Coach: helpers need permission.' });
-    await tip(s, 3.55, 'Faked documents?', 'stop and go to AG – Fraud (CP Document Fraud).', 'FiAlertTriangle');
+    const s = content(UAH, 'Scenario: the helper', 'The CP brought a helper, worked half the duration, and charged in full.',
+      'This is the one real fork in this topic. Example: the customer booked 4 hours; the CP arrived with a helper, the two of them finished in 2 hours, and the CP invoiced the full 4 hours. Ask: is there evidence the customer authorized the helper and the reduced hours (for example, a message where the customer agreed)? Yes: advise the customer that records show they authorized it; address other pain points; do not penalize the CP. No: follow the main flow: refund the unauthorized hours, request documentation from the CP (3 days), and coach that helpers require permission and can\'t justify full-rate billing. If the CP\'s document wasn\'t just weak but faked, stop and go to AG - Fraud > CP Document Fraud: invalid evidence means the claim fails; faked evidence is a separate offence with a separate outcome.');
+    const cx = 5.0, lx = 2.55, rx = 7.45, w = 3.2;
+    await flowBox(s, cx - 1.75, 1.35, 3.5, 0.58, 'Evidence C authorized\nhelper + reduced hours?', 'decision');
+    flowSplit(s, cx, 1.93, 2.25, lx, rx, 2.6, 'Yes', 'No');
+    await flowBox(s, lx - w / 2, 2.6, w, 0.55, 'No penalty\nC agreed to this', 'end');
+    await flowBox(s, rx - w / 2, 2.6, w, 0.55, 'Request documentation\nSame as the main flow', 'penalty');
+    const desc = (x, items) => T(s, items.map(([b, t], i) => [{ text: b, options: { bold: true, color: C.ink } }, { text: t, options: { breakLine: i < items.length - 1 } }]).flat(),
+      { x: x - w / 2, y: 3.28, w, h: 1.25, fontSize: 9, color: C.soft, paraSpaceAfter: 3, valign: 'top' });
+    desc(lx, [['Tell the customer ', 'records show they authorized the helper and the shorter time.'], ['Address ', 'any other pain points.'], ['Don\'t ', 'penalize the CP.']]);
+    desc(rx, [['Refund ', 'the unauthorized hours via the CP Dashboard.'], ['Request ', 'documentation from the CP (3 days).'], ['Coach: ', 'helpers need permission and can\'t justify full-rate billing.']]);
+    await tip(s, 4.6, 'Faked documents?', 'stop and go to AG – Fraud (CP Document Fraud). It\'s a separate offence.', 'FiAlertTriangle');
   }
 
   await knowledgeCheck(UAH, [
