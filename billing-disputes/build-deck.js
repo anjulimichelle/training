@@ -574,7 +574,7 @@ async function steps(s, y, h, items) {
     const s = content(UAH, 'The process', 'Refund first, verify after.',
       'Step 1: refund only the alleged unauthorized hours via the cleaner\'s dashboard, not the full job; the base appointment was authorized and worked. Step 2: coach the cleaner on asking permission before extending; send comms about the action taken; give them 3 days to provide documentation proving the customer authorized the extra hours. Refunding first protects the customer\'s money without making them wait on an investigation. Step 3: if a Premium fee was charged, refund it; unauthorized hours is itself the service issue. Step 4: tell the customer a refund was processed on their cleaner\'s behalf, remind them to leave clear instructions for future cleaners, and block the C/CP pairing. Macros: Unauthorized Addition of Hours (customer refund); Unauthorized Addition of Hours > CP Coaching.');
     const steps = [
-      ['Refund the unauthorized hours only', 'action', 'Refund via the CP Dashboard for the alleged unauthorized hours only, not the full job. The booked time was authorized and worked.'],
+      ['Refund the unauthorized hours only', 'action', 'Refund via the CP Dashboard for the alleged unauthorized hours only, not the full job.'],
       ['Coach CP + request evidence', 'action', 'Coach the CP to ask before extending. Send comms about the action taken. The CP has 3 days to prove the customer authorized the extra hours.'],
       ['Check for Premium charge', 'decision', 'If a Premium fee was charged, refund it. Unauthorized hours is itself the service issue, so the customer doesn\'t need to ask.'],
       ['Close the loop with the customer, done', 'penalty', 'Tell the customer the refund was processed on their cleaner\'s behalf. Remind them to leave clear instructions for future cleaners. Block the C/CP pairing.'],
@@ -593,14 +593,14 @@ async function steps(s, y, h, items) {
     const s = content(UAH, 'Scenario: the helper', 'The CP brought a helper, worked half the duration, and charged in full.',
       'This is the one real fork in this topic. Example: the customer booked 4 hours; the CP arrived with a helper, the two of them finished in 2 hours, and the CP invoiced the full 4 hours. Ask: is there evidence the customer authorized the helper and the reduced hours (for example, a message where the customer agreed)? Yes: advise the customer that records show they authorized it; address other pain points; do not penalize the CP. No: follow the main flow: refund the unauthorized hours, request documentation from the CP (3 days), and coach that helpers require permission and can\'t justify full-rate billing. If the CP\'s document wasn\'t just weak but faked, stop and go to AG - Fraud > CP Document Fraud: invalid evidence means the claim fails; faked evidence is a separate offence with a separate outcome.');
     const cx = 5.0, lx = 2.55, rx = 7.45, w = 3.2;
-    await flowBox(s, cx - 1.75, 1.35, 3.5, 0.58, 'Evidence C authorized\nhelper + reduced hours?', 'decision');
+    await flowBox(s, cx - 1.75, 1.35, 3.5, 0.58, 'Evidence says C authorized\nhelper + reduced hours?', 'decision');
     flowSplit(s, cx, 1.93, 2.25, lx, rx, 2.6, 'Yes', 'No');
     await flowBox(s, lx - w / 2, 2.6, w, 0.55, 'No penalty\nC agreed to this', 'end');
     await flowBox(s, rx - w / 2, 2.6, w, 0.55, 'Request documentation\nSame as the main flow', 'penalty');
     const desc = (x, items) => T(s, items.map(([b, t], i) => [{ text: b, options: { bold: true, color: C.ink } }, { text: t, options: { breakLine: i < items.length - 1 } }]).flat(),
       { x: x - w / 2, y: 3.28, w, h: 1.25, fontSize: 9, color: C.soft, paraSpaceAfter: 3, valign: 'top' });
     desc(lx, [['Tell the customer ', 'records show they authorized the helper and the shorter time.'], ['Address ', 'any other pain points.'], ['Don\'t ', 'penalize the CP.']]);
-    desc(rx, [['Refund ', 'the unauthorized hours via the CP Dashboard.'], ['Request ', 'documentation from the CP (3 days).'], ['Coach: ', 'helpers need permission and can\'t justify full-rate billing.']]);
+    desc(rx, [['Follow Branch B.', ''], ['Request ', 'documentation from the CP (3 days).'], ['Coach: ', 'helpers need permission and can\'t justify full-rate billing.']]);
     await tip(s, 4.6, 'Faked documents?', 'stop and go to AG – Fraud (CP Document Fraud). It\'s a separate offence.', 'FiAlertTriangle');
   }
 
@@ -616,6 +616,16 @@ async function steps(s, y, h, items) {
     ['Refund first, verify after', 'Only the added hours, plus Premium if charged.'],
     ['Coach and close the loop', '3 days for proof. Block the pairing.'],
   ], 'TRAINER: recap the three takeaways, then open the floor for questions on Unauthorized Addition of Hours before moving on.');
+
+  {
+    const s = content(UAH + '  ·  Practice', 'Let\'s practice!', 'Review the live ticket and investigate.',
+      'TRAINER: provide a live ticket for trainees to review. Give them time to investigate (job history, CTJ, C/CP messages, Premium charge), then discuss. Ask: Is it Unauthorized Hours, Overcharged Hours, or something else? Did the customer authorize the extra time? What actions will you take (refund only the added hours via the CP Dashboard, refund Premium if charged, coach the CP and request evidence within 3 days, block the C/CP pairing)? How will you respond to the customer?');
+    await card(s, 0.45, 1.45, 3.9, 3.0, { ico: 'FiInbox', title: 'Live ticket', body: 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.' });
+    box(s, 0.65, 3.85, 1.35, 0.3, C.goldSoft);
+    T(s, 'Trainer provides', { x: 0.65, y: 3.85, w: 1.35, h: 0.3, fontSize: 8, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    await card(s, 4.5, 1.45, 5.05, 1.42, { n: 1, title: 'What will be your actions?', body: 'Which issue is it, and what will you do on the account?' });
+    await card(s, 4.5, 3.03, 5.05, 1.42, { n: 2, title: 'How will you respond to the customer?', body: 'Write the reply you would send.' });
+  }
 
   // ================= 3. FALSE INVOICE =================
   const FI = 'False Invoice';
