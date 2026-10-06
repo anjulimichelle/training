@@ -1,6 +1,6 @@
 # How to report a no show: narration script
 
-Voice: Kokoro am_puck, full-precision (fp32) model, speed 0.95. Times are seconds into the screen recording.
+Voice: Kokoro am_puck, full-precision (fp32) model, speed 0.95. No on-screen captions. Times are seconds into the screen recording.
 
 | Start | Line |
 |---|---|
@@ -12,4 +12,4 @@ Voice: Kokoro am_puck, full-precision (fp32) model, speed 0.95. Times are second
 | 28.2s | And there you go. The job now shows as cancelled. |
 | 37.6s | Now, close the Job Admin page, and refresh your CRM. |
 | 46.8s | The Pending Invoice job is gone, and it now shows as cancelled in the CRM. |
-| 53.4s | That's it! Easy, right? |
+| 53.4s | That wraps up this tutorial. Thanks for watching. |
