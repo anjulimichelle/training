@@ -580,15 +580,20 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(LMC, 'Invalid charge: reverse both sides', 'E.g. the customer cancelled because the CP wanted to reschedule or cancel, or the CP no-showed.',
-      'If the charge is invalid: 1) Refund the LMC charge via the Manual Charges section. 2) Create a Cleaner Payment Holdback for the $20 the CP received: CP CRM > Do > CleanerPaymentHoldback > create (the amount is entered in cents, so $20 = 2000). Special case: the customer was charged LMC but the job was later completed anyway. Refund the LMC charge, create a $20 holdback with invalid_lmc as the holdback type, log the ticket, then recreate the job and invoice it normally so it still triggers the customer\'s FC correctly.');
+      'If the charge is invalid: 1) Refund the LMC charge via the Manual Charges section. 2) Create a Cleaner Payment Holdback for the $20 the CP received: CP CRM > Do > CleanerPaymentHoldback > create (the amount is entered in cents, so $20 = 2000). Special case: the customer was charged LMC but the job was later completed anyway. Refund the LMC charge, create a $20 holdback with invalid_lmc as the holdback type, log the ticket, then recreate the job and invoice it normally so it still triggers the customer\'s FC correctly. TRAINER: in slideshow mode, click Refund the LMC charge or Hold back the CP\'s $20 to play that how-to video.');
     const w = 4.0, cx1 = 0.45, cx2 = 0.45 + w + 0.4;
     eyebrow(s, 'Charge was invalid', cx1, 1.5, 4, C.soft);
-    await flowBox(s, cx1, 1.8, w, 0.55, 'Refund the LMC charge', 'action');
+    // Clickable: each step opens its how-to video in Drive.
+    const videoBtn = (text, y, url, tooltip) => s.addText(text, { shape: pres.shapes.ROUNDED_RECTANGLE, x: cx1, y, w, h: 0.55, rectRadius: 0.08,
+      fill: { color: C.teal }, line: { color: C.teal, width: 1 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle',
+      hyperlink: { url, tooltip } });
+    videoBtn('▶  Refund the LMC charge', 1.8, 'https://drive.google.com/file/d/1dGh4N34uNXt2b5cvOZ1YuZrXYro7ufBa/view?usp=sharing', 'Play: how to refund the LMC fee');
     T(s, 'From the Manual Charges section.', { x: cx1, y: 2.4, w, h: 0.3, fontSize: 9.5, color: C.soft, align: 'center' });
     flowLine(s, [[cx1 + w / 2, 2.7], [cx1 + w / 2, 2.9]], true);
-    await flowBox(s, cx1, 2.9, w, 0.55, 'Hold back the CP\'s $20', 'action');
+    videoBtn('▶  Hold back the CP\'s $20', 2.9, 'https://drive.google.com/file/d/1gqoWAA__DzuEuV7R4xlQCMbLl--T5nq6/view?usp=sharing', 'Play: how to create an LMC fee holdback');
     T(s, 'CP CRM › Do › CleanerPaymentHoldback › create.\nAmount in cents: 2000.', { x: cx1, y: 3.5, w, h: 0.5, fontSize: 9.5, color: C.soft, align: 'center' });
-    eyebrow(s, 'Special case: job completed anyway', cx2, 1.5, 4.6, C.soft);
+    // Label wording as the trainer edited it in Google Slides (kept as typed, not uppercased).
+    T(s, 'SPECIAL CASE: LMC was charged but JOB COMPLETED later anyway', { x: cx2, y: 1.5, w: 4.6, h: 0.2, fontFace: HEAD, bold: true, fontSize: 8, color: C.soft, charSpacing: 0.5 });
     box(s, cx2, 1.8, 9.55 - cx2, 2.2, C.white, C.border);
     T(s, bullets(['Refund the LMC charge', '$20 holdback, type invalid_lmc', 'Log the ticket', 'Recreate the job and invoice it normally, so the customer\'s FC still triggers']),
       { x: cx2 + 0.2, y: 1.95, w: 9.55 - cx2 - 0.4, h: 1.95, fontSize: 10.5, paraSpaceAfter: 6 });
