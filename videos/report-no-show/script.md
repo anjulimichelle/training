@@ -4,7 +4,7 @@ Voice: Kokoro am_puck, full-precision (fp32) model, speed 0.95. No on-screen cap
 
 | Start | Line |
 |---|---|
-| 0.2s | Hi! In this quick video, I'll show you how to report a no-show from the Job Admin page. |
+| 0.4s | In this quick video, I'll show you how to report a no-show from the Job Admin page. |
 | 6.4s | First, find the job under Pending Invoice Jobs, and click its Job ID. |
 | 11.8s | That opens up the Job Admin page. |
 | 14.5s | From here, click Do. |
