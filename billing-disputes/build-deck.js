@@ -471,41 +471,48 @@ async function steps(s, y, h, items) {
   {
     const s = content(OCH, 'Branch B: no clear evidence present', 'Takes longer: it pauses while we wait on the CP, and picks back up when the Timed Reminder triggers.',
       'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple false invoice or overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. Timed Reminder format: Action On: 72 hours from the time of ticket handling. Who Should Act: Any CS. Action: C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>. Follow When the Timed Reminder Triggers. TRAINER DEMO: show trainees how to add a Timed Reminder in the Legacy C CRM (Do > TimedReminder > Create): set it 72 hours out, assign Any CS, and paste the Action text with the real C ID, job ID and hours. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
-    const lx = 3.0, rx = 7.6, w = 2.8, h = 0.52;
+    // Yes (skip to Branch A) on the left; No (request docs, then the reminder) on the right.
+    const lx = 2.05, rx = 6.2, w = 2.8, h = 0.52;
     await flowBox(s, 5.0 - 1.75, 1.42, 3.5, 0.55, 'CP suspended + DNR due to multiple false invoice or overcharged hours?', 'decision');
-    flowSplit(s, 5.0, 1.97, 2.2, lx, rx, 2.45, 'No', 'Yes');
-    await flowBox(s, lx - w / 2, 2.45, w, h, 'Request docs\n72-hour Timed Reminder', 'action');
+    flowSplit(s, 5.0, 1.97, 2.2, lx, rx, 2.45, 'Yes', 'No');
     // Clickable: jumps back to the Branch A slide.
-    s.addText('Skip to Branch A  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - w / 2, y: 2.45, w, h, rectRadius: 0.08,
+    s.addText('Skip to Branch A  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: lx - w / 2, y: 2.45, w, h, rectRadius: 0.08,
       fill: { color: C.teal }, line: { color: C.teal, width: 1 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle',
       hyperlink: { slide: branchA._slideNum, tooltip: 'Go to Branch A' } });
-    flowLine(s, [[lx, 2.45 + h], [lx, 3.22]], true);
-    await flowBox(s, lx - w / 2, 3.22, w, h, 'Reminder triggers\nCP provided valid proof?', 'decision');
-    flowSplit(s, lx, 3.22 + h, 3.98, 1.65, 4.35, 4.4, 'Yes', 'No');
-    await flowBox(s, 1.65 - 1.15, 4.4, 2.3, 0.46, 'No refund', 'end');
+    await flowBox(s, rx - w / 2, 2.45, w, h, 'Request docs\n72-hour Timed Reminder', 'action');
+    flowLine(s, [[rx, 2.45 + h], [rx, 3.12]], true);
+    await flowBox(s, rx - w / 2, 3.12, w, h, 'Reminder triggers\nCP provided valid proof?', 'decision');
+    flowSplit(s, rx, 3.12 + h, 3.84, 4.95, 7.45, 4.05, 'Yes', 'No');
+    await flowBox(s, 4.95 - 1.15, 4.05, 2.3, 0.46, 'No refund', 'end');
     // The penalty check looks like a button: one click opens the details on this slide.
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fill: { color: C.ink }, line: { color: C.teal, width: 2 }, rectRadius: 0.08 });
-    T(s, 'Refund, then penalty check  ›', { x: 4.35 - 1.2, y: 4.4, w: 2.4, h: 0.46, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle' });
-    // Timed Reminder format, next to the step that creates it.
-    box(s, 4.85, 2.98, 4.7, 1.32, C.white, C.border);
-    T(s, 'Timed Reminder format', { x: 5.0, y: 3.03, w: 3.0, h: 0.28, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, valign: 'middle' });
-    box(s, 8.35, 3.06, 1.1, 0.24, C.goldSoft);
-    T(s, 'Trainer demo', { x: 8.35, y: 3.06, w: 1.1, h: 0.24, fontSize: 7.5, bold: true, color: C.gold, align: 'center', valign: 'middle' });
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 7.45 - 1.2, y: 4.05, w: 2.4, h: 0.46, fill: { color: C.ink }, line: { color: C.teal, width: 2 }, rectRadius: 0.08 });
+    T(s, 'Refund, then penalty check  ›', { x: 7.45 - 1.2, y: 4.05, w: 2.4, h: 0.46, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle' });
+    // Timed Reminder format, under the Yes side; the penalty check pops up over it.
+    const px = 0.45, py = 3.12, pw = 3.2, ph = 1.39;
+    box(s, px, py, pw, ph, C.white, C.border);
+    T(s, 'Timed Reminder format', { x: px + 0.15, y: py + 0.05, w: 2.0, h: 0.28, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, valign: 'middle' });
+    box(s, px + pw - 1.2, py + 0.08, 1.1, 0.24, C.goldSoft);
+    T(s, 'Trainer demo', { x: px + pw - 1.2, y: py + 0.08, w: 1.1, h: 0.24, fontSize: 7.5, bold: true, color: C.gold, align: 'center', valign: 'middle' });
     T(s, [
       { text: 'Action On  ', options: { bold: true, color: C.ink } }, { text: '72 hours from the time of ticket handling', options: { breakLine: true } },
       { text: 'Who Should Act  ', options: { bold: true, color: C.ink } }, { text: 'Any CS', options: { breakLine: true } },
       { text: 'Action  ', options: { bold: true, color: C.ink } }, { text: 'C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>' },
-    ], { x: 5.0, y: 3.33, w: 4.45, h: 0.88, fontSize: 8.5, color: C.soft, paraSpaceAfter: 2, valign: 'top' });
+    ], { x: px + 0.15, y: py + 0.38, w: pw - 0.3, h: ph - 0.45, fontSize: 8.5, color: C.soft, paraSpaceAfter: 2, valign: 'top' });
     // Hidden until clicked: covers the Timed Reminder box like a pop-up.
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 4.85, y: 2.98, w: 4.7, h: 1.32, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06, shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'step1Panel' });
-    s.addShape(pres.shapes.RECTANGLE, { x: 4.85, y: 2.98, w: 4.7, h: 0.32, fill: { color: C.teal }, line: { color: C.teal }, objectName: 'step1Head' });
-    T(s, 'Penalty check', { x: 5.0, y: 2.98, w: 4.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 10.5, color: C.white, valign: 'middle', objectName: 'step1Title' });
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06, shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'step1Panel' });
+    s.addShape(pres.shapes.RECTANGLE, { x: px, y: py, w: pw, h: 0.32, fill: { color: C.teal }, line: { color: C.teal }, objectName: 'step1Head' });
+    T(s, 'Penalty check', { x: px + 0.15, y: py, w: pw - 0.3, h: 0.32, fontFace: HEAD, bold: true, fontSize: 10.5, color: C.white, valign: 'middle', objectName: 'step1Title' });
     T(s, [
       { text: '≥ 30 minutes overcharged:  ', options: { bold: true, color: C.teal } },
       { text: 'add flag cp_overcharged_hours + norequests + the Overcharged Hours macro series.', options: { breakLine: true } },
       { text: '< 30 minutes overcharged:  ', options: { bold: true, color: C.teal } },
       { text: 'no flag, no penalty + the Overcharged Hours macro series.' },
-    ], { x: 5.0, y: 3.36, w: 4.45, h: 0.9, fontSize: 9, paraSpaceAfter: 5, valign: 'top', objectName: 'step1Body' });
+    ], { x: px + 0.15, y: py + 0.4, w: pw - 0.3, h: ph - 0.48, fontSize: 9, paraSpaceAfter: 5, valign: 'top', objectName: 'step1Body' });
+    // Recommended macro, as a banner along the bottom.
+    box(s, 0.45, 4.66, 9.1, 0.44, C.goldSoft, C.gold);
+    s.addImage({ data: await icon('FiMessageSquare', C.gold), x: 0.65, y: 4.78, w: 0.2, h: 0.2 });
+    T(s, [{ text: 'Recommended macros:  ', options: { bold: true, color: C.gold } }, { text: 'Overcharged hrs', options: { bold: true, color: C.ink } }],
+      { x: 0.95, y: 4.66, w: 8.4, h: 0.44, fontFace: HEAD, fontSize: 12, valign: 'middle' });
   }
 
   {
