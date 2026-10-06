@@ -289,8 +289,8 @@ async function macroFlag(s, x, y, label, macro, w = 3.2) {
 }
 
 // Knowledge check: question on the left, answer on the right revealed one per click (step1..step4).
-async function knowledgeCheck(eb, qa, notes) {
-  const s = content(eb + '  ·  Knowledge check', 'Knowledge check', 'Ask each question, then click to reveal the answer.', notes);
+async function knowledgeCheck(eb, qa, notes, title = 'Knowledge check') {
+  const s = content(eb + '  ·  Knowledge check', title, 'Ask each question, then click to reveal the answer.', notes);
   const n = qa.length, h = Math.min(0.86, (3.75 - 0.08 * (n - 1)) / n);
   for (let i = 0; i < n; i++) {
     const y = 1.4 + i * (h + 0.08);
@@ -504,13 +504,40 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ['FCR quoted "$20/hr" and never mentioned processing fee, tax or Premium. What do you do?', 'Admin refund to $20/hr × hours. Max CP rate $20, Experience Level Standard, explain fees.'],
     ['The customer is retainable. What can you offer, and how many times?', 'One light offer: up to $20 credit or a 1-hr voucher. Declined? Waive ETF and cancel.'],
     ['The rep said the Happiness Guarantee right after explaining the ETF. Customer wants to cancel. ETF?', 'Waive it. Pairing the guarantee with cancellation terms is misrepresentation.'],
-  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', 'Quick check');
 
-  await wrapUp(INC, [
-    ['Test the words', '"At" is a guarantee. "Around" is an estimate.'],
-    ['Verify, then own it', 'Check the recording. Call it our error.'],
-    ['Fix, then one offer', 'Refund overpayment. One light offer, else waive ETF.'],
-  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Incorrect Information Provided.');
+  {
+    const s = content(INC + '  ·  Wrap-up', 'Investigate a live ticket', 'Your trainer shares a real ticket. Work it through the process.',
+      'TRAINER: share a live Incorrect Information ticket (type the ticket ID on the slide, or share your screen). Give trainees a few minutes to investigate on their own, then walk through it together using the four prompts: 1) What was said? Find the exact words the customer says they were told, and by whom (Sales, an agent, the website). 2) Promise or estimate? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Was a fee simply never mentioned, or was a specific total promised? 3) Verify: would this need a Sales call review? Walk through the request, the internal note with the escalation link, and setting the status to Waiting on CSQ. 4) What\'s the fix? If verified: refund the gap, own the error, correct it, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? Then open the floor for questions on Incorrect Information Provided.');
+    // Ticket card: the trainer fills in the ticket on the day.
+    const tx = 0.45, ty = 1.42, tw = 3.0, th = 1.85;
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: tx, y: ty, w: tw, h: th, fill: { color: C.tealSoft }, line: { color: C.teal, width: 1.25, dashType: 'dash' }, rectRadius: 0.08 });
+    await iconDot(s, tx + 0.2, ty + 0.2, 'FiInbox', 0.42, C.white);
+    T(s, 'Today\'s ticket', { x: tx + 0.75, y: ty + 0.2, w: tw - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, color: C.teal, valign: 'middle' });
+    T(s, [
+      { text: 'Ticket ID:  ', options: { bold: true, color: C.ink } }, { text: '__________', options: { color: C.soft, breakLine: true } },
+      { text: 'Provided by your trainer', options: { italic: true, color: C.soft, fontSize: 9 } },
+    ], { x: tx + 0.2, y: ty + 0.85, w: tw - 0.4, h: 0.8, fontSize: 11, paraSpaceAfter: 6 });
+    // Four prompts to investigate with.
+    const prompts = [
+      ['What was said?', 'Find the exact words, and who said them.'],
+      ['Promise or estimate?', '"At" is a guarantee. "Around" is an estimate.'],
+      ['Verify it', 'Sales call review? Note, then Waiting on CSQ.'],
+      ['What\'s the fix?', 'Steps 2–6, and which macro?'],
+    ];
+    const gx = 3.6, gw = (9.55 - gx - 0.15) / 2, gh = (th - 0.15) / 2;
+    for (let n = 0; n < 4; n++) {
+      const x = gx + (n % 2) * (gw + 0.15), y = ty + Math.floor(n / 2) * (gh + 0.15);
+      box(s, x, y, gw, gh, C.white, C.border);
+      badge(s, x + 0.15, y + 0.15, n + 1);
+      T(s, prompts[n][0], { x: x + 0.55, y: y + 0.12, w: gw - 0.7, h: 0.32, fontFace: HEAD, bold: true, fontSize: 11.5, valign: 'middle' });
+      T(s, prompts[n][1], { x: x + 0.55, y: y + 0.46, w: gw - 0.7, h: gh - 0.52, fontSize: 9.5, color: C.soft });
+    }
+    box(s, 0.45, 3.4, 9.1, 1.0, C.teal);
+    s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.8, y: 3.7, w: 0.4, h: 0.4 });
+    T(s, [{ text: 'Questions?', options: { bold: true, fontFace: HEAD, fontSize: 20, breakLine: true } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
+      { x: 1.45, y: 3.4, w: 7.9, h: 1.0, color: C.white, valign: 'middle' });
+  }
 
   // ================= 2. LAST-MINUTE CANCELLATION =================
   const LMC = 'Last-Minute Cancellation';
