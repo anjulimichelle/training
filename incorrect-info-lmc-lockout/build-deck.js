@@ -507,36 +507,40 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', 'Quick check');
 
   {
-    const s = content(INC + '  ·  Wrap-up', 'Investigate a live ticket', 'Your trainer shares a real ticket. Work it through the process.',
-      'TRAINER: share a live Incorrect Information ticket (type the ticket ID on the slide, or share your screen). Give trainees a few minutes to investigate on their own, then walk through it together using the four prompts: 1) What was said? Find the exact words the customer says they were told, and by whom (Sales, an agent, the website). 2) Promise or estimate? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Was a fee simply never mentioned, or was a specific total promised? 3) Verify: would this need a Sales call review? Walk through the request, the internal note with the escalation link, and setting the status to Waiting on CSQ. 4) What\'s the fix? If verified: refund the gap, own the error, correct it, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? Then open the floor for questions on Incorrect Information Provided.');
-    // Ticket card: the trainer fills in the ticket on the day.
-    const tx = 0.45, ty = 1.42, tw = 3.0, th = 1.85;
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: tx, y: ty, w: tw, h: th, fill: { color: C.tealSoft }, line: { color: C.teal, width: 1.25, dashType: 'dash' }, rectRadius: 0.08 });
-    await iconDot(s, tx + 0.2, ty + 0.2, 'FiInbox', 0.42, C.white);
-    T(s, 'Today\'s ticket', { x: tx + 0.75, y: ty + 0.2, w: tw - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, color: C.teal, valign: 'middle' });
-    T(s, [
-      { text: 'Ticket ID:  ', options: { bold: true, color: C.ink } }, { text: '__________', options: { color: C.soft, breakLine: true } },
-      { text: 'Provided by your trainer', options: { italic: true, color: C.soft, fontSize: 9 } },
-    ], { x: tx + 0.2, y: ty + 0.85, w: tw - 0.4, h: 0.8, fontSize: 11, paraSpaceAfter: 6 });
-    // Four prompts to investigate with.
+    const s = content(INC + '  ·  Practice', 'Let\'s investigate together!', 'Review the live ticket and investigate.',
+      'TRAINER: share a live Incorrect Information ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is there verified misinformation? What exactly was said, and by whom? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Would this need a Sales call review (request, internal note with the escalation link, status Waiting on CSQ)? 2) What was the misinformation, and how do we correct it? Refund the gap, own the error, correct the charges or expectations, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Incorrect Information Provided.');
+    const top = 1.42, bottom = 4.3, gap = 0.15;
+    // Left: the live ticket the trainer provides.
+    const lw = 3.7;
+    box(s, 0.45, top, lw, bottom - top, C.white, C.border);
+    await iconDot(s, 0.65, top + 0.2, 'FiInbox', 0.42);
+    T(s, 'Live ticket', { x: 0.65, y: top + 0.78, w: lw - 0.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 13 });
+    T(s, 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.', { x: 0.65, y: top + 1.15, w: lw - 0.4, h: 0.8, fontSize: 10.5, color: C.soft });
+    s.addText('Trainer provides', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.65, y: bottom - 0.58, w: 1.5, h: 0.36, rectRadius: 0.08,
+      fill: { color: C.goldSoft }, line: { color: C.goldSoft }, fontFace: BODY, bold: true, fontSize: 9.5, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
+    // Right: three prompts, in order.
+    const rx = 0.45 + lw + gap, rw = 9.55 - rx, rh = (bottom - top - 2 * gap) / 3;
     const prompts = [
-      ['What was said?', 'Find the exact words, and who said them.'],
-      ['Promise or estimate?', '"At" is a guarantee. "Around" is an estimate.'],
-      ['Verify it', 'Sales call review? Note, then Waiting on CSQ.'],
-      ['What\'s the fix?', 'Steps 2–6, and which macro?'],
+      ['Is there verified misinformation?', 'What exactly was said: a promise or an estimate?'],
+      ['What are those, and how do we correct them?', 'Refund the gap, own it, correct it, one light offer.'],
+      ['5-min writing challenge', 'Create your comms for the customer.'],
     ];
-    const gx = 3.6, gw = (9.55 - gx - 0.15) / 2, gh = (th - 0.15) / 2;
-    for (let n = 0; n < 4; n++) {
-      const x = gx + (n % 2) * (gw + 0.15), y = ty + Math.floor(n / 2) * (gh + 0.15);
-      box(s, x, y, gw, gh, C.white, C.border);
-      badge(s, x + 0.15, y + 0.15, n + 1);
-      T(s, prompts[n][0], { x: x + 0.55, y: y + 0.12, w: gw - 0.7, h: 0.32, fontFace: HEAD, bold: true, fontSize: 11.5, valign: 'middle' });
-      T(s, prompts[n][1], { x: x + 0.55, y: y + 0.46, w: gw - 0.7, h: gh - 0.52, fontSize: 9.5, color: C.soft });
+    for (let n = 0; n < prompts.length; n++) {
+      const y = top + n * (rh + gap);
+      box(s, rx, y, rw, rh, C.white, C.border);
+      badge(s, rx + 0.2, y + (rh - 0.3) / 2, n + 1);
+      T(s, prompts[n][0], { x: rx + 0.7, y: y + 0.14, w: rw - 0.9, h: 0.32, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
+      T(s, prompts[n][1], { x: rx + 0.7, y: y + 0.48, w: rw - 0.9, h: 0.28, fontSize: 10, color: C.soft, valign: 'middle' });
     }
-    box(s, 0.45, 3.4, 9.1, 1.0, C.teal);
-    s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.8, y: 3.7, w: 0.4, h: 0.4 });
-    T(s, [{ text: 'Questions?', options: { bold: true, fontFace: HEAD, fontSize: 20, breakLine: true } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
-      { x: 1.45, y: 3.4, w: 7.9, h: 1.0, color: C.white, valign: 'middle' });
+    // Timer chip on the writing challenge.
+    const cy = top + 2 * (rh + gap);
+    s.addImage({ data: await icon('FiClock', C.gold), x: 9.55 - 1.05, y: cy + 0.2, w: 0.18, h: 0.18 });
+    T(s, '5 min', { x: 9.55 - 0.82, y: cy + 0.14, w: 0.6, h: 0.3, fontSize: 10, bold: true, color: C.gold, valign: 'middle' });
+    // Questions strip.
+    box(s, 0.45, 4.45, 9.1, 0.55, C.teal);
+    s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.7, y: 4.585, w: 0.28, h: 0.28 });
+    T(s, [{ text: 'Questions?  ', options: { bold: true, fontFace: HEAD, fontSize: 14 } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
+      { x: 1.15, y: 4.45, w: 8.2, h: 0.55, color: C.white, valign: 'middle' });
   }
 
   // ================= 2. LAST-MINUTE CANCELLATION =================
