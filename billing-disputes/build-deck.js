@@ -798,17 +798,7 @@ async function steps(s, y, h, items) {
     await tip(s, 3.25, 'C-side agent?', 'always check the CP CRM first. The cleaner may already have reported it.', 'FiSearch');
   }
 
-  {
-    const s = content(CASH, 'The job status decides the action', 'Nobody should pay twice, and nobody should be paid twice.',
-      'The customer shouldn\'t pay twice (cash and the platform) and the cleaner shouldn\'t be paid twice (cash and their payout). Pending Invoice: nothing has been charged; cancel via the C CRM with the "does not want the service" reason code so it never gets charged. Invoiced: refund from the CP Dashboard, which reverses both the customer\'s charge and the cleaner\'s payout in one action. Cancelled (the customer says the cleaning happened and they paid cash): nothing was ever charged, so there is nothing to refund. Do not recreate the job: that\'s how the customer ends up paying twice. Exception: the cleaner tells us separately they were never paid; then work it as a normal cash case from the job\'s actual status. Otherwise educate on the cash policy, cancel the RC and upcoming jobs if the customer no longer wants service, and close.');
-    await cards(s, 1.4, 2.0, [
-      { ico: 'FiClock', title: 'Pending Invoice', body: 'Cancel via the C CRM: "does not want the service".' },
-      { ico: 'FiDollarSign', title: 'Invoiced', body: 'Refund from the CP Dashboard. Reverses both sides.' },
-      { ico: 'FiXCircle', title: 'Cancelled', body: 'Nothing to refund. Don\'t recreate the job.' },
-    ]);
-    await tip(s, 3.6, 'Partial cash payment?', 'invoice (or refund) only the difference, based on CP Pay, not the C Price.', 'FiPercent');
-  }
-
+  let jobStatus;
   {
     const s = content(CASH, 'Key principles', null,
       'Don\'t penalize customers for paying off-platform: they\'re not breaking the rules, the cleaner is. Don\'t act as an investigator when there\'s nothing to go on: with no cleaner report and no proof from the customer, focus on the customer\'s experience. How the cash payment was confirmed changes the tone of the coaching, not the cleaner\'s status. Remind the customer that payment runs through the platform, not cash, unless it\'s a tip: many don\'t realise the job still has to be invoiced, and a cash payment today can still turn into a charge later.');
@@ -830,13 +820,22 @@ async function steps(s, y, h, items) {
   }
 
   {
-    const s = content(CASH, 'The penalty ladder', 'C-side agents never suspend or add DNR for cash.',
-      'Quick reference from the KB. Cleaner admits it (soft ladder): 1st instance coach, no status change; 2nd instance norequests. Confirmed only by customer proof (hard ladder): 1st instance coach and warn, no status change; 2nd instance norequests. Repeated instances are the CP-side team\'s call: put the history in your internal note. If the cleaner denies it and the customer never produces proof, nothing is confirmed: no refund, no penalty; assess for retention instead. NOTE FOR TRAINER: the KB process steps further down still say a 3rd instance (soft) and 2nd instance (hard) lead to Suspended + DNR, which conflicts with this quick reference and the key principle. Confirm the current rule before teaching.');
-    table(s, ['Instance', 'Cleaner admits it (soft ladder)', 'Only customer proof (hard ladder)'], [
-      ['1st', 'Coach. No status change', 'Coach and warn. No status change'],
-      ['2nd', 'norequests', 'norequests'],
-    ], { y: 1.45, colW: [1.4, 3.85, 3.85], fontSize: 11, rowH: 0.55 });
-    await tip(s, 3.35, 'Denied and no proof?', 'nothing is confirmed: no refund, no penalty. Assess for retention.', 'FiInfo');
+    const s = jobStatus = content(CASH, 'The job status decides the action', 'Nobody should pay twice, and nobody should be paid twice.',
+      'The customer shouldn\'t pay twice (cash and the platform) and the cleaner shouldn\'t be paid twice (cash and their payout). Pending Invoice: nothing has been charged; cancel via the C CRM with the "does not want the service" reason code so it never gets charged. Invoiced: refund from the CP Dashboard, which reverses both the customer\'s charge and the cleaner\'s payout in one action. Cancelled (the customer says the cleaning happened and they paid cash): nothing was ever charged, so there is nothing to refund. Do not recreate the job: that\'s how the customer ends up paying twice. Exception: the cleaner tells us separately they were never paid; then work it as a normal cash case from the job\'s actual status. Otherwise educate on the cash policy, cancel the RC and upcoming jobs if the customer no longer wants service, and close.');
+    await cards(s, 1.4, 2.0, [
+      // 📹 runs link to how-to videos in Drive.
+      { ico: 'FiClock', title: 'Pending Invoice', body: [
+        { text: 'Fully covered? ' }, { text: 'Cancel via the C CRM: "does not want the service".', options: { breakLine: true } },
+        { text: 'Partially covered? ' }, { text: '📹Invoice ', options: { hyperlink: { url: 'https://drive.google.com/file/d/1NI_7g4lgQ7n8nVf4-w2sNLksijWYnf-e/view?usp=drive_link', tooltip: 'Play video' } } }, { text: 'the remaining balance.' },
+      ] },
+      { ico: 'FiDollarSign', title: 'Invoiced', body: [
+        { text: 'Full refund → ' }, { text: '📹 Refund from CP Dashboard', options: { hyperlink: { url: 'https://drive.google.com/file/d/1TuwGdwdOWppyezVsG-aITCSja8J-Z0aJ/view?usp=drive_link', tooltip: 'Play video' } } }, { text: '. Reverses both sides.', options: { breakLine: true } },
+        { text: 'Partial refund → ' }, { text: '📹Admin refund', options: { hyperlink: { url: 'https://drive.google.com/file/d/1gfRiLUltOEjqDdeLfUkY-7V7u7b0C36n/view?usp=drive_link', tooltip: 'Play video' } } }, { text: ' + ' },
+        { text: '📹CP Holdback', options: { hyperlink: { url: 'https://drive.google.com/file/d/1df803P7wbfSjWemzHFR7nFgx-AGHbZXW/view?usp=drive_link', tooltip: 'Play video' } } },
+      ] },
+      { ico: 'FiXCircle', title: 'Cancelled', body: 'Nothing to refund. Don\'t recreate the job.' },
+    ]);
+    await tip(s, 3.6, 'Partial cash payment?', 'invoice (or refund) only the difference, based on CP Pay, not the C Price.', 'FiPercent');
   }
 
   {
@@ -848,7 +847,22 @@ async function steps(s, y, h, items) {
       ['Act on the status', 'Cancel, refund, or nothing if already cancelled.'],
       ['Soft ladder', 'It\'s an admission: coach first.'],
     ]);
+    // Under "Act on the status": jumps back to the job status slide.
+    const cw = (9.1 - 0.45) / 4, bx = 0.45 + 2 * (cw + 0.15);
+    s.addText('Job status actions  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: bx + 0.18, y: 2.95, w: cw - 0.36, h: 0.32, rectRadius: 0.08,
+      fill: { color: C.teal }, line: { color: C.teal }, fontFace: HEAD, bold: true, fontSize: 9.5, color: C.white, align: 'center', valign: 'middle', margin: [2, 2, 0, 0],
+      hyperlink: { slide: jobStatus._slideNum, tooltip: 'Go to: The job status decides the action' } });
     await tip(s, 3.6, 'Partial payment, still Pending Invoice?', 'invoice the remaining balance, based on CP Pay.', 'FiPercent');
+  }
+
+  {
+    const s = content(CASH, 'The penalty ladder', 'C-side agents never suspend or add DNR for cash.',
+      'Quick reference from the KB. Cleaner admits it (soft ladder): 1st instance coach, no status change; 2nd instance norequests. Confirmed only by customer proof (hard ladder): 1st instance coach and warn, no status change; 2nd instance norequests. Repeated instances are the CP-side team\'s call: put the history in your internal note. If the cleaner denies it and the customer never produces proof, nothing is confirmed: no refund, no penalty; assess for retention instead. NOTE FOR TRAINER: the KB process steps further down still say a 3rd instance (soft) and 2nd instance (hard) lead to Suspended + DNR, which conflicts with this quick reference and the key principle. Confirm the current rule before teaching.');
+    table(s, ['Instance', 'Cleaner admits it (soft ladder)', 'Only customer proof (hard ladder)'], [
+      ['1st', 'Coach. No status change', 'Coach and warn. No status change'],
+      ['2nd', 'norequests', 'norequests'],
+    ], { y: 1.45, colW: [1.4, 3.85, 3.85], fontSize: 11, rowH: 0.55 });
+    await tip(s, 3.35, 'Denied and no proof?', 'nothing is confirmed: no refund, no penalty. Assess for retention.', 'FiInfo');
   }
 
   {
