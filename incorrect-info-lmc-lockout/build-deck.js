@@ -413,27 +413,8 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(INC, 'Quoted a rate, left out the fees', 'Never just "a gap in what was mentioned".',
-      'If the rep quoted a specific rate and left out the processing fee, tax or Premium, the customer had no way to know the real price. That\'s misrepresentation. Honor the total they were told: admin refund so the job comes to what they expected. If someone disclosed a charge before it happened and the customer agreed to it (e.g. the CP explained the extra-hours rate), refund only the part that was never disclosed. Worked example: FCR told the customer "$20/hr" and didn\'t mention the processing fee, tax or Premium. Admin refund so the job totals $20/hr × hours worked. Set the max CP rate to $20 and the Cleaner Experience Level to Standard, and explain the fees going forward.');
-    const w = 2.1, gap = 0.23;
-    const flow = [
-      ['Told "$20/hr"', 'penalty', 'No mention of processing fee, tax or Premium.'],
-      ['Admin refund', 'action', 'So the job totals $20/hr × hours worked.'],
-      ['Set the account', 'action', 'Max CP rate $20. Cleaner Experience Level: Standard.'],
-      ['Explain the fees', 'end', 'So the next invoice isn\'t a surprise.'],
-    ];
-    for (let i = 0; i < flow.length; i++) {
-      const x = 0.45 + i * (w + gap);
-      await flowBox(s, x, 1.55, w, 0.6, flow[i][0], flow[i][1]);
-      if (i < flow.length - 1) flowLine(s, [[x + w, 1.85], [x + w + gap, 1.85]], true);
-      T(s, flow[i][2], { x, y: 2.25, w, h: 0.7, fontSize: 9.5, color: C.soft, align: 'center' });
-    }
-    await tip(s, 3.35, 'Disclosed and agreed?', 'refund only the part that was never disclosed.', 'FiInfo');
-  }
-
-  {
     const s = content(INC, 'The process', 'Verify first. Only verified misinformation moves on to steps 2–6.',
-      '1) Verify: confirm it\'s genuinely a guaranteed promise, not an estimate or a gap in what was proactively mentioned. Look for the specific language used, not just whether the customer was surprised. To verify, run a Sales call review: submit a Sales call review request (link icon on the pop-up opens the request sheet), add an internal note with your escalation link, and don\'t resolve yet: change the queue to Waiting on CSQ. If misinformation is not verified, handle it as a normal case. If it is verified, continue: 2) Refund any overpayment that resulted, where applicable: e.g. promised a $49/month MF but charged $59, refund the difference. Not every case has an overpayment; service-capability and guarantee-pairing cases often don\'t. 3) Acknowledge the error directly. Don\'t frame it as a misunderstanding on the customer\'s side. 4) Correct the charges or expectations going forward, and clearly explain what changed. 5) Assess retainability as for any other case. If retainable, attempt retention with one light offer, not a push: up to $20 credit or a 1-hr courtesy voucher. While you wait for their reply, set a TR before the next MF. 6) If the customer declines the offer, or isn\'t retainable, waive the ETF and cancel the FC. Macro: Misinformation: address incorrect claims about charges.' +
+      '1) Verify: confirm it\'s genuinely a guaranteed promise, not an estimate or a gap in what was proactively mentioned. Look for the specific language used, not just whether the customer was surprised. To verify, run a Sales call review: submit a Sales call review request (link icon on the pop-up opens the request sheet), add an internal note with your escalation link, and don\'t resolve yet: change the status to Waiting on CSQ. If misinformation is not verified, clarify the information and address any confusion. If it is verified, continue: 2) Refund any overpayment that resulted, where applicable: e.g. promised a $49/month MF but charged $59, refund the difference. Not every case has an overpayment; service-capability and guarantee-pairing cases often don\'t. 3) Acknowledge the error directly. Don\'t frame it as a misunderstanding on the customer\'s side. 4) Correct the charges or expectations going forward, and clearly explain what changed. 5) Assess retainability as for any other case. If retainable, attempt retention with one light offer, not a push: up to $20 credit or a 1-hr courtesy voucher. While you wait for their reply, set a TR before the next MF. 6) If the customer declines the offer, or isn\'t retainable, waive the ETF and cancel the FC.' +
       ' TRAINER: click once (Sales call review) to open the escalation steps; click again to close them. In slideshow mode, the link icon on the pop-up opens the Sales call review request sheet.');
     const stepBox = (x, y, w, n, title, sub, kind = 'action') => {
       const dark = kind === 'penalty';
@@ -453,7 +434,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     stepBox(7.25, y1, 2.3, 3, 'Own the error', 'Ours, not "a misunderstanding"');
     // Not verified: normal handling.
     flowLine(s, [[3.625, y1 + h], [3.625, 2.3]], true); lbl('No', 3.65, y1 + h + 0.02, 0.3);
-    await flowBox(s, 2.6, 2.3, 2.05, 0.4, 'Handle as a normal case', 'end');
+    await flowBox(s, 2.6, 2.3, 2.05, 0.5, 'Clarify the information and address any confusion', 'end');
     // Under Verify: the button that opens the Sales call review steps.
     s.addText('Sales call review  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.45, y: 2.2, w: 1.9, h: 0.4, rectRadius: 0.08,
       fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, align: 'center', valign: 'middle' });
@@ -468,13 +449,12 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     T(s, 'Declined or\nnot retainable', { x: 5.3, y: m2 - 0.42, w: 1.35, h: 0.38, fontSize: 8, bold: true, color: C.soft, align: 'center', valign: 'bottom' });
     stepBox(6.65, y2, 2.9, 6, 'Waive the ETF, cancel FC', 'No ETF: the error was ours', 'penalty');
     await tip(s, 3.9, 'Waiting on a reply?', 'set a TR before the next MF.', 'FiClock');
-    await macroFlag(s, 0.45, 4.5, 'Recommended Macro:', 'Misinformation: address incorrect claims about charges', 6.2);
     // Pop-up: Sales call review steps open on click 1 and close on click 2.
     const px = 0.45, py = 2.7, pw = 5.6, ph = 1.72, SHEET = 'https://docs.google.com/spreadsheets/d/1uW45nsR5hVwTl9x32EWYaOevp_LeXd61mLAM7qUTv2I/edit?gid=0#gid=0';
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06,
       shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'pop1_2Panel' });
     T(s, 'Sales call review', { x: px + 0.15, y: py + 0.06, w: 3, h: 0.3, fontFace: HEAD, bold: true, fontSize: 11, color: C.teal, valign: 'middle', objectName: 'pop1_2Title' });
-    const rows = ['Sales call review request', 'Add an internal note with your escalation link', 'Don\'t resolve yet. Change the queue to Waiting on CSQ'];
+    const rows = ['Sales call review request', 'Add an internal note with your escalation link', 'Don\'t resolve yet. Change the status to Waiting on CSQ'];
     for (let i = 0; i < rows.length; i++) {
       const ry = py + 0.42 + i * 0.33;
       s.addText(String(i + 1), { shape: pres.shapes.OVAL, x: px + 0.18, y: ry + 0.03, w: 0.24, h: 0.24, fill: { color: C.tealSoft }, line: { color: C.tealSoft },
@@ -486,6 +466,26 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px + 2.45, y: py + 0.43, w: 0.34, h: 0.28, rectRadius: 0.06, fill: { color: C.gold }, line: { color: C.gold }, hyperlink: link, objectName: 'pop1_2LinkBg' });
     s.addImage({ data: await icon('FiLink', C.white), x: px + 2.54, y: py + 0.47, w: 0.17, h: 0.17, hyperlink: link, objectName: 'pop1_2LinkIcon' });
     T(s, 'Verified? Continue to step 2.', { x: px + 0.18, y: py + ph - 0.32, w: pw - 0.36, h: 0.26, fontSize: 8.5, italic: true, color: C.soft, valign: 'middle', objectName: 'pop1_2Foot' });
+  }
+
+  {
+    const s = content(INC, 'Quoted a rate, left out the fees', 'Never just "a gap in what was mentioned".',
+      'If the rep quoted a specific rate and left out the processing fee, tax or Premium, the customer had no way to know the real price. That\'s misrepresentation. Honor the total they were told: admin refund so the job comes to what they expected. If someone disclosed a charge before it happened and the customer agreed to it (e.g. the CP explained the extra-hours rate), refund only the part that was never disclosed. Worked example: FCR told the customer "$20/hr" and didn\'t mention the processing fee, tax or Premium. Admin refund so the job totals $20/hr × hours worked. Set the max CP rate to $20 and the Cleaner Experience Level to Standard, and explain the fees going forward. Recommended macro: Misinformation: address incorrect claims about charges.');
+    const w = 2.1, gap = 0.23;
+    const flow = [
+      ['Told "$20/hr"', 'penalty', 'No mention of processing fee, tax or Premium.'],
+      ['Admin refund', 'action', 'So the job totals $20/hr × hours worked.'],
+      ['Set the account', 'action', 'Max CP rate $20. Cleaner Experience Level: Standard.'],
+      ['Explain the fees', 'end', 'So the next invoice isn\'t a surprise.'],
+    ];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 1.55, w, 0.6, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 1.85], [x + w + gap, 1.85]], true);
+      T(s, flow[i][2], { x, y: 2.25, w, h: 0.7, fontSize: 9.5, color: C.soft, align: 'center' });
+    }
+    await tip(s, 3.35, 'Disclosed and agreed?', 'refund only the part that was never disclosed.', 'FiInfo');
+    await macroFlag(s, 0.45, 3.95, 'Recommended Macro:', 'Misinformation: address incorrect claims about charges', 6.2);
   }
 
   {
