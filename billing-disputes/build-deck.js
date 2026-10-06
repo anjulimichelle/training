@@ -378,7 +378,7 @@ async function steps(s, y, h, items) {
       'The test isn\'t just "was there a heads-up". It\'s whether the cleaner actually worked the hours they billed. Did the cleaner show up at all? If not: False Invoice. Did they work the hours, but never get the customer\'s OK to add the extra time? Unauthorized Hours. Did they bill for more time than they worked? Overcharged Hours. Getting this right matters because each needs different evidence (GPS/CTJ data vs proof of a conversation) and leads to different resolutions and penalties.');
     await cards(s, 1.45, 1.9, [
       { ico: 'FiUserX', title: 'Didn\'t show up at all', body: 'False Invoice' },
-      { ico: 'FiMessageSquare', title: 'Worked it, but never asked', body: 'Unauthorized Addition of Hours' },
+      { ico: 'FiMessageSquare', title: 'Worked but increased the hours', body: 'Unauthorized Addition of Hours' },
       { ico: 'FiClock', title: 'Billed more than worked', body: 'Overcharged Hours: this topic' },
     ]);
     await tip(s, 3.6, 'Why it matters:', 'each one needs different evidence and leads to a different resolution and penalty.', 'FiInfo');
@@ -393,7 +393,7 @@ async function steps(s, y, h, items) {
       { ico: 'FiAlertOctagon', title: 'CP Suspended + DNR', body: [
         { text: 'Already DNR for repeat offenses?', options: { breakLine: true } },
         { text: 'Within 120 days: ', options: { bold: true, color: C.ink } }, { text: 'refund the excess even without clear evidence. No need to request evidence from the CP.', options: { breakLine: true } },
-        { text: 'Beyond 120 days: ', options: { bold: true, color: C.ink } }, { text: 'refund the excess only when the issue is clearly proven.' },
+        { text: 'Beyond 120 days: ', options: { bold: true, color: C.ink } }, { text: 'refund the excess only if the issue is clearly proven.' },
       ] },
     ]);
   }
@@ -451,8 +451,9 @@ async function steps(s, y, h, items) {
     T(s, [{ text: 'CTJ matches hours invoiced', options: { bold: true, color: C.gold, breakLine: true } }, { text: 'Clear evidence NO overcharge occurred → stop, no refund, address other concerns' }], { x: 6.17, y: 4.05, w: 3.28, h: 0.95, fontSize: 8.5, valign: 'middle' });
   }
 
+  let branchA;
   {
-    const s = content(OCH, 'Branch A: clear evidence present', 'A straight line once you\'re in it: refund, check for a Premium fee, then split on the 30-minute rule.',
+    const s = branchA = content(OCH, 'Branch A: clear evidence present', 'A straight line once you\'re in it: refund, check for a Premium fee, then split on the 30-minute rule.',
       'Step 1: refund the overcharged hour(s) via the CP Dashboard; the evidence already settles it. Step 2: if the customer was also charged a Premium rate, refund it: a confirmed overcharge is itself the service issue, no separate request needed. Step 3: check how much was overcharged. 30 minutes or more: apply the cp_overcharged_hours flag, ban the C/CP pairing, send comms to both, then go to the Penalty section. Under 30 minutes: ban the C/CP pairing, send comms to both, done (no flag, no penalty).');
     const cx = 5.0, w = 2.7, h = 0.46;
     await flowBox(s, cx - w / 2, 1.45, w, h, 'Refund via CP Dashboard', 'action');
@@ -469,12 +470,15 @@ async function steps(s, y, h, items) {
 
   {
     const s = content(OCH, 'Branch B: no clear evidence present', 'Takes longer: it pauses while we wait on the CP, and picks back up when the Timed Reminder triggers.',
-      'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. Timed Reminder format: Action On: 72 hours from the time of ticket handling. Who Should Act: Any CS. Action: C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>. Follow When the Timed Reminder Triggers. TRAINER DEMO: show trainees how to add a Timed Reminder in the Legacy C CRM (Do > TimedReminder > Create): set it 72 hours out, assign Any CS, and paste the Action text with the real C ID, job ID and hours. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
+      'If the overcharge amount isn\'t known yet, ask the customer for detail first (B1). Is the CP suspended + DNR due to multiple false invoice or overcharged hours? Yes: skip documentation and treat it as valid: go to Branch A from step 1. No: request documentation. Refund the Premium Upsell fee if charged; create a 72-hour Timed Reminder on the C side; tell the customer we\'ll follow up in 4-5 business days and the CP is blocked from their future requests (not penalized yet); block the pairing and tell the CP documentation is due within 3 days or the alleged hours will be refunded on their behalf. When the reminder triggers: valid proof from the CP: no refund (confirm the CP stays blocked from this customer). No or insufficient proof: refund the alleged hours via the CP Dashboard, check/refund Premium, log to the Ticket Tracker, then the penalty check. Timed Reminder format: Action On: 72 hours from the time of ticket handling. Who Should Act: Any CS. Action: C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>. Follow When the Timed Reminder Triggers. TRAINER DEMO: show trainees how to add a Timed Reminder in the Legacy C CRM (Do > TimedReminder > Create): set it 72 hours out, assign Any CS, and paste the Action text with the real C ID, job ID and hours. TRAINER: click (or press the right arrow) to open the penalty check. 30 minutes or more overcharged: add the cp_overcharged_hours flag + norequests + the Overcharged Hours macro series. Under 30 minutes: no flag, no penalty + the Overcharged Hours macro series.');
     const lx = 3.0, rx = 7.6, w = 2.8, h = 0.52;
-    await flowBox(s, 5.0 - 1.75, 1.42, 3.5, 0.55, 'CP suspended + DNR due to multiple overcharged hours?', 'decision');
+    await flowBox(s, 5.0 - 1.75, 1.42, 3.5, 0.55, 'CP suspended + DNR due to multiple false invoice or overcharged hours?', 'decision');
     flowSplit(s, 5.0, 1.97, 2.2, lx, rx, 2.45, 'No', 'Yes');
     await flowBox(s, lx - w / 2, 2.45, w, h, 'Request docs\n72-hour Timed Reminder', 'action');
-    await flowBox(s, rx - w / 2, 2.45, w, h, 'Skip to Branch A', 'action');
+    // Clickable: jumps back to the Branch A slide.
+    s.addText('Skip to Branch A  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - w / 2, y: 2.45, w, h, rectRadius: 0.08,
+      fill: { color: C.teal }, line: { color: C.teal, width: 1 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle',
+      hyperlink: { slide: branchA._slideNum, tooltip: 'Go to Branch A' } });
     flowLine(s, [[lx, 2.45 + h], [lx, 3.22]], true);
     await flowBox(s, lx - w / 2, 3.22, w, h, 'Reminder triggers\nCP provided valid proof?', 'decision');
     flowSplit(s, lx, 3.22 + h, 3.98, 1.65, 4.35, 4.4, 'Yes', 'No');
