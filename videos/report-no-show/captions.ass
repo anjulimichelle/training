@@ -1,0 +1,21 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1340
+PlayResY: 906
+WrapStyle: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Cap,Inter,30,&H00FFFFFF,&H00FFFFFF,&H1A3B4A0B,&H1A3B4A0B,1,0,0,0,100,100,0,0,3,14,0,2,80,80,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.30,0:00:05.75,Cap,,0,0,0,,Hi! In this quick video, I'll show you how to report a no-show from the Job Admin page.
+Dialogue: 0,0:00:05.80,0:00:10.95,Cap,,0,0,0,,First, find the job under Pending Invoice Jobs, and click its Job ID.
+Dialogue: 0,0:00:11.00,0:00:13.63,Cap,,0,0,0,,That opens up the Job Admin page.
+Dialogue: 0,0:00:14.40,0:00:16.32,Cap,,0,0,0,,From here, click Do.
+Dialogue: 0,0:00:17.30,0:00:22.27,Cap,,0,0,0,,Scroll down to the No Show section, and click the red Submit No Show button.
+Dialogue: 0,0:00:28.20,0:00:31.70,Cap,,0,0,0,,And there you go. The job now shows as cancelled.
+Dialogue: 0,0:00:37.60,0:00:41.93,Cap,,0,0,0,,Now, close the Job Admin page, and refresh your CRM.
+Dialogue: 0,0:00:46.80,0:00:52.22,Cap,,0,0,0,,The Pending Invoice job is gone, and it now shows as cancelled in the CRM.
+Dialogue: 0,0:00:53.40,0:00:55.41,Cap,,0,0,0,,That's it! Easy, right?
