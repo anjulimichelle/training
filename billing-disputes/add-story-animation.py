@@ -1,6 +1,7 @@
 """Add on-click builds Google Slides keeps:
 - a shape named reveal*: its paragraphs fade in one per click (line by line);
 - shapes named stepN*: everything with the same N appears together, one step per click, in N order;
+- shapes named popA_B*: appear on click A and disappear again on click B (a pop-up that closes);
 - shapes named typeN*: one per click, typed in letter by letter (PowerPoint typewriter; Google may show it whole)."""
 import re, sys, zipfile
 
@@ -13,6 +14,15 @@ def effect(cid, tgt, node):
             f'<p:set><p:cBhvr><p:cTn id="{cid+1}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>{tgt}'
             f'<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>'
             f'<p:animEffect transition="in" filter="fade"><p:cBhvr><p:cTn id="{cid+2}" dur="600"/>{tgt}</p:cBhvr></p:animEffect>'
+            f'</p:childTnLst></p:cTn></p:par>')
+
+
+def leave(cid, tgt, node):
+    """Disappear: the exit counterpart of an appear."""
+    return (f'<p:par><p:cTn id="{cid}" presetID="1" presetClass="exit" presetSubtype="0" fill="hold" grpId="1" nodeType="{node}">'
+            f'<p:stCondLst><p:cond delay="0"/></p:stCondLst><p:childTnLst>'
+            f'<p:set><p:cBhvr><p:cTn id="{cid+1}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>{tgt}'
+            f'<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="hidden"/></p:to></p:set>'
             f'</p:childTnLst></p:cTn></p:par>')
 
 
@@ -70,21 +80,30 @@ for item in zin.infolist():
                 clicks.append(click(cid, effect(cid + 2, tgt, 'clickEffect')))
                 cid += 5
             bld.append(f'<p:bldP spid="{spid}" grpId="0" build="p"/>')
+        # Click number -> shapes that appear ('in') or disappear ('out') on that click.
         steps = {}
-        for sid, name in re.findall(r'<p:cNvPr id="(\d+)" name="step(\d+)[^"]*"', x):
-            steps.setdefault(int(name), []).append(sid)
+        for sid, n in re.findall(r'<p:cNvPr id="(\d+)" name="step(\d+)[^"]*"', x):
+            steps.setdefault(int(n), []).append((sid, 'in'))
+        for sid, a, b in re.findall(r'<p:cNvPr id="(\d+)" name="pop(\d+)_(\d+)[^"]*"', x):
+            steps.setdefault(int(a), []).append((sid, 'in'))
+            steps.setdefault(int(b), []).append((sid, 'out'))
+        built = set()
         for k in sorted(steps):
             inner, first = '', True
-            for sid in steps[k]:
-                inner += effect(cid + 2, f'<p:tgtEl><p:spTgt spid="{sid}"/></p:tgtEl>', 'clickEffect' if first else 'withEffect')
+            for sid, kind in steps[k]:
+                tgt = f'<p:tgtEl><p:spTgt spid="{sid}"/></p:tgtEl>'
+                node = 'clickEffect' if first else 'withEffect'
+                inner += effect(cid + 2, tgt, node) if kind == 'in' else leave(cid + 2, tgt, node)
                 first = False
                 cid += 3
             clicks.append(click(cid, inner))
             cid += 2
-            for sid in steps[k]:
+            for sid, kind in steps[k]:
+                grp = '0' if kind == 'in' else '1'
                 # build entries only for sp shapes (pictures don't take one)
-                if re.search(rf'<p:sp>(?:(?!</p:sp>).)*?<p:cNvPr id="{sid}"', x, re.S):
-                    bld.append(f'<p:bldP spid="{sid}" grpId="0" animBg="1"/>')
+                if (sid, grp) not in built and re.search(rf'<p:sp>(?:(?!</p:sp>).)*?<p:cNvPr id="{sid}"', x, re.S):
+                    bld.append(f'<p:bldP spid="{sid}" grpId="{grp}" animBg="1"/>')
+                    built.add((sid, grp))
         for sid, n in sorted(re.findall(r'<p:cNvPr id="(\d+)" name="type(\d+)[^"]*"', x), key=lambda t: int(t[1])):
             clicks.append(click(cid, typed(cid + 2, f'<p:tgtEl><p:spTgt spid="{sid}"/></p:tgtEl>', 'clickEffect')))
             cid += 4
