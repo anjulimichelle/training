@@ -432,17 +432,60 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(INC, 'The process', 'Five steps, in order.',
-      '1) Confirm it\'s genuinely a guaranteed promise, not an estimate or a gap in what was proactively mentioned. Look for the specific language used, not just whether the customer was surprised. Verify against the sales call recording or notes. 2) Refund any overpayment that resulted, where applicable: e.g. promised a $49/month MF but charged $59, refund the difference. Not every case has an overpayment; service-capability and guarantee-pairing cases often don\'t. 3) Acknowledge the error directly. Don\'t frame it as a misunderstanding on the customer\'s side. 4) Correct the charges or expectations going forward, and clearly explain what changed. 5) Assess retainability as for any other case. If retainable, attempt retention with one light offer, not a push: up to $20 credit or a 1-hr courtesy voucher. While you wait for their reply, set a TR before the next MF. If they decline, or aren\'t retainable, waive the ETF and process the cancellation. Macro: Misinformation: address incorrect claims about charges.');
-    await cards(s, 1.4, 2.15, [
-      { title: 'Verify it', body: 'Exact words, checked against the recording or notes.' },
-      { title: 'Refund the gap', body: 'Promised $49 MF, charged $59? Refund the $10.' },
-      { title: 'Own the error', body: 'Say it was ours. Not "a misunderstanding".' },
-      { title: 'Correct it', body: 'Fix charges or expectations. Explain what changed.' },
-      { title: 'One light offer', body: 'Up to $20 credit or a 1-hr voucher. Declined? Waive ETF, cancel.' },
-    ]);
-    await tip(s, 3.75, 'Waiting on a reply?', 'set a TR before the next MF.', 'FiClock');
-    await macroFlag(s, 0.45, 4.35, 'Recommended Macro:', 'Misinformation: address incorrect claims about charges', 6.2);
+    const s = content(INC, 'The process', 'Verify first. Only verified misinformation moves on to steps 2–6.',
+      '1) Verify: confirm it\'s genuinely a guaranteed promise, not an estimate or a gap in what was proactively mentioned. Look for the specific language used, not just whether the customer was surprised. To verify, run a Sales call review: submit a Sales call review request (link icon on the pop-up opens the request sheet), add an internal note with your escalation link, and don\'t resolve yet: change the queue to Waiting on CSQ. If misinformation is not verified, handle it as a normal case. If it is verified, continue: 2) Refund any overpayment that resulted, where applicable: e.g. promised a $49/month MF but charged $59, refund the difference. Not every case has an overpayment; service-capability and guarantee-pairing cases often don\'t. 3) Acknowledge the error directly. Don\'t frame it as a misunderstanding on the customer\'s side. 4) Correct the charges or expectations going forward, and clearly explain what changed. 5) Assess retainability as for any other case. If retainable, attempt retention with one light offer, not a push: up to $20 credit or a 1-hr courtesy voucher. While you wait for their reply, set a TR before the next MF. 6) If the customer declines the offer, or isn\'t retainable, waive the ETF and cancel the FC. Macro: Misinformation: address incorrect claims about charges.' +
+      ' TRAINER: click once (Sales call review) to open the escalation steps; click again to close them. In slideshow mode, the link icon on the pop-up opens the Sales call review request sheet.');
+    const stepBox = (x, y, w, n, title, sub, kind = 'action') => {
+      const dark = kind === 'penalty';
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w, h: 0.62, fill: { color: dark ? C.ink : C.teal }, line: { color: dark ? C.ink : C.teal, width: 1 }, rectRadius: 0.08 });
+      T(s, [{ text: `${n}  ${title}`, options: { bold: true, fontFace: HEAD, fontSize: 10.5, breakLine: true } }, { text: sub, options: { fontSize: 8 } }],
+        { x: x + 0.05, y, w: w - 0.1, h: 0.62, color: C.white, align: 'center', valign: 'middle' });
+    };
+    const lbl = (t, x, y, w = 0.5) => T(s, t, { x, y, w, h: 0.2, fontSize: 8, bold: true, color: C.soft, align: 'center' });
+    // Row 1: verify, the decision, then steps 2-3.
+    const y1 = 1.42, h = 0.62, m1 = y1 + h / 2;
+    stepBox(0.45, y1, 1.9, 1, 'Verify', 'Is it a real promise?');
+    flowLine(s, [[2.35, m1], [2.6, m1]], true);
+    await flowBox(s, 2.6, y1, 2.05, h, 'Misinformation\nverified?', 'decision');
+    flowLine(s, [[4.65, m1], [4.95, m1]], true); lbl('Yes', 4.55, m1 - 0.22);
+    stepBox(4.95, y1, 2.0, 2, 'Refund the gap', 'Charged more than promised?');
+    flowLine(s, [[6.95, m1], [7.25, m1]], true);
+    stepBox(7.25, y1, 2.3, 3, 'Own the error', 'Ours, not "a misunderstanding"');
+    // Not verified: normal handling.
+    flowLine(s, [[3.625, y1 + h], [3.625, 2.3]], true); lbl('No', 3.65, y1 + h + 0.02, 0.3);
+    await flowBox(s, 2.6, 2.3, 2.05, 0.4, 'Handle as a normal case', 'end');
+    // Under Verify: the button that opens the Sales call review steps.
+    s.addText('Sales call review  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.45, y: 2.2, w: 1.9, h: 0.4, rectRadius: 0.08,
+      fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, align: 'center', valign: 'middle' });
+    flowLine(s, [[1.4, y1 + h], [1.4, 2.2]]);
+    // Row 1 to row 2.
+    const y2 = 3.05, m2 = y2 + h / 2;
+    flowLine(s, [[8.4, y1 + h], [8.4, 2.88], [1.45, 2.88], [1.45, y2]], true);
+    stepBox(0.45, y2, 2.0, 4, 'Correct it', 'Fix charges, explain what changed');
+    flowLine(s, [[2.45, m2], [2.8, m2]], true);
+    stepBox(2.8, y2, 2.5, 5, 'One light offer', 'Up to $20 credit or a 1-hr voucher');
+    flowLine(s, [[5.3, m2], [6.65, m2]], true);
+    T(s, 'Declined or\nnot retainable', { x: 5.3, y: m2 - 0.42, w: 1.35, h: 0.38, fontSize: 8, bold: true, color: C.soft, align: 'center', valign: 'bottom' });
+    stepBox(6.65, y2, 2.9, 6, 'Waive the ETF, cancel FC', 'No ETF: the error was ours', 'penalty');
+    await tip(s, 3.9, 'Waiting on a reply?', 'set a TR before the next MF.', 'FiClock');
+    await macroFlag(s, 0.45, 4.5, 'Recommended Macro:', 'Misinformation: address incorrect claims about charges', 6.2);
+    // Pop-up: Sales call review steps open on click 1 and close on click 2.
+    const px = 0.45, py = 2.7, pw = 5.6, ph = 1.72, SHEET = 'https://docs.google.com/spreadsheets/d/1uW45nsR5hVwTl9x32EWYaOevp_LeXd61mLAM7qUTv2I/edit?gid=0#gid=0';
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06,
+      shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'pop1_2Panel' });
+    T(s, 'Sales call review', { x: px + 0.15, y: py + 0.06, w: 3, h: 0.3, fontFace: HEAD, bold: true, fontSize: 11, color: C.teal, valign: 'middle', objectName: 'pop1_2Title' });
+    const rows = ['Sales call review request', 'Add an internal note with your escalation link', 'Don\'t resolve yet. Change the queue to Waiting on CSQ'];
+    for (let i = 0; i < rows.length; i++) {
+      const ry = py + 0.42 + i * 0.33;
+      s.addText(String(i + 1), { shape: pres.shapes.OVAL, x: px + 0.18, y: ry + 0.03, w: 0.24, h: 0.24, fill: { color: C.tealSoft }, line: { color: C.tealSoft },
+        fontFace: HEAD, bold: true, fontSize: 8.5, color: C.teal, align: 'center', valign: 'middle', margin: 0, objectName: `pop1_2Num${i + 1}` });
+      T(s, rows[i], { x: px + 0.52, y: ry, w: i === 0 ? 2.3 : pw - 0.7, h: 0.3, fontSize: 10, color: C.ink, bold: i === 2, valign: 'middle', objectName: `pop1_2Row${i + 1}` });
+    }
+    // Clickable link icon: opens the Sales call review request sheet.
+    const link = { url: SHEET, tooltip: 'Open the Sales call review request sheet' };
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px + 2.45, y: py + 0.43, w: 0.34, h: 0.28, rectRadius: 0.06, fill: { color: C.gold }, line: { color: C.gold }, hyperlink: link, objectName: 'pop1_2LinkBg' });
+    s.addImage({ data: await icon('FiLink', C.white), x: px + 2.54, y: py + 0.47, w: 0.17, h: 0.17, hyperlink: link, objectName: 'pop1_2LinkIcon' });
+    T(s, 'Verified? Continue to step 2.', { x: px + 0.18, y: py + ph - 0.32, w: pw - 0.36, h: 0.26, fontSize: 8.5, italic: true, color: C.soft, valign: 'middle', objectName: 'pop1_2Foot' });
   }
 
   {
