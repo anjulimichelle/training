@@ -280,6 +280,14 @@ async function detailsButton(s, x, y) {
   T(s, 'Show details', { x: x + 0.42, y, w: 1.45, h: 0.4, fontFace: HEAD, bold: true, fontSize: 11, color: C.white, valign: 'middle' });
 }
 
+// Small gold flag naming the recommended macro.
+async function macroFlag(s, x, y, label, macro, w = 3.2) {
+  box(s, x, y, w, 0.32, C.goldSoft, C.gold);
+  s.addImage({ data: await icon('FiMessageSquare', C.gold), x: x + 0.12, y: y + 0.08, w: 0.16, h: 0.16 });
+  T(s, [{ text: label + '  ', options: { bold: true, color: C.gold } }, { text: macro, options: { bold: true, color: C.ink } }],
+    { x: x + 0.35, y, w: w - 0.4, h: 0.32, fontFace: HEAD, fontSize: 9.5, valign: 'middle' });
+}
+
 // Knowledge check: question on the left, answer on the right revealed one per click (step1..step4).
 async function knowledgeCheck(eb, qa, notes) {
   const s = content(eb + '  ·  Knowledge check', 'Knowledge check', 'Ask each question, then click to reveal the answer.', notes);
@@ -511,11 +519,7 @@ async function steps(s, y, h, items) {
       { text: 'Who Should Act  ', options: { bold: true, color: C.ink } }, { text: 'Any CS', options: { breakLine: true } },
       { text: 'Action  ', options: { bold: true, color: C.ink } }, { text: 'C <C_ID> reported that CP overcharged J <JOB_ID> for <# OF OVERCHARGED HOURS>' },
     ], { x: px + 0.15, y: py + 0.38, w: pw - 0.3, h: ph - 0.45, fontSize: 8.5, color: C.soft, paraSpaceAfter: 2, valign: 'top', objectName: 'pop1_2Body' });
-    // Recommended macro, as a small flag along the bottom.
-    box(s, 0.45, 4.72, 3.2, 0.32, C.goldSoft, C.gold);
-    s.addImage({ data: await icon('FiMessageSquare', C.gold), x: 0.57, y: 4.8, w: 0.16, h: 0.16 });
-    T(s, [{ text: 'Recommended macros:  ', options: { bold: true, color: C.gold } }, { text: 'Overcharged hrs', options: { bold: true, color: C.ink } }],
-      { x: 0.8, y: 4.72, w: 2.8, h: 0.32, fontFace: HEAD, fontSize: 9.5, valign: 'middle' });
+    await macroFlag(s, 0.45, 4.72, 'Recommended macros:', 'Overcharged hrs');
   }
 
   {
@@ -739,6 +743,7 @@ async function steps(s, y, h, items) {
       flowLine(s, [[x + w, y + h / 2], [x + w + 0.2, y + h / 2]]);
       T(s, rows[i][2], { x: x + w + 0.3, y: y - 0.03, w: 5.45, h: h + 0.06, fontSize: 8.5, color: C.soft, valign: 'middle', objectName: `type${i + 1}Desc` });
     }
+    await macroFlag(s, 6.35, 4.93, 'Recommended Macro:', 'False Invoice');
   }
 
   {
