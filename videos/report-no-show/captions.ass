@@ -10,12 +10,12 @@ Style: Cap,Inter,30,&H00FFFFFF,&H00FFFFFF,&H1A3B4A0B,&H1A3B4A0B,1,0,0,0,100,100,
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 0,0:00:00.20,0:00:06.35,Cap,,0,0,0,,Hi! In this quick video, I'll show you how to report a no-show from the Job Admin page.
-Dialogue: 0,0:00:06.40,0:00:11.75,Cap,,0,0,0,,First, find the job under Pending Invoice Jobs, and click its Job ID.
+Dialogue: 0,0:00:00.20,0:00:06.33,Cap,,0,0,0,,Hi! In this quick video, I'll show you how to report a no-show from the Job Admin page.
+Dialogue: 0,0:00:06.40,0:00:11.74,Cap,,0,0,0,,First, find the job under Pending Invoice Jobs, and click its Job ID.
 Dialogue: 0,0:00:11.80,0:00:14.45,Cap,,0,0,0,,That opens up the Job Admin page.
-Dialogue: 0,0:00:14.50,0:00:16.53,Cap,,0,0,0,,From here, click Do.
-Dialogue: 0,0:00:17.30,0:00:22.87,Cap,,0,0,0,,Scroll down to the No Show section, and click the red Submit No Show button.
-Dialogue: 0,0:00:28.20,0:00:32.28,Cap,,0,0,0,,And there you go. The job now shows as cancelled.
-Dialogue: 0,0:00:37.60,0:00:42.38,Cap,,0,0,0,,Now, close the Job Admin page, and refresh your CRM.
-Dialogue: 0,0:00:46.80,0:00:52.73,Cap,,0,0,0,,The Pending Invoice job is gone, and it now shows as cancelled in the CRM.
-Dialogue: 0,0:00:53.40,0:00:55.51,Cap,,0,0,0,,That's it! Easy, right?
+Dialogue: 0,0:00:14.50,0:00:16.32,Cap,,0,0,0,,From here, click Do.
+Dialogue: 0,0:00:17.30,0:00:22.47,Cap,,0,0,0,,Scroll down to the No Show section, and click the red Submit No Show button.
+Dialogue: 0,0:00:28.20,0:00:31.68,Cap,,0,0,0,,And there you go. The job now shows as cancelled.
+Dialogue: 0,0:00:37.60,0:00:41.98,Cap,,0,0,0,,Now, close the Job Admin page, and refresh your CRM.
+Dialogue: 0,0:00:46.80,0:00:52.37,Cap,,0,0,0,,The Pending Invoice job is gone, and it now shows as cancelled in the CRM.
+Dialogue: 0,0:00:53.40,0:00:55.26,Cap,,0,0,0,,That's it! Easy, right?

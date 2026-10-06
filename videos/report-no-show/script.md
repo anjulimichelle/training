@@ -1,6 +1,6 @@
 # How to report a no show: narration script
 
-Voice: Kokoro am_michael, full-precision (fp32) model, speed 0.95. Times are seconds into the screen recording.
+Voice: Kokoro am_puck, full-precision (fp32) model, speed 0.95. Times are seconds into the screen recording.
 
 | Start | Line |
 |---|---|
