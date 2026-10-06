@@ -508,7 +508,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(INC + '  ·  Practice', 'Let\'s investigate together!', 'Review the live ticket and investigate.',
-      'TRAINER: share a live Incorrect Information ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is there verified misinformation? What exactly was said, and by whom? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Would this need a Sales call review (request, internal note with the escalation link, status Waiting on CSQ)? 2) What was the misinformation, and how do we correct it? Refund the gap, own the error, correct the charges or expectations, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? 3) 5-minute writing challenge: in slideshow mode, click the 5 min button to start a countdown in a new tab. Each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Incorrect Information Provided.');
+      'TRAINER: share a live Incorrect Information ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is there verified misinformation? What exactly was said, and by whom? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Would this need a Sales call review (request, internal note with the escalation link, status Waiting on CSQ)? 2) What was the misinformation, and how do we correct it? Refund the gap, own the error, correct the charges or expectations, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Incorrect Information Provided.');
     const top = 1.42, bottom = 4.3, gap = 0.15;
     // Left: the live ticket the trainer provides.
     const lw = 3.7;
@@ -532,18 +532,12 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       T(s, prompts[n][0], { x: rx + 0.7, y: y + 0.14, w: rw - 0.9, h: 0.32, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
       T(s, prompts[n][1], { x: rx + 0.7, y: y + 0.48, w: rw - 0.9, h: 0.28, fontSize: 10, color: C.soft, valign: 'middle' });
     }
-    // Timer chip on the writing challenge.
-    const cy = top + 2 * (rh + gap);
-    // Clickable: opens a 5-minute countdown (Google's timer starts as soon as the page loads).
-    const timer = { url: 'https://www.google.com/search?q=set+timer+for+5+minutes', tooltip: 'Start a 5-minute timer' };
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 9.55 - 1.3, y: cy + 0.12, w: 1.1, h: 0.34, rectRadius: 0.08, fill: { color: C.goldSoft }, line: { color: C.gold, width: 1 }, hyperlink: timer });
-    s.addImage({ data: await icon('FiPlayCircle', C.gold), x: 9.55 - 1.2, y: cy + 0.2, w: 0.18, h: 0.18, hyperlink: timer });
-    s.addText('5 min', { x: 9.55 - 0.97, y: cy + 0.12, w: 0.7, h: 0.34, margin: 0, fontFace: BODY, fontSize: 10, bold: true, color: C.gold, valign: 'middle', hyperlink: timer });
     // Questions strip.
     box(s, 0.45, 4.45, 9.1, 0.55, C.teal);
     s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.7, y: 4.585, w: 0.28, h: 0.28 });
     T(s, [{ text: 'Questions?  ', options: { bold: true, fontFace: HEAD, fontSize: 14 } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
       { x: 1.15, y: 4.45, w: 8.2, h: 0.55, color: C.white, valign: 'middle' });
+
   }
 
   // ================= 2. LAST-MINUTE CANCELLATION =================
