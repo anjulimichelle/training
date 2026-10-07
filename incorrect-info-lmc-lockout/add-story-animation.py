@@ -56,6 +56,10 @@ for item in zin.infolist():
     data = zin.read(item.filename)
     if re.match(r'ppt/slides/slide\d+\.xml$', item.filename):
         x = data.decode('utf8')
+        # pptxgenjs writes a second <a:pPr> after a run when later runs carry no bullet; it
+        # isn't valid there and drops the paragraph's bullet, so remove it.
+        x = re.sub(r'(</a:r>)<a:pPr\b[^>]*?(?:/>|>.*?</a:pPr>)', r'\1', x, flags=re.S)
+        data = x.encode('utf8')
         # Linked buttons: the link lives on the shape, so drop pptxgenjs's duplicate
         # run-level link and its forced underline.
         if '<a:hlinkClick' in x:
@@ -65,7 +69,8 @@ for item in zin.infolist():
                     # Run-level link only: keep the run's own colour (not the theme's blue link colour).
                     return re.sub(r'<a:hlinkClick ([^>]*?)/>', lambda h: '<a:hlinkClick ' + h.group(1) + '><a:extLst><a:ext uri="{A12FA001-AC4F-418D-AE19-62706E023703}"><ahyp:hlinkClr xmlns:ahyp="http://schemas.microsoft.com/office/drawing/2018/hyperlinkcolor" val="tx"/></a:ext></a:extLst></a:hlinkClick>', sp)
                 sp = re.sub(r'(<a:rPr[^>]*>)(.*?)<a:hlinkClick[^>]*?(?:/>|>.*?</a:hlinkClick>)', r'\1\2', sp, flags=re.S)
-                sp = re.sub(r'(<a:rPr[^>]*?) u="sng"', r'\1 u="none"', sp)
+                if 'name="keepU' not in sp:
+                    sp = re.sub(r'(<a:rPr[^>]*?) u="sng"', r'\1 u="none"', sp)
                 return re.sub(r'\s*<a:extLst>\s*<a:ext uri="\{A12FA001-AC4F-418D-AE19-62706E023703\}">.*?</a:extLst>', '', sp, flags=re.S)
             x = re.sub(r'<p:sp>.*?</p:sp>', clean, x, flags=re.S)
             data = x.encode('utf8')

@@ -892,7 +892,10 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     stat(s, 0.45, 1.45, 2.5, 2.1, '$20', 'plus applicable taxes, per job', C.gold);
     const panels = [
       { ico: 'FiStar', title: 'Premium Fee', items: ['Optional: the customer picks it', 'Chosen at booking', 'A higher service tier'] },
-      { ico: 'FiClock', title: 'Not the Priority Fee', items: ['Automatic, not chosen', 'Triggered by booking or rescheduling', 'Inside the 48-hour window'] },
+      { ico: 'FiClock', title: 'Cleaner preference level', items: [
+        [{ text: 'Standard', options: { bold: true } }, { text: ': experienced, background checked cleaners ' }, { text: '→ ', options: { bold: true, fontSize: 10.5, color: C.teal } }, { text: 'no additional fee' }],
+        [{ text: 'Premium', options: { bold: true } }, { text: ': matched with the most highly rated cleaners ' }, { text: '→ ', options: { bold: true, fontSize: 10.5, color: C.teal } }, { text: 'with premium fee' }],
+      ] },
     ];
     const pw = (9.55 - 3.1 - 0.15) / 2;
     for (const [i, p] of panels.entries()) {
@@ -901,6 +904,9 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       await iconDot(s, x + 0.2, 1.65, p.ico, 0.42);
       T(s, p.title, { x: x + 0.75, y: 1.65, w: pw - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, valign: 'middle' });
       T(s, bullets(p.items), { x: x + 0.2, y: 2.23, w: pw - 0.4, h: 1.2, fontSize: 10, paraSpaceAfter: 5 });
+      // Video link after "Chosen at booking": its own box so Google keeps the teal (no blue underline).
+      if (i === 0) s.addText('▷ watch how it’s done', { x: x + 0.2 + 0.139 + 1.26, y: 2.485, w: 1.3, h: 0.16, margin: 0, fontFace: BODY, bold: true, fontSize: 8, color: C.teal, valign: 'middle',
+        hyperlink: { url: 'https://drive.google.com/file/d/1xrZtwaVuBxWvpMwEJyrKL_lwecHIy8Wg/view?usp=sharing', tooltip: 'Play: choosing Premium at booking' } });
     }
     await tip(s, 3.8, 'Where to find it:', 'New CRM › Payment History. Legacy CRM › Manual Charges.', 'FiSearch');
   }
@@ -924,6 +930,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     T(s, [
       { text: 'Look for', options: { bold: true, fontFace: HEAD, color: C.teal, breakLine: true } },
       { text: 'premium_surcharge', options: { bold: true, color: C.ink, breakLine: true } },
+      { text: '(may include tax)', options: { bold: true, fontSize: 8.5, color: C.soft, breakLine: true } },
       { text: '$20 + tax, e.g. $21.35', options: { color: C.ink, breakLine: true } },
       { text: 'Confirmed service issue? Always check for it, and refund it.', options: { color: C.soft } },
     ], { x: cx + 0.15, y: 3.1, w: cw - 0.3, h: 1.75, fontSize: 9.5, paraSpaceAfter: 4, valign: 'top' });
@@ -938,7 +945,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ], { y: 1.42, colW: [2.0, 3.8, 3.3], fontSize: 10, rowH: [0.34, 0.42, 0.42] });
     eyebrow(s, 'Customer doesn\'t want Premium, and the charge already failed', 0.45, 2.85, 8, C.soft);
     const w = 2.15, gap = 0.17, flow = [
-      ['Switch the experience to Standard', 'action'],
+      ['', 'action'],
       ['Credit equal to the Premium Fee', 'action'],
       ['The retry lands, offset by the credit', 'end'],
       ['Explain both to the customer', 'end'],
@@ -948,6 +955,10 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       await flowBox(s, x, 3.12, w, 0.62, flow[i][0], flow[i][1]);
       if (i < flow.length - 1) flowLine(s, [[x + w, 3.43], [x + w + gap, 3.43]], true);
     }
+    // First box: label plus a "watch & learn" video link (own box, keepU keeps its underline).
+    T(s, 'Switch to Standard', { x: 0.45, y: 3.14, w, h: 0.3, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'bottom' });
+    s.addText('▷ watch & learn', { x: 0.45 + (w - 1.1) / 2, y: 3.46, w: 1.1, h: 0.2, margin: 0, fontFace: BODY, bold: true, fontSize: 9, color: 'B6D7A8', underline: { style: 'sng' }, align: 'center', valign: 'middle',
+      objectName: 'keepU_watch', hyperlink: { url: 'https://drive.google.com/file/d/1bUur2RIeT1_L7rt_OYw8iXUdYBAJ41kI/view?usp=sharing', tooltip: 'Play: switching Premium to Standard' } });
     await tip(s, 4.0, 'Looks resolved?', 'check how the fee behaves on retry before deciding nothing is owed.', 'FiRefreshCw');
   }
 
@@ -991,26 +1002,38 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(PRO, 'Choose the resolution', 'Based on why they\'re contesting it, not just that they are.',
-      'Homeaglow properly set expectations: explain that the Processing Fee is a standard charge included in every cleaning. Keep it neutral; don\'t imply it was charged incorrectly. If they only wanted clarification, the explanation is enough. If they\'re still unhappy but staying, you may issue a one-time $10 or $20 account credit as goodwill (use your judgment). Never issue a credit equal to the Processing Fee itself: that implies the fee was inappropriate. If they specifically want cash back instead of credits, or will cancel unless refunded, you may issue a $10 or $20 partial refund instead. Set clear expectations that the fee is standard and ongoing: this is a one-time exception, not a waiver. Homeaglow failed to set proper expectations: refund the Processing Fee in full to the original payment method, and acknowledge the specific expectation-setting issue without suggesting the fee is generally invalid. If they no longer want their ForeverClean membership because of it, waive the ETF when processing the cancellation. Macro: Processing Fee.');
-    const cx = 5.0, bw = 4.2, lx = 0.45 + bw / 2, rx = 9.55 - bw / 2;
-    await flowBox(s, cx - 2.3, 1.42, 4.6, 0.44, 'Did Homeaglow set expectations properly?', 'decision');
-    flowSplit(s, cx, 1.86, 2.0, lx, rx, 2.14, '', '');
-    T(s, 'Yes: expectation gap', { x: lx + 0.08, y: 2.0, w: 1.8, h: 0.14, fontSize: 8, bold: true, color: C.soft });
-    T(s, 'No: we failed to', { x: rx + 0.08, y: 2.0, w: 1.8, h: 0.14, fontSize: 8, bold: true, color: C.soft });
-    const lsteps = [['Explain: a standard charge on every cleaning', 'end'], ['Still unhappy, staying? One-time $10 or $20 credit', 'action'], ['Wants cash or will cancel? $10 or $20 partial refund', 'action']];
-    for (let i = 0; i < lsteps.length; i++) {
-      const y = 2.14 + i * 0.6;
-      await flowBox(s, 0.45, y, bw, 0.46, lsteps[i][0], lsteps[i][1]);
-      if (i < lsteps.length - 1) flowLine(s, [[lx, y + 0.46], [lx, y + 0.6]], true);
-    }
-    await flowBox(s, 9.55 - bw, 2.14, bw, 0.46, 'Refund the Processing Fee in full\nto the original payment method', 'action');
-    flowLine(s, [[rx, 2.6], [rx, 2.74]], true);
-    await flowBox(s, 9.55 - bw, 2.74, bw, 0.46, 'Name the specific expectation issue', 'end');
-    flowLine(s, [[rx, 3.2], [rx, 3.34]], true);
-    await flowBox(s, 9.55 - bw, 3.34, bw, 0.46, 'Cancelling FC over it? Waive the ETF', 'penalty');
-    await tip(s, 4.02, 'Never', 'issue a credit equal to the exact Processing Fee. It says the fee was wrong.', 'FiSlash');
-    await macroFlag(s, 0.45, 4.56, 'Recommended Macro:', 'Processing Fee', 3.2);
+    const s = content(PRO, 'Decision flow', 'If the customer is contesting the charge.',
+      'Start with why the customer is contesting the fee. Your resolution should reflect why they\'re contesting it, not just the fact that they are. TRAINER: both boxes start empty; each click reveals the next item. BRANCH 1, Homeaglow properly disclosed the fee (an expectation gap: they overlooked it, forgot, or assumed the hourly rate included all fees). Always explain neutrally that the Processing Fee is a standard charge on every cleaning; if they only wanted clarification, that\'s enough. 1) Wants to keep their membership but is still unhappy: explain the fee, plus a one-time $10 or $20 goodwill credit (use your judgment). 2) Wants a cash refund, or may cancel unless refunded: explain the fee, plus a $10 or $20 partial refund. Set clear expectations that the fee is standard and ongoing: this is a one-time exception, not a waiver. 3) Objects to future fees rather than this charge: move into retention; offer a $10–$15 Membership Fee reduction, and escalate to Support or a TL, who can approve reductions of up to 50%. Never issue a credit equal to the exact Processing Fee: it implies the fee was inappropriate. BRANCH 2, Homeaglow failed to set proper expectations: refund the Processing Fee in full to the original payment method, and acknowledge the specific expectation-setting issue without suggesting the fee is generally invalid. If they\'re cancelling ForeverClean over it, waive the ETF when processing the cancellation. Sample scenarios: a Sales rep failed to mention the Processing Fee, or incorrectly stated there are no additional fees; a system or onboarding issue prevented the customer from seeing the fee disclosure. Macro: Processing Fee.');
+    const RED = 'B3261E', PINK = 'FCEBEA';
+    const bw = 4.4, lx0 = 0.45, rx0 = 9.55 - bw, lx = lx0 + bw / 2, rx = rx0 + bw / 2;
+    s.addText('Why is the customer contesting the fee?', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 5.0 - 2.1, y: 1.4, w: 4.2, h: 0.42, rectRadius: 0.08,
+      fill: { color: C.goldSoft }, line: { color: C.gold, width: 1 }, fontFace: HEAD, bold: true, fontSize: 11, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
+    flowSplit(s, 5.0, 1.82, 1.98, lx, rx, 2.12, '', '');
+    const head = (x, text, col) => s.addText(text, { shape: pres.shapes.ROUNDED_RECTANGLE, x, y: 2.12, w: bw, h: 0.36, rectRadius: 0.06,
+      fill: { color: col }, line: { color: col, width: 1 }, fontFace: HEAD, bold: true, fontSize: 10.5, color: C.white, align: 'center', valign: 'middle', margin: 0 });
+    head(lx0, 'Homeaglow properly disclosed the fee', C.teal);
+    head(rx0, 'Homeaglow failed to set proper expectations', RED);
+    box(s, lx0, 2.56, bw, 2.16, C.tealSoft, C.teal);
+    box(s, rx0, 2.56, bw, 2.16, PINK, RED);
+    // Branch 1: one item per click (step1..3).
+    const left = [
+      ['Wants to keep membership', 'Explain the fee + $10–$20 goodwill credit'],
+      ['Wants a cash refund, or may cancel', 'Explain the fee + $10–$20 partial refund'],
+      ['Objects to future fees', '$10–$15 MF reduction (up to 50% via TL)'],
+    ];
+    left.forEach(([who, what], i) => T(s, [
+      { text: (i + 1) + '.  ' + who, options: { bold: true, fontFace: HEAD, breakLine: true } },
+      { text: '→  ', options: { bold: true, color: C.teal } }, { text: what },
+    ], { x: lx0 + 0.2, y: 2.68 + i * 0.6, w: bw - 0.4, h: 0.5, fontSize: 10, objectName: 'step' + (i + 1) + 'Item' }));
+    T(s, 'Never credit the exact fee amount.', { x: lx0 + 0.2, y: 4.4, w: bw - 0.4, h: 0.22, fontSize: 9, bold: true, color: C.soft, objectName: 'step3Never' });
+    // Branch 2: hidden until clicked, one item at a time (step4..7).
+    const ritem = (n, runs, y, h) => T(s, runs, { x: rx0 + 0.2, y, w: bw - 0.4, h, fontSize: 10, objectName: 'step' + n + 'Item' });
+    ritem(4, [{ text: '✓  ', options: { bold: true, color: RED } }, { text: 'Refund the Processing Fee in full', options: { bold: true, fontFace: HEAD } }], 2.68, 0.25);
+    ritem(5, [{ text: '✓  ', options: { bold: true, color: RED } }, { text: 'Canceling FC over it? ', options: { bold: true, fontFace: HEAD } }, { text: 'Waive the ETF' }], 3.0, 0.25);
+    ritem(6, [{ text: 'Sample scenarios', options: { bold: true, fontFace: HEAD, color: RED, breakLine: true } },
+      { text: 'A sales rep failed to mention the Processing Fee, or incorrectly stated there are no additional fees', options: { bullet: { indent: 10 } } }], 3.38, 0.72);
+    ritem(7, [{ text: 'A system onboarding issue prevented the customer from seeing the fee disclosure', options: { bullet: { indent: 10 } } }], 4.08, 0.5);
+    await macroFlag(s, 0.45, 4.84, 'Recommended Macro:', 'Processing Fee', 3.2);
   }
 
   {
