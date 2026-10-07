@@ -781,32 +781,33 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(PRI, 'What triggers it?', 'The system adds it automatically. The customer sees it at booking.',
-      'The system automatically applies a Priority Fee when the customer books a cleaning scheduled to take place within 12–48 hours from the time they book it, or reschedules a cleaning and the new appointment is within 48 hours from the time they make the change. The Priority Fee is also subject to the standard 15% processing fee charged on billable services. Whenever we talk about refunding the Priority Fee, that includes the associated 15% processing fee. Example: Priority Fee $15/hr x 3 hrs = $45; processing fee (15%) $6.75; total charged $51.75. When refunding, refund both, since the processing fee was charged because of the Priority Fee. ON THE SLIDE: left, the message customers see when the date and time they pick incurs a Priority Fee ("This time is a high-demand date & time for cleaners. Priority rates may apply."). Right, how the charge shows on the Job Admin page: the + PriorityMarkup line in the Base breakdown (here $23.50/hr), and the 15% processing fee in the Txn Fee column.');
-    // Compact stat tile: big figure, one short caption.
-    const tile = (x, w, big, cap) => {
-      box(s, x, 1.42, w, 1.15, C.white, C.border);
-      T(s, big, { x, y: 1.5, w, h: 0.55, fontFace: HEAD, bold: true, fontSize: 26, color: C.teal, align: 'center', valign: 'middle' });
-      T(s, cap, { x: x + 0.15, y: 2.07, w: w - 0.3, h: 0.42, fontSize: 9, color: C.soft, align: 'center', valign: 'top' });
+      'The system automatically applies a Priority Fee when the customer books a cleaning scheduled to take place within 12–48 hours from the time they book it, or reschedules a cleaning and the new appointment is within 48 hours from the time they make the change. The Priority Fee is also subject to the standard 15% processing fee charged on billable services. Whenever we talk about refunding the Priority Fee, that includes the associated 15% processing fee. Example: Priority Fee $15/hr x 3 hrs = $45; processing fee (15%) $6.75; total charged $51.75. When refunding, refund both, since the processing fee was charged because of the Priority Fee. ON THE SLIDE: first, the message customers see when the date and time they pick incurs a Priority Fee ("This time is a high-demand date & time for cleaners. Priority rates may apply."). Second, how the charge shows on the Job Admin page: the + PriorityMarkup line in the Base breakdown (here $23.50/hr), and the 15% processing fee in the Txn Fee column. TRAINER: the screenshots are hidden when the slide opens. Click once (What the customer sees when booking) to show the booking prompt, click again (How it shows in Job Admin) to swap to the Job Admin screenshot, and click a third time to close it.');
+    // Two tiles; each has a button that opens its screenshot on this slide (click 1, click 2; click 3 closes).
+    const tw = (9.1 - 0.15) / 2, x2 = 0.45 + tw + 0.15;
+    const tile = (x, big, cap) => {
+      box(s, x, 1.42, tw, 1.15, C.white, C.border);
+      T(s, big, { x, y: 1.5, w: tw, h: 0.55, fontFace: HEAD, bold: true, fontSize: 28, color: C.teal, align: 'center', valign: 'middle' });
+      T(s, cap, { x: x + 0.2, y: 2.07, w: tw - 0.4, h: 0.4, fontSize: 10, color: C.soft, align: 'center', valign: 'top' });
     };
-    const lw = 2.75, mw = 1.55, mx = 0.45 + lw + 0.15, rx = mx + mw + 0.15, rw = 9.55 - rx;
-    // Left: the < 48 hrs tile, with the prompt the customer sees when they pick such a slot.
-    tile(0.45, lw, '< 48 hrs', 'Booked (12–48 hrs out) or rescheduled into this window');
-    eyebrow(s, 'What the customer sees when booking', 0.45, 2.7, lw, C.soft);
-    const ph = lw * 218 / 458;
-    s.addImage({ path: path.join(IMG, 'priority_prompt.png'), x: 0.45, y: 2.92, w: lw, h: ph });
-    s.addShape(pres.shapes.RECTANGLE, { x: 0.45, y: 2.92, w: lw, h: ph, fill: { type: 'none' }, line: { color: C.border, width: 0.75 } });
-    // Middle: the processing fee on top, and where to look.
-    tile(mx, mw, '+ 15%', 'Processing fee on top');
-    box(s, mx, 2.7, mw, 1.53, C.tealSoft);
-    T(s, [{ text: 'In Job Admin', options: { bold: true, fontFace: HEAD, color: C.teal, breakLine: true } },
-      { text: '+ PriorityMarkup in the Base breakdown; the 15% in Txn Fee.' }],
-      { x: mx + 0.12, y: 2.8, w: mw - 0.24, h: 1.35, fontSize: 9, color: C.ink, paraSpaceAfter: 4, valign: 'top' });
-    // Right: how the charge shows in Job Admin.
-    eyebrow(s, 'How it shows in Job Admin', rx, 1.42, rw, C.soft);
-    const ih = rw * 316 / 784;
-    s.addImage({ path: path.join(IMG, 'priority_crm.png'), x: rx, y: 1.64, w: rw, h: ih });
-    s.addShape(pres.shapes.RECTANGLE, { x: rx, y: 1.64, w: rw, h: ih, fill: { type: 'none' }, line: { color: C.border, width: 0.75 } });
-    await tip(s, 4.4, 'Refunding it?', 'refund the 15% processing fee with it.', 'FiInfo');
+    tile(0.45, '< 48 hrs', 'Booked (12–48 hrs out) or rescheduled into this window');
+    tile(x2, '+ 15%', 'Processing fee charged on top of the Priority Fee');
+    const btn = (x, text) => s.addText(text, { shape: pres.shapes.ROUNDED_RECTANGLE, x: x + (tw - 3.4) / 2, y: 2.7, w: 3.4, h: 0.36, rectRadius: 0.08,
+      fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, align: 'center', valign: 'middle' });
+    btn(0.45, '▶  What the customer sees when booking');
+    btn(x2, '▶  How it shows in Job Admin');
+    await tip(s, 3.3, 'Refunding it?', 'refund the 15% processing fee with it.', 'FiInfo');
+    // Pop-ups: the screenshot opens large, over the tiles, while it's shown.
+    const py = 1.42, ph = 3.66;
+    const shot = async (nm, file, iw, ih, label, cx) => {
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 0.45, y: py, w: 9.1, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06,
+        shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: nm + 'Panel' });
+      T(s, label, { x: 0.7, y: py + 0.1, w: 8.6, h: 0.34, fontFace: HEAD, bold: true, fontSize: 12, color: C.teal, valign: 'middle', objectName: nm + 'Label' });
+      const h = ph - 0.62, w = h * iw / ih;
+      s.addImage({ path: path.join(IMG, file), x: cx - w / 2, y: py + 0.5, w, h, objectName: nm + 'Img' });
+      s.addShape(pres.shapes.RECTANGLE, { x: cx - w / 2, y: py + 0.5, w, h, fill: { type: 'none' }, line: { color: C.border, width: 0.75 }, objectName: nm + 'Frame' });
+    };
+    await shot('pop1_2', 'priority_prompt.png', 458, 218, 'What the customer sees when booking', 5.0);
+    await shot('pop2_3', 'priority_crm.png', 784, 316, 'How it shows in Job Admin', 5.0);
   }
 
   {
