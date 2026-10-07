@@ -626,7 +626,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
   await practice(LMC, [
-    ['Is this a valid or invalid LMC fee? Why?', 'Check the six waivers first, then the messages.'],
+    ['Is this a valid or invalid LMC fee? Why?', 'Investigate, check the messages, what caused the customer to cancel?'],
     ['What actions are you going to take?', 'Invalid: refund + $20 holdback. Valid: customer category.'],
     ['5-min writing challenge', 'Create your comms for the customer.'],
   ], 'TRAINER: share a live Last-Minute Cancellation ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is this a valid or invalid LMC fee, and why? Check the six automatic waivers first: job still Submitted (no CP matched), severe weather, CP rescheduled less than 24 hours before, Alternate Start Time claimed, ETA asked with no check-in, or all of these together. Then read what the customer and the CP said (e.g. the CP asked to reschedule or cancel, or no-showed). 2) What actions are you going to take? Invalid: refund the LMC charge and create a $20 Cleaner Payment Holdback (invalid_lmc, 2000 cents); special case if the job was completed anyway. Valid: only if the customer asks for a refund or contests it, go straight to their customer category offer. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Last-Minute Cancellation.');
@@ -645,52 +645,81 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       ['CP can\'t get in', 'Arrived at the scheduled time and tried to reach the customer.'],
       ['Lockout submitted', 'The job changes to Invoiced.'],
       ['Customer charged', 'The full job cost, for a cleaning that didn\'t happen.'],
-      ['Customer contests', 'That\'s the ticket you\'ll see.'],
+      ['Cleaner is paid', 'Cleaner receives $40 or actual CP pay whichever is lower.'],
     ]);
     await tip(s, 3.7, 'Validate first:', 'refunding an invalid lockout isn\'t generosity. It\'s fixing an error.', 'FiShield');
   }
 
+  // Step 1 and the evidence for each question on one slide: each Details pop-up opens on its click and closes on the next.
+  const allYesLinks = [0, 1].map(() => ({ slide: 1, tooltip: 'Go to Step 3: valid lockout, check the customer category' }));
+  let step1Slide;
   {
     const s = content(LO, 'Step 1: validate the claim', 'Ask in order. Any "no" usually means the lockout is invalid.',
-      'Ask these four questions in order. Any "no" typically means the lockout is invalid. Always leave an internal note documenting your findings: it\'s your reference if either party disputes the outcome later. Next slide: what evidence to check for each question.');
-    const w = 4.6, x = 0.45, h = 0.44, gap = 0.16;
+      'Ask these four questions in order. Any "no" typically means the lockout is invalid. Always leave an internal note documenting your findings: it\'s your reference if either party disputes the outcome later. Invalid: refund through the CP Dashboard (it charges the cost back to the CP, who made the error), not an admin refund; also refund the Premium fee if any. All yes: valid, go to Step 3 (click the All yes box). WHAT TO CHECK: 1) Customer\'s messages to the CP. Mentioned cancelling or rescheduling more than 6 hours before start: invalid, the CP shouldn\'t have gone. Within 6 hours: if the CP acknowledged the appointment wouldn\'t happen, still invalid. 2) CPs may arrive 30 minutes before up to 30 minutes after the start time. Check call/text timestamps, CP-to-Care comms, check-in messages, GPS screenshots, CP App "approaching" notifications. More than 30 min late: invalid. Exception: the evidence shows the customer had already decided not to have the appointment (e.g. told Support but the job wasn\'t cancelled and the CP wasn\'t told; or told the CP after start time that they\'d cancelled long before). The CP still has to show they were on site and tried to reach the customer. Coach lateness separately. 3) CP messages confirming arrival, CTJ logs, pre-evidence photos, or a selfie at the home. A photo of the house without the CP in frame: check it isn\'t reused or reverse-searchable. A photo is only required for CP Dashboard submissions, not the CP App. Faked (not just weak) evidence: stop and go to AG – Fraud › CP Document Fraud. 4) At least 2 contact attempts, at least 5 minutes apart, staying at least 15 minutes, and following any entry notes. Same rule for CP App and CP Dashboard. Confirm with timestamps: contact attempts, the lockout action in Job History, CP messages to the customer or CS. Waived if the CP says the customer refused entry or asked to cancel on arrival: then look for other proof the CP was on site on time. IMPORTANT: These requirements may be disregarded if the CP claims that the C did not let them in or wanted to cancel upon their arrival. If this is the case, check for other indicators proving that CP did arrive on time at the C\'s location.' +
+      ' TRAINER: the details are hidden when the slide opens. Click 1 opens question 1\'s details, click 2 swaps to question 2, click 3 to question 3, click 4 to question 4, click 5 closes them. In slideshow mode, click the All yes box to jump to Step 3.');
+    step1Slide = s;
+    const qx = 0.45, qw = 3.8, qh = 0.42, qgap = 0.14, top = 1.42;
     const qs = ['Did the customer want the appointment?', 'Did the CP arrive on time?', 'Did the CP arrive at the address?', 'Did the CP try to complete it?'];
+    const details = [
+      ['Wanted the appointment', 'Check the customer\'s messages to the CP.\nAsked to cancel or reschedule more than 6 hrs before start? Invalid: the CP shouldn\'t have gone.\nWithin 6 hrs and the CP acknowledged it wouldn\'t happen? Still invalid.'],
+      ['Arrived on time', 'CPs may arrive 30 min before to 30 min after the start time.\nCheck call/text timestamps, CP-to-Care comms, check-in messages, GPS screenshots, CP App "approaching" notifications.\nMore than 30 min late? Invalid, unless the customer had already decided not to have the appointment.'],
+      ['At the address', 'CP messages confirming arrival, CTJ logs, pre-evidence photos, or a selfie at the home.\nA house photo without the CP in it: check it isn\'t reused. A photo is only required for CP Dashboard submissions.\nFaked evidence? Stop: AG – Fraud › CP Document Fraud.'],
+      ['Tried to complete it', 'At least 2 contact attempts, 5+ min apart, 15+ min on site, entry notes followed. Same rule for the CP App and CP Dashboard.\nConfirm with timestamps: contact attempts, the lockout action in Job History, CP messages.\nImportant: these requirements may be disregarded if the CP claims that the C did not let them in or wanted to cancel upon their arrival. If this is the case, check for other indicators proving that CP did arrive on time at the C\u2019s location.'],
+    ];
+    const barX = 4.5, mid = (i) => top + i * (qh + qgap) + qh / 2;
     for (let i = 0; i < qs.length; i++) {
-      const y = 1.42 + i * (h + gap);
-      await flowBox(s, x, y, w, h, `${i + 1}  ${qs[i]}`, 'decision');
-      if (i < qs.length - 1) flowLine(s, [[x + w / 2, y + h], [x + w / 2, y + h + gap]], true);
-      T(s, 'Yes', { x: x + w / 2 + 0.08, y: y + h, w: 0.5, h: gap, fontSize: 8, bold: true, color: C.soft, valign: 'middle' });
-      flowLine(s, [[x + w, y + h / 2], [6.2, y + h / 2]]);
-      T(s, 'No', { x: x + w + 0.1, y: y + h / 2 - 0.2, w: 0.5, h: 0.2, fontSize: 8, bold: true, color: C.soft });
+      const y = top + i * (qh + qgap);
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: qx, y, w: qw, h: qh, fill: { color: C.goldSoft }, line: { color: C.gold, width: 1 }, rectRadius: 0.08 });
+      T(s, `${i + 1}  ${qs[i]}`, { x: qx + 0.1, y, w: qw - 1.0, h: qh, fontFace: HEAD, bold: true, fontSize: 9.5, color: C.gold, valign: 'middle' });
+      // Looks like a button: the click that follows opens this question's details.
+      s.addText('Details  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: qx + qw - 0.86, y: y + 0.08, w: 0.78, h: qh - 0.16, rectRadius: 0.06,
+        fill: { color: C.white }, line: { color: C.gold, width: 0.75 }, fontFace: BODY, bold: true, fontSize: 8, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
+      if (i < qs.length - 1) {
+        flowLine(s, [[qx + 1.3, y + qh], [qx + 1.3, y + qh + qgap]], true);
+        T(s, 'Yes', { x: qx + 1.36, y: y + qh, w: 0.4, h: qgap, fontSize: 7.5, bold: true, color: C.soft, valign: 'middle' });
+      }
+      flowLine(s, [[qx + qw, mid(i)], [barX, mid(i)]]);
+      T(s, 'No', { x: qx + qw + 0.04, y: mid(i) - 0.18, w: 0.3, h: 0.16, fontSize: 7.5, bold: true, color: C.soft });
     }
-    // Every "no" feeds one outcome box.
-    flowLine(s, [[6.2, 1.42 + h / 2], [6.2, 1.42 + 3 * (h + gap) + h / 2]]);
-    flowLine(s, [[6.2, 2.54], [6.5, 2.54]], true);
-    await flowBox(s, 6.5, 2.24, 3.05, 0.6, 'Invalid: refund via CP Dashboard', 'penalty');
-    const yEnd = 1.42 + 3 * (h + gap) + h;
-    flowLine(s, [[x + w / 2, yEnd], [x + w / 2, yEnd + 0.18]], true);
-    await flowBox(s, x, yEnd + 0.18, w, 0.45, 'All yes: valid. Check the customer category', 'action');
-    await tip(s, 4.45, 'Always:', 'leave an internal note with your findings.', 'FiEdit3');
-  }
-
-  {
-    const s = content(LO, 'What to check for each question', 'Evidence that\'s hard to fake beats one side\'s word.',
-      '1) Customer\'s messages to the CP. Mentioned cancelling or rescheduling more than 6 hours before start: invalid, the CP shouldn\'t have gone. Within 6 hours: if the CP acknowledged the appointment wouldn\'t happen, still invalid. 2) CPs may arrive 30 minutes before up to 30 minutes after the start time. Check call/text timestamps, CP-to-Care comms, check-in messages, GPS screenshots, CP App "approaching" notifications. More than 30 min late: invalid. Exception: the evidence shows the customer had already decided not to have the appointment (e.g. told Support but the job wasn\'t cancelled and the CP wasn\'t told; or told the CP after start time that they\'d cancelled long before). The CP still has to show they were on site and tried to reach the customer. Coach lateness separately. 3) CP messages confirming arrival, CTJ logs, pre-evidence photos, or a selfie at the home. A photo of the house without the CP in frame: check it isn\'t reused or reverse-searchable. A photo is only required for CP Dashboard submissions, not the CP App. Faked (not just weak) evidence: stop and go to AG – Fraud › CP Document Fraud. 4) At least 2 contact attempts, at least 5 minutes apart, staying at least 15 minutes, and following any entry notes. Same rule for CP App and CP Dashboard. Confirm with timestamps: contact attempts, the lockout action in Job History, CP messages to the customer or CS. Waived if the CP says the customer refused entry or asked to cancel on arrival: then look for other proof the CP was on site on time.');
-    await checkRows(s, 1.42, [
-      ['Wanted the appointment', 'Customer asked to cancel or reschedule > 6 hrs before? Invalid. Within 6 hrs and the CP acknowledged it? Invalid.'],
-      ['Arrived on time', '30 min before to 30 min after start. Timestamps, check-ins, GPS, CP App "approaching". Later? Invalid, unless the customer had already decided.'],
-      ['At the address', 'CTJ, arrival messages, photos, a selfie at the home. A house photo alone: check it isn\'t reused. Faked? AG – Fraud.'],
-      ['Tried to complete it', '2+ contact attempts, 5+ min apart, 15+ min on site, entry notes followed. Same rule for App and Dashboard.'],
-    ], 0.74, 0.1);
-  }
-
-  {
-    const s = content(LO, 'Invalid: refund via the CP Dashboard', 'The claim was the error, so the CP pays for it.',
-      'If the lockout doesn\'t hold up under Step 1, refund the charge through the CP Dashboard refund flow, not an admin refund. Also check for a Premium rate charge on the same job and refund that too if applicable. Why CP Dashboard: it charges the cost back to the CP, because the CP made the mistake (an invalid lockout claim). An admin refund comes out of Homeaglow\'s pocket as a goodwill gesture, but the customer did nothing wrong, so there\'s nothing to smooth over. An admin refund would make Homeaglow pay for the CP\'s error.');
-    await twoCol(s,
-      { ico: 'FiCheckCircle', title: 'CP Dashboard refund', items: ['Charges the cost back to the CP', 'The CP made the error', 'Also refund Premium, if charged'] },
-      { ico: 'FiXCircle', title: 'Not an admin refund', items: ['Comes out of Homeaglow\'s pocket', 'A goodwill gesture: not needed here', 'Would make us pay for the CP\'s error'] },
-      1.45, 2.3);
+    // Every "no" feeds the Invalid box.
+    flowLine(s, [[barX, mid(0)], [barX, mid(3)]]);
+    const ix = 4.68, iw = 1.6, iy = mid(1) + 0.05;
+    flowLine(s, [[barX, iy + 0.25], [ix, iy + 0.25]], true);
+    await flowBox(s, ix, iy, iw, 0.5, 'Invalid: refund via\nCP Dashboard', 'penalty');
+    T(s, 'Also refund the Premium fee, if any.', { x: ix - 0.05, y: iy + 0.55, w: iw + 0.35, h: 0.25, fontSize: 8, bold: true, color: C.ink, align: 'center' });
+    // All yes: clickable, jumps to Step 3 (forward link, patched once that slide exists).
+    const yEnd = top + 4 * qh + 3 * qgap;
+    flowLine(s, [[qx + 1.3, yEnd], [qx + 1.3, yEnd + 0.14]], true);
+    T(s, 'Yes', { x: qx + 1.36, y: yEnd, w: 0.4, h: 0.14, fontSize: 7.5, bold: true, color: C.soft, valign: 'middle' });
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: qx, y: yEnd + 0.14, w: qw, h: 0.42, fill: { color: C.teal }, line: { color: C.teal, width: 1 }, rectRadius: 0.08, hyperlink: allYesLinks[0] });
+    s.addText('All yes: valid. Check the customer category  ›', { x: qx, y: yEnd + 0.14, w: qw, h: 0.42, margin: 0, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle', hyperlink: allYesLinks[1] });
+    // Default view on the right: the Important note.
+    const px = 6.4, pw = 9.55 - px, py = top, ph = yEnd + 0.56 - top;
+    box(s, px, py, pw, ph, C.goldSoft, C.gold);
+    s.addImage({ data: await icon('FiAlertTriangle', C.gold), x: px + 0.18, y: py + 0.2, w: 0.2, h: 0.2 });
+    T(s, 'Important', { x: px + 0.45, y: py + 0.15, w: pw - 0.6, h: 0.3, fontFace: HEAD, bold: true, fontSize: 11.5, color: C.gold, valign: 'middle' });
+    T(s, 'These requirements may be disregarded if the CP claims that the C did not let them in or wanted to cancel upon their arrival. If this is the case, check for other indicators proving that CP did arrive on time at the C’s location.',
+      { x: px + 0.18, y: py + 0.55, w: pw - 0.36, h: ph - 0.7, fontSize: 9.5, color: C.ink, paraSpaceAfter: 4 });
+    // Pop-ups: question i's details open on click i and close on click i+1.
+    for (let i = 0; i < details.length; i++) {
+      const nm = `pop${i + 1}_${i + 2}`;
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06,
+        shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: nm + 'Panel' });
+      s.addText(String(i + 1), { shape: pres.shapes.OVAL, x: px + 0.18, y: py + 0.17, w: 0.28, h: 0.28, fill: { color: C.tealSoft }, line: { color: C.tealSoft },
+        fontFace: HEAD, bold: true, fontSize: 9, color: C.teal, align: 'center', valign: 'middle', margin: 0, objectName: nm + 'Num' });
+      T(s, details[i][0], { x: px + 0.55, y: py + 0.15, w: pw - 0.7, h: 0.32, fontFace: HEAD, bold: true, fontSize: 11.5, color: C.teal, valign: 'middle', objectName: nm + 'Title' });
+      T(s, details[i][1], { x: px + 0.18, y: py + 0.58, w: pw - 0.36, h: ph - 0.7, fontSize: 9, color: C.ink, paraSpaceAfter: 5, objectName: nm + 'Body' });
+    }
+    // Always note, with the trainer's example internal note.
+    const ay = 4.2;
+    box(s, 0.45, ay, 9.1, 0.78, C.goldSoft);
+    s.addImage({ data: await icon('FiEdit3', C.gold), x: 0.62, y: ay + 0.12, w: 0.18, h: 0.18 });
+    T(s, [
+      { text: 'Always: ', options: { bold: true, color: C.gold, fontSize: 10 } }, { text: 'Leave an internal note with your findings.', options: { bold: true, fontSize: 10, breakLine: true } },
+      { text: 'Job ID 45371', options: { bold: true, fontSize: 8, breakLine: true } },
+      { text: 'Invalid Lockout', options: { bold: true, fontSize: 8, breakLine: true } },
+      { text: 'Job start 10AM, CP arrived 11AM (more than 30 mins late)', options: { bold: true, fontSize: 8 } },
+    ], { x: 0.9, y: ay + 0.09, w: 8.5, h: 0.64 });
   }
 
   {
@@ -703,6 +732,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       ['Deactivated FC, RC still on', 'Any', 'Admin refund in full. Deactivate the RC plan.'],
     ], { y: 1.42, colW: [2.2, 1.9, 5.0], fontSize: 9.5, rowH: 0.56 });
     await macroFlag(s, 0.45, 4.62, 'Recommended Macros:', 'Lockout fee: high-value customer · Lockout fee: no refund (standard customer)', 9.1);
+    allYesLinks.forEach(l => { step1Slide._rels.find(r => r.rId === l._rId).Target = String(s._slideNum); });
   }
 
   {
