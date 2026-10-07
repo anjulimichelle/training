@@ -725,7 +725,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     const s = content(LO, 'Step 3: valid lockout, check the customer category', 'Go straight to the right offer. Applies if Customer asks for a refund or contests the lockout charge.',
       'Same non-ladder principle as LMC. New customer (1-2 invoiced jobs): admin refund the full job cost; refunding now and educating protects a relationship that\'s still forming. Low to moderate expected future LTNR (3-4 invoiced jobs): credits up to 75% of the job cost, keeping at least $40 to cover the CP\'s costs. Declined but not escalating: this is the maximum. Escalates: route to Service Recovery. Insists on cancelling: apply the job cost toward the ETF (max reduction still 50%). Very high-value customer (more than 4 invoiced jobs, high retention): offer two options: the full LO fee as account credit, or a refund of the LO fee minus $40 (the CP cost). Explain why the fee exists either way. Applies to customers with an active FC in most cases; a customer actively using the service without an FC table is an edge case, use judgment. Deactivated FC, RC still active (cancelled FC but the Recurring Cleaning plan stayed on and a job still happened): admin refund the full charge and deactivate the RC plan. That\'s a product gap: FC self-cancel doesn\'t cancel RC. If vague, probe: check for a legitimate explanation (e.g. a messaging bug) before assuming the customer is at fault. It\'s fine to open with the full job cost as credits as a goodwill gesture before working through the tiers. Macros: Lockout fee: high-value customer; Lockout fee: no refund (standard customer).');
     table(s, ['Customer', 'Invoiced jobs', 'What to do'], [
-      ['New customer', '1–2', 'Admin refund the full job cost.'],
+      ['New customer', '1–2', [{ text: 'Admin refund the full job cost. ' }, { text: '▷ Watch & Learn', options: { bold: true, fontSize: 8, color: C.teal } }]],
       ['Low to moderate LTNR', '3–4', 'Credits up to 75% of the job, keep $40 for the CP. \nEscalates? Send to Service Recovery. \nCancelling? Offer to apply the LO fee toward ETF (max 50% off).'],
       ['Very high-value', 'More than 4, high retention', 'Choice: full fee as credit, or refund minus $40. Explain the fee.'],
       ['Deactivated FC, RC still on', 'Any', 'Admin refund in full. Deactivate the RC plan.'],
@@ -741,9 +741,6 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       { ico: 'FiShield', title: 'Entry denied: CP fault or T&S', items: ['Admin refund the lockout fee', 'Still pay the CP $40', 'Document it in internal notes', 'Coach the CP'] },
       { ico: 'FiPhoneMissed', title: 'Cancelled via Support, not actioned', items: ['Don\'t charge the customer', 'Refund or cancel on the C-side', 'Pay the CP via MCP, if on site and tried', 'Lateness doesn\'t matter here'] },
       1.45, 1.85);
-    // Clickable: "Watch & Learn" right after the first bullet opens the admin refund video (its own box, so it keeps the teal style in Google).
-    s.addText('▷ Watch & Learn', { x: 2.63, y: 2.255, w: 1.0, h: 0.15, margin: 0, fontFace: BODY, bold: true, fontSize: 8, color: C.teal, valign: 'middle',
-      hyperlink: { url: 'https://drive.google.com/file/d/1tCfXer937DtMgutZGSs0BcBjtjThbOSH/view?usp=sharing', tooltip: 'Watch: how to admin refund the lockout fee' } });
     // Details: click 1 shows the left description, click 2 the right one (both stay).
     const cw = (9.1 - 0.15) / 2, desc = [
       [{ text: 'CP was denied entry because:', options: { bold: true, breakLine: true } },
@@ -760,18 +757,6 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 3.45, w: cw, h: 1.45, fill: { color: C.tealSoft }, line: { color: C.teal, width: 1.25 }, rectRadius: 0.06, objectName: `step${i + 1}Panel` });
       T(s, desc[i], { x: x + 0.2, y: 3.55, w: cw - 0.4, h: 1.25, fontSize: 10.5, color: C.ink, paraSpaceAfter: 4, valign: 'middle', objectName: `step${i + 1}Text` });
     }
-  }
-
-  {
-    const s = content(LO, 'Lockout pay: when the CP contacts us', 'Treat any lockout report as a request for lockout pay review.',
-      'When a CP reports a lockout, whether they ask for lockout pay directly or only describe what happened, treat it as a request for lockout pay review. Signals: the CP mentions time waited, travel, gas or cost, or lost earnings, or asks what happens with the job. The exception is a CP who clearly only wants the job cancelled. Validate using Step 1, including the lateness exception. If the customer had cancelled through Support and we didn\'t act, follow that special scenario. Outcomes: valid lockout the CP didn\'t submit (didn\'t know how, app issue): pay the standard lockout amount. Invalid lockout but evidence the CP was on site: one-time courtesy MCP if the CP has no cp_false_check_in or false invoice flags, isn\'t suspended, and hasn\'t had courtesy lockout pay in the last 90 days. No evidence the CP was on site: no pay; explain the lockout requirements. MCPs over $40 still need Support approval. Why: requiring specific words would reward CPs who know our terms over CPs who were actually locked out. The courtesy conditions are checkable, so every agent and QA reviewer reaches the same answer; the 90-day cap protects against abuse.');
-    table(s, ['Situation', 'Outcome'], [
-      ['Valid lockout, CP didn\'t submit it (didn\'t know how, app issue)', 'Pay the standard lockout amount.'],
-      ['Invalid lockout, but evidence the CP was on site', 'One-time courtesy MCP: no cp_false_check_in or false invoice flags, not suspended, none in the last 90 days.'],
-      ['No evidence the CP was on site', 'No pay. Explain the lockout requirements.'],
-    ], { y: 1.42, colW: [4.0, 5.1], fontSize: 9.5, rowH: [0.34, 0.55, 0.62, 0.5] });
-    await tip(s, 3.55, 'Counts as a request:', 'time waited, travel, gas, lost earnings, or "what happens with the job?"', 'FiMessageCircle');
-    await tip(s, 4.1, 'MCP over $40?', 'still needs Support approval.', 'FiLock');
   }
 
   await knowledgeCheck(LO, [
@@ -796,12 +781,32 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(PRI, 'What triggers it?', 'The system adds it automatically. The customer sees it at booking.',
-      'The system automatically applies a Priority Fee when the customer books a cleaning scheduled to take place within 12–48 hours from the time they book it, or reschedules a cleaning and the new appointment is within 48 hours from the time they make the change. The Priority Fee is also subject to the standard 15% processing fee charged on billable services. Whenever we talk about refunding the Priority Fee, that includes the associated 15% processing fee. Example: Priority Fee $15/hr x 3 hrs = $45; processing fee (15%) $6.75; total charged $51.75. When refunding, refund both, since the processing fee was charged because of the Priority Fee.');
-    const w = (9.1 - 0.3) / 3;
-    stat(s, 0.45, 1.45, w, 1.6, '< 48 hrs', 'Booked (12–48 hrs out) or rescheduled into this window');
-    stat(s, 0.45 + (w + 0.15), 1.45, w, 1.6, '+ 15%', 'Processing fee charged on top of the Priority Fee');
-    stat(s, 0.45 + 2 * (w + 0.15), 1.45, w, 1.6, '$51.75', 'e.g. $15/hr × 3 hrs = $45, plus $6.75 processing', C.gold);
-    await tip(s, 3.3, 'Refunding it?', 'refund the 15% processing fee with it.', 'FiInfo');
+      'The system automatically applies a Priority Fee when the customer books a cleaning scheduled to take place within 12–48 hours from the time they book it, or reschedules a cleaning and the new appointment is within 48 hours from the time they make the change. The Priority Fee is also subject to the standard 15% processing fee charged on billable services. Whenever we talk about refunding the Priority Fee, that includes the associated 15% processing fee. Example: Priority Fee $15/hr x 3 hrs = $45; processing fee (15%) $6.75; total charged $51.75. When refunding, refund both, since the processing fee was charged because of the Priority Fee. ON THE SLIDE: left, the message customers see when the date and time they pick incurs a Priority Fee ("This time is a high-demand date & time for cleaners. Priority rates may apply."). Right, how the charge shows on the Job Admin page: the + PriorityMarkup line in the Base breakdown (here $23.50/hr), and the 15% processing fee in the Txn Fee column.');
+    // Compact stat tile: big figure, one short caption.
+    const tile = (x, w, big, cap) => {
+      box(s, x, 1.42, w, 1.15, C.white, C.border);
+      T(s, big, { x, y: 1.5, w, h: 0.55, fontFace: HEAD, bold: true, fontSize: 26, color: C.teal, align: 'center', valign: 'middle' });
+      T(s, cap, { x: x + 0.15, y: 2.07, w: w - 0.3, h: 0.42, fontSize: 9, color: C.soft, align: 'center', valign: 'top' });
+    };
+    const lw = 2.75, mw = 1.55, mx = 0.45 + lw + 0.15, rx = mx + mw + 0.15, rw = 9.55 - rx;
+    // Left: the < 48 hrs tile, with the prompt the customer sees when they pick such a slot.
+    tile(0.45, lw, '< 48 hrs', 'Booked (12–48 hrs out) or rescheduled into this window');
+    eyebrow(s, 'What the customer sees when booking', 0.45, 2.7, lw, C.soft);
+    const ph = lw * 218 / 458;
+    s.addImage({ path: path.join(IMG, 'priority_prompt.png'), x: 0.45, y: 2.92, w: lw, h: ph });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.45, y: 2.92, w: lw, h: ph, fill: { type: 'none' }, line: { color: C.border, width: 0.75 } });
+    // Middle: the processing fee on top, and where to look.
+    tile(mx, mw, '+ 15%', 'Processing fee on top');
+    box(s, mx, 2.7, mw, 1.53, C.tealSoft);
+    T(s, [{ text: 'In Job Admin', options: { bold: true, fontFace: HEAD, color: C.teal, breakLine: true } },
+      { text: '+ PriorityMarkup in the Base breakdown; the 15% in Txn Fee.' }],
+      { x: mx + 0.12, y: 2.8, w: mw - 0.24, h: 1.35, fontSize: 9, color: C.ink, paraSpaceAfter: 4, valign: 'top' });
+    // Right: how the charge shows in Job Admin.
+    eyebrow(s, 'How it shows in Job Admin', rx, 1.42, rw, C.soft);
+    const ih = rw * 316 / 784;
+    s.addImage({ path: path.join(IMG, 'priority_crm.png'), x: rx, y: 1.64, w: rw, h: ih });
+    s.addShape(pres.shapes.RECTANGLE, { x: rx, y: 1.64, w: rw, h: ih, fill: { type: 'none' }, line: { color: C.border, width: 0.75 } });
+    await tip(s, 4.4, 'Refunding it?', 'refund the 15% processing fee with it.', 'FiInfo');
   }
 
   {
