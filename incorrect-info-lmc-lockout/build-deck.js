@@ -811,49 +811,60 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(PRI, 'The 48-hour rule', 'Ignore the original appointment. Only look at the NEW one.',
+    const s = content(PRI, 'The 48-hour rule', 'Check the job history. Ignore the original appointment. Only look at the NEW one.',
       'Quick rule: ignore the original appointment date. Only look at the new appointment. If the new appointment is within 48 hours of when the booking or reschedule is made, a Priority Fee applies. Example 1 (fee applies): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to July 29, 9:00 AM. The new appointment is only 47 hours away, so the Priority Fee applies. Example 2 (no fee): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to August 1, 9:00 AM. The new appointment is more than 48 hours away, so no Priority Fee applies.');
     await twoCol(s,
-      { ico: 'FiCheckCircle', title: 'Fee applies', items: ['Now: Jul 27, 10:00 AM', 'Original: Jul 28, 2:00 PM', 'Changed to: Jul 29, 9:00 AM', [{ text: 'New slot is 47 hrs away', options: { bold: true, color: C.teal } }]] },
-      { ico: 'FiXCircle', title: 'No fee', items: ['Now: Jul 27, 10:00 AM', 'Original: Jul 28, 2:00 PM', 'Changed to: Aug 1, 9:00 AM', [{ text: 'New slot is more than 48 hrs away', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiCheckCircle', title: 'Fee applies', items: ['Customer booked/rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Jul 29, 9:00 AM', [{ text: 'New slot is 47 hrs away', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiXCircle', title: 'No fee', items: ['Customer booked/rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Aug 1, 9:00 AM', [{ text: 'New slot is more than 48 hrs away', options: { bold: true, color: C.teal } }]] },
       1.45, 2.1);
     await tip(s, 3.75, 'Same original date in both.', 'Only the new appointment decides it.', 'FiCalendar');
   }
 
   {
-    const s = content(PRI, 'Why did they end up in the window?', 'Check the account history before you say anything about a resolution.',
-      'Step 1: pull up the account history first. Before saying anything to the customer about a resolution, ask one question: why did the customer end up in the priority window? Their own scheduling choice, or because Homeaglow or the CP forced them into it? Step 2: choose the path. Customer chose the priority window (booked or rescheduled within 48 hours on their own, or picked a high-demand date, and nothing on our side drove it): explain the policy plainly, the fee stands. You can soften it with up to 100% of the Priority Fee in account credits as a courtesy. Treat 100% as a ceiling, not a starting point: base the amount on the customer\'s history and how the conversation is going. Frame it as goodwill, not "we got this wrong". Macro: Priority Fee: Issue Credits up to 100% of the Priority Fee. Homeaglow or the CP caused it: refund the full Priority Fee, including the 15% processing fee, to the original payment method, and acknowledge specifically what happened (e.g. "your last cleaner cancelled on short notice"). Macro: Priority Fee Refunded. The two paths are mutually exclusive. Not sure which? Escalate rather than deciding solo.');
-    const cx = 5.0, bw = 4.2;
-    await flowBox(s, cx - 2.0, 1.42, 4.0, 0.4, 'Pull up the account history', 'action');
-    flowLine(s, [[cx, 1.82], [cx, 1.98]], true);
-    await flowBox(s, cx - 2.3, 1.98, 4.6, 0.46, 'Why did they end up in the priority window?', 'decision');
-    const lx = 0.45 + bw / 2, rx = 9.55 - bw / 2;
-    flowSplit(s, cx, 2.44, 2.6, lx, rx, 2.76, '', '');
-    T(s, 'Their own choice', { x: lx + 0.08, y: 2.61, w: 1.6, h: 0.15, fontSize: 8, bold: true, color: C.soft });
-    T(s, 'Homeaglow or the CP caused it', { x: rx + 0.08, y: 2.6, w: 2.0, h: 0.16, fontSize: 8, bold: true, color: C.soft });
-    await flowBox(s, 0.45, 2.76, bw, 0.5, 'Fee stands. Explain the policy plainly.', 'end');
-    flowLine(s, [[lx, 3.26], [lx, 3.38]], true);
-    await flowBox(s, 0.45, 3.38, bw, 0.5, 'Courtesy credits, up to 100% of the fee\n(a ceiling, not a starting point)', 'action');
-    await flowBox(s, 9.55 - bw, 2.76, bw, 0.5, 'Refund the full fee + 15% processing\nto the original payment method', 'action');
-    flowLine(s, [[rx, 3.26], [rx, 3.38]], true);
-    await flowBox(s, 9.55 - bw, 3.38, bw, 0.5, 'Name exactly what happened\n("your last cleaner cancelled…")', 'end');
-    await macroFlag(s, 0.45, 4.0, 'Macro:', 'Priority Fee: Issue Credits up to 100%', bw);
-    await macroFlag(s, 9.55 - bw, 4.0, 'Macro:', 'Priority Fee Refunded', bw);
-    await tip(s, 4.52, 'Not sure which?', 'escalate before you commit to either. Never refund and credit the same fee.', 'FiHelpCircle');
+    const s = content(PRI, 'Decision flow', 'Investigate and determine why the customer ended up in the priority window.',
+      'Pull up the account history first. Before saying anything to the customer about a resolution, ask one question: why did the customer end up in the priority window? Their own scheduling choice, or because Homeaglow or the CP forced them into it? C-fault (the customer chose the window: booked or rescheduled within 48 hours on their own, or picked a high-demand date, and nothing on our side drove it): the fee stands. Explain the policy plainly and show them the Priority Fee notice they saw at booking. You can soften it with up to 100% of the Priority Fee in account credits as a courtesy; treat 100% as a ceiling, not a starting point, and frame it as goodwill, not "we got this wrong". Macro: Priority Fee: Issue Credits up to 100% of the Priority Fee. CP/Platform fault (Homeaglow or the CP caused the priority window): refund the full Priority Fee and the associated 15% processing fee to the original payment method, and acknowledge specifically what happened (e.g. "your last cleaner cancelled on short notice"). Macro: Priority Fee Refunded. The two paths are mutually exclusive: never refund and credit the same fee unless a supervisor approves. Not sure which? Escalate. Only take the refund path if you can point to one of these known scenarios (not exhaustive): 1) the customer\'s previous CP was a no-show or cancelled at the last minute; 2) the customer\'s previous CP requested to reschedule; 3) the customer was affected by a system bug; 4) the customer immediately booked another cleaning after reporting their previous CP for Poor Cleaning Quality (PCQ). If a case doesn\'t match exactly but is genuinely comparable (something on Homeaglow\'s or the CP\'s end forced the customer into the window, not their own scheduling choice), treat it the same way. If you\'re not sure whether it\'s truly comparable or the customer\'s own choice dressed up differently, escalate. Worked example: "I was charged a $15/hr priority fee for my cleaning yesterday. I didn\'t do anything different from usual." The account history shows their scheduled CP cancelled the day before, so they had to rebook on short notice. That\'s scenario 1: skip the credit macro, send Priority Fee Refunded, refund the $15/hr fee and its 15% processing fee to the original payment method, and acknowledge that the previous CP\'s cancellation caused it. Check for repeat Priority Fee disputes on the same account before offering courtesy credits again. TRAINER: the scenarios are hidden when the slide opens. Click once (Scenarios) to open the box with scenario 1, then click to add scenarios 2, 3 and 4 one at a time; the fifth click closes the box.');
+    const cx = 5.0, bw = 4.2, lx = 0.45 + bw / 2, rx = 9.55 - bw / 2;
+    await flowBox(s, cx - 1.9, 1.42, 3.8, 0.48, 'PRIORITY FEE: refund request', 'action');
+    flowSplit(s, cx, 1.9, 2.04, lx, rx, 2.18, '', '');
+    s.addText('C-fault', { shape: pres.shapes.ROUNDED_RECTANGLE, x: lx - 1.1, y: 2.18, w: 2.2, h: 0.42, rectRadius: 0.08, fill: { color: C.goldSoft }, line: { color: C.gold, width: 1.25 },
+      fontFace: HEAD, bold: true, fontSize: 11, color: C.gold, align: 'center', valign: 'middle' });
+    s.addText('CP/Platform fault', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - 1.1, y: 2.18, w: 2.2, h: 0.42, rectRadius: 0.08, fill: { color: C.ink }, line: { color: C.ink, width: 1 },
+      fontFace: HEAD, bold: true, fontSize: 11, color: C.white, align: 'center', valign: 'middle' });
+    flowLine(s, [[lx, 2.6], [lx, 2.74]], true);
+    flowLine(s, [[rx, 2.6], [rx, 2.74]], true);
+    const desc = (x, runs) => {
+      box(s, x, 2.74, bw, 1.02, C.white, C.border);
+      T(s, runs, { x: x + 0.2, y: 2.74, w: bw - 0.4, h: 1.02, fontSize: 10, color: C.ink, align: 'center', valign: 'middle', paraSpaceAfter: 3 });
+    };
+    desc(0.45, [{ text: 'Fee stands. Explain the policy, offer up to 100% credits.', options: { bold: true, breakLine: true } },
+      { text: 'Show them the Priority Fee notice they saw at booking.', options: { color: C.soft } }]);
+    desc(9.55 - bw, [{ text: 'Homeaglow or the CP caused the priority window.', options: { color: C.soft, breakLine: true } },
+      { text: 'Refund the Priority Fee and the associated 15% processing fee.', options: { bold: true } }]);
+    await macroFlag(s, 0.45, 3.88, 'Macro:', 'Priority Fee: Issue Credits up to 100%', bw);
+    await macroFlag(s, 9.55 - bw, 3.88, 'Macro:', 'Priority Fee Refunded', bw);
+    s.addText('Scenarios  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: rx - 0.8, y: 4.32, w: 1.6, h: 0.36, rectRadius: 0.08,
+      fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, fontFace: HEAD, bold: true, fontSize: 10, color: C.teal, align: 'center', valign: 'middle' });
+    T(s, 'Not sure which? Escalate. Never refund and credit the same fee.', { x: 0.45, y: 4.32, w: bw, h: 0.36, fontSize: 9, bold: true, color: C.soft, align: 'center', valign: 'middle' });
+    // Pop-up over the C-fault side: the box opens with scenario 1 (click 1), scenarios 2-4 follow one per click, click 5 closes it.
+    const px = 0.45, py = 2.18, pw = bw + 0.25, ph = 2.85;
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06,
+      shadow: { type: 'outer', color: '000000', opacity: 0.18, blur: 6, offset: 2, angle: 90 }, objectName: 'pop1_5Panel' });
+    T(s, 'When it\'s on us: known scenarios', { x: px + 0.2, y: py + 0.08, w: pw - 0.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 11, color: C.teal, valign: 'middle', objectName: 'pop1_5Title' });
+    const scen = [
+      ['FiUserX', 'CP no-show', 'Previous CP didn\'t show or cancelled last minute.'],
+      ['FiRepeat', 'CP rescheduled', 'Previous CP asked to move the appointment.'],
+      ['FiAlertTriangle', 'System bug', 'The customer was affected by a bug.'],
+      ['FiThumbsDown', 'Rebooked after PCQ', 'Booked again right after reporting Poor Cleaning Quality.'],
+    ];
+    for (let i = 0; i < scen.length; i++) {
+      const nm = `pop${i + 1}_5`, y = py + 0.48 + i * 0.58;
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px + 0.15, y, w: pw - 0.3, h: 0.5, fill: { color: C.tealSoft }, line: { color: C.tealSoft }, rectRadius: 0.06, objectName: nm + 'Row' });
+      s.addImage({ data: await icon(scen[i][0], C.teal), x: px + 0.28, y: y + 0.15, w: 0.2, h: 0.2, objectName: nm + 'Icon' });
+      T(s, [{ text: scen[i][1] + '   ', options: { bold: true, fontFace: HEAD, color: C.ink } }, { text: scen[i][2], options: { color: C.soft } }],
+        { x: px + 0.6, y, w: pw - 0.85, h: 0.5, fontSize: 9.5, valign: 'middle', objectName: nm + 'Text' });
+    }
   }
 
-  {
-    const s = content(PRI, 'When it\'s on us', 'Known examples. Not an exhaustive list.',
-      'Only take the refund path if you can point to one of these known scenarios (not exhaustive): 1) the customer\'s previous CP was a no-show or cancelled at the last minute; 2) the customer\'s previous CP requested to reschedule; 3) the customer was affected by a system bug; 4) the customer immediately booked another cleaning after reporting their previous CP for Poor Cleaning Quality (PCQ). If a case doesn\'t match exactly but is genuinely comparable (something on Homeaglow\'s or the CP\'s end forced the customer into the window, not their own scheduling choice), treat it the same way. If you\'re not sure whether it\'s truly comparable or the customer\'s own choice dressed up differently, escalate. Worked example: "I was charged a $15/hr priority fee for my cleaning yesterday. I didn\'t do anything different from usual." The account history shows their scheduled CP cancelled the day before, so they had to rebook on short notice. That\'s scenario 1: skip the credit macro, send Priority Fee Refunded, refund the $15/hr fee and its 15% processing fee to the original payment method, and acknowledge that the previous CP\'s cancellation caused it.');
-    await cards(s, 1.42, 1.75, [
-      { ico: 'FiUserX', title: 'CP no-show', body: 'Previous CP didn\'t show or cancelled last minute.' },
-      { ico: 'FiRepeat', title: 'CP rescheduled', body: 'Previous CP asked to move the appointment.' },
-      { ico: 'FiAlertTriangle', title: 'System bug', body: 'The customer was affected by a bug.' },
-      { ico: 'FiThumbsDown', title: 'Rebooked after PCQ', body: 'Booked again right after reporting Poor Cleaning Quality.' },
-    ]);
-    await tip(s, 3.32, 'Genuinely comparable?', 'treat it the same. Their own choice dressed up differently? Escalate.', 'FiHelpCircle');
-    await tip(s, 3.86, 'Repeat disputes?', 'check for earlier Priority Fee disputes before offering credits again.', 'FiSearch');
-  }
 
   await knowledgeCheck(PRI, [
     ['Now Jul 27, 10 AM. The customer moves tomorrow\'s 2 PM cleaning to Jul 29, 9 AM. Fee valid?', 'Yes. Only the new slot counts, and it\'s 47 hours away.'],
