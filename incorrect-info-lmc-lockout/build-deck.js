@@ -771,11 +771,11 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ['Valid lockout, 3 invoiced jobs, wants a refund. What do you offer?', 'Credits up to 75% of the job cost, keeping $40 for the CP.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
-  await wrapUp(LO, [
-    ['Four questions', 'Wanted it? On time? At the address? Tried to get in?'],
-    ['Invalid? CP pays', 'Refund through the CP Dashboard, not admin.'],
-    ['Valid? By category', 'Straight to the tier\'s offer. $40 CP cost stays.'],
-  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Lockouts.');
+  await practice(LO, [
+    ['Is the lockout valid or invalid? Why?', 'Wanted it? On time? At the address? Tried to get in?'],
+    ['What actions are you going to take?', 'Invalid: CP Dashboard refund. Valid: customer category.'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live Lockout ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is the lockout valid or invalid, and why? Walk the four questions in order: did the customer want the appointment, did the CP arrive on time (30 min before to 30 min after start), did the CP arrive at the address, and did the CP try to complete it (2+ contact attempts, 5+ min apart, 15+ min on site, entry notes followed). Remember the exception if the customer refused entry or wanted to cancel on arrival. 2) What actions are you going to take? Invalid: refund through the CP Dashboard (and the Premium fee if charged). Valid: only if the customer asks for a refund or contests the charge, go straight to their customer category offer. Check the special scenarios (entry denied for CP fault or T&S; cancelled via Support but not actioned). Leave an internal note with your findings. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Lockouts.');
 
   // ---------- Close ----------
   {
