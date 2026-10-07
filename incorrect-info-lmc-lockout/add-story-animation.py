@@ -62,7 +62,8 @@ for item in zin.infolist():
             def clean(m):
                 sp = m.group(0)
                 if not re.search(r'<p:cNvPr[^>]*>\s*<a:hlinkClick', sp):
-                    return sp
+                    # Run-level link only: keep the run's own colour (not the theme's blue link colour).
+                    return re.sub(r'<a:hlinkClick ([^>]*?)/>', lambda h: '<a:hlinkClick ' + h.group(1) + '><a:extLst><a:ext uri="{A12FA001-AC4F-418D-AE19-62706E023703}"><ahyp:hlinkClr xmlns:ahyp="http://schemas.microsoft.com/office/drawing/2018/hyperlinkcolor" val="tx"/></a:ext></a:extLst></a:hlinkClick>', sp)
                 sp = re.sub(r'(<a:rPr[^>]*>)(.*?)<a:hlinkClick[^>]*?(?:/>|>.*?</a:hlinkClick>)', r'\1\2', sp, flags=re.S)
                 sp = re.sub(r'(<a:rPr[^>]*?) u="sng"', r'\1 u="none"', sp)
                 return re.sub(r'\s*<a:extLst>\s*<a:ext uri="\{A12FA001-AC4F-418D-AE19-62706E023703\}">.*?</a:extLst>', '', sp, flags=re.S)

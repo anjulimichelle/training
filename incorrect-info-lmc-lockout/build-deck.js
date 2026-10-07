@@ -40,7 +40,7 @@ async function fitImage(s, file, x, y, w, h) {
 
 const pres = new pptxgen();
 pres.layout = 'LAYOUT_16x9'; // 10 x 5.625 in
-pres.title = 'Incorrect Info, LMC & Lockouts';
+pres.title = 'Incorrect Info, LMC, Lockouts & Fees';
 
 pres.defineSlideMaster({
   title: 'CONTENT',
@@ -62,7 +62,11 @@ async function iconDot(s, x, y, name, d = 0.36, fill = C.tealSoft) {
   const i = d * 0.52;
   s.addImage({ data: await icon(name), x: x + (d - i) / 2, y: y + (d - i) / 2, w: i, h: i });
 }
-const bullets = (items) => items.map((t, j) => ({ text: t, options: { bullet: { indent: 10 }, breakLine: j < items.length - 1 } }));
+// An item may be a string, or an array of runs (mixed formatting within one bullet).
+const bullets = (items) => items.flatMap((t, j) => {
+  const runs = Array.isArray(t) ? t : [{ text: t }], last = j === items.length - 1;
+  return runs.map((r, k) => ({ text: r.text, options: Object.assign({}, r.options, k === 0 ? { bullet: { indent: 10 } } : {}, k === runs.length - 1 && !last ? { breakLine: true } : {}) }));
+});
 
 // ZTP level chip. Level 3 is solid teal, Level 2 tinted, Level 1 outlined.
 function levelChip(s, x, y, lvl) {
@@ -124,7 +128,7 @@ async function panel(s, ill, y = 0.68, h = 4.26) {
 }
 
 let topicNo = 0;
-const TOPICS = 3;
+const TOPICS = 6;
 async function topic(title, sub, learn, ill, notes) {
   topicNo++;
   const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -368,11 +372,11 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   {
     const s = pres.addSlide({ masterName: 'COVER' });
     eyebrow(s, 'Homeaglow  ·  New Hire Care Training', 0.62, 0.6);
-    T(s, 'Incorrect Info,\nLMC & Lockouts', { x: 0.62, y: 1.0, w: 4.9, h: 1.6, fontFace: HEAD, bold: true, fontSize: 32 });
-    T(s, 'When our own words set the wrong expectation, and how to handle last-minute cancellation and lockout charges.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
+    T(s, 'Incorrect Info,\nLMC, Lockouts\n& Fees', { x: 0.62, y: 0.95, w: 4.9, h: 1.75, fontFace: HEAD, bold: true, fontSize: 30 });
+    T(s, 'When our own words set the wrong expectation, and how to handle the charges customers contest most.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
     T(s, 'Internal training material', { x: 0.62, y: 5.0, w: 3, h: 0.2, fontSize: 7, color: C.soft });
     await panel(s, 'ill6.png', 0.4, 4.82);
-    s.addNotes('Welcome. This module covers three topics from the Knowledge Library: General Guidance: Incorrect Information Provided; AG-Refund: Last-Minute Cancellation (LMC); and AG-Refund: Lockout (LO). The common thread: validate first, then decide how generous to be. Each topic ends with a knowledge check and time for questions.');
+    s.addNotes('Welcome. This module covers six topics from the Knowledge Library: General Guidance: Incorrect Information Provided; AG-Refund: Last-Minute Cancellation (LMC); AG-Refund: Lockout (LO); AG – Refund – Priority Fee; AG – Refund – Premium Upsell; and AG – Refund: Processing Fee. The common thread: work out whether the charge is valid and why the customer is contesting it, then resolve it the way the Knowledge Library sets out, no more and no less.');
   }
 
   // ---------- Agenda ----------
@@ -382,30 +386,33 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   const addTopic = topic;
   topic = async (...args) => { const t = await addTopic(...args); topicSlides.push(t._slideNum); return t; };
   {
-    const s = agendaSlide = content('Overview', 'Agenda', 'Three topics. Click a topic to jump to it.',
-      'Topic 1 is general guidance that applies whenever our own communication caused the problem. Topics 2 and 3 are action guides for two charges customers contest often: the Last-Minute Cancellation fee and the Lockout charge. Both follow the same two-step shape: is the charge valid, and if so, which customer tier applies. In slideshow mode, click any topic to jump straight to it.');
+    const s = agendaSlide = content('Overview', 'Agenda', 'Six topics. Click a topic to jump to it.',
+      'Topic 1 is general guidance that applies whenever our own communication caused the problem. Topics 2 to 6 are action guides for charges customers often contest: the Last-Minute Cancellation fee, the Lockout fee, the Priority Fee, the Premium Upsell and the Processing Fee. In slideshow mode, click any topic to jump straight to it.');
     const rows = [
-      ['General Guidance: Incorrect Information Provided', 'We promised something we can\'t deliver. Fix it, own it, and don\'t charge an ETF for it.'],
-      ['AG-Refund: Last-Minute Cancellation (LMC)', 'The $40 fee for cancelling within 6 hours: is it valid, and how much do we refund?'],
-      ['AG-Refund: Lockout (LO)', 'The CP couldn\'t get in. Validate the claim, then refund by customer tier.'],
+      ['Incorrect Information Provided', 'We promised what we can\'t deliver. Own it, no ETF.'],
+      ['Last-Minute Cancellation (LMC)', 'The $40 fee within 6 hours: valid, and how much back?'],
+      ['Lockout (LO)', 'The CP couldn\'t get in. Validate, then refund by tier.'],
+      ['Priority Fee', 'Short-notice booking. Their choice, or ours?'],
+      ['Premium Upsell', 'The optional $20 upgrade. When to refund it.'],
+      ['Processing Fee', 'Standard pricing. Why are they contesting it?'],
     ];
-    const h = 1.0, gy = 0.14;
+    const cw = (9.1 - 0.15) / 2, h = 1.0, gy = 0.14;
     for (let i = 0; i < rows.length; i++) {
-      const [title, line] = rows[i], y = 1.5 + i * (h + gy);
+      const [title, line] = rows[i], x = 0.45 + (i < 3 ? 0 : cw + 0.15), y = 1.45 + (i % 3) * (h + gy);
       const link = { slide: 1, tooltip: 'Go to ' + title };
       agendaLinks.push(link);
       // One shape per row, so a click anywhere on it follows the link.
       s.addText([
-        { text: title, options: { color: C.ink, bold: true, fontFace: HEAD, fontSize: 14, breakLine: true, hyperlink: link } },
-        { text: line, options: { color: C.soft, fontSize: 10.5, hyperlink: link } },
-      ], { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.45, y, w: 9.1, h, rectRadius: 0.06, fill: { color: C.white }, line: { color: C.border, width: 0.75 },
-        fontFace: BODY, valign: 'middle', margin: [62, 40, 0, 0], hyperlink: link });
+        { text: title, options: { color: C.ink, bold: true, fontFace: HEAD, fontSize: 12.5, breakLine: true, hyperlink: link } },
+        { text: line, options: { color: C.soft, fontSize: 9.5, hyperlink: link } },
+      ], { shape: pres.shapes.ROUNDED_RECTANGLE, x, y, w: cw, h, rectRadius: 0.06, fill: { color: C.white }, line: { color: C.border, width: 0.75 },
+        fontFace: BODY, valign: 'middle', margin: [56, 30, 0, 0], hyperlink: link });
       const num = { slide: 1, tooltip: 'Go to ' + title };
       agendaLinks.push(num);
-      s.addText(String(i + 1).padStart(2, '0'), { x: 0.6, y, w: 0.6, h, fontFace: HEAD, bold: true, fontSize: 18, color: C.teal, align: 'center', valign: 'middle', hyperlink: num });
+      s.addText(String(i + 1).padStart(2, '0'), { x: x + 0.1, y, w: 0.55, h, fontFace: HEAD, bold: true, fontSize: 16, color: C.teal, align: 'center', valign: 'middle', hyperlink: num });
       const arrow = { slide: 1, tooltip: 'Go to ' + title };
       agendaLinks.push(arrow);
-      s.addText('›', { x: 9.0, y, w: 0.4, h, fontFace: HEAD, bold: true, fontSize: 22, color: C.teal, align: 'center', valign: 'middle', hyperlink: arrow });
+      s.addText('›', { x: x + cw - 0.42, y, w: 0.35, h, fontFace: HEAD, bold: true, fontSize: 20, color: C.teal, align: 'center', valign: 'middle', hyperlink: arrow });
     }
   }
 
@@ -734,6 +741,9 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       { ico: 'FiShield', title: 'Entry denied: CP fault or T&S', items: ['Admin refund the lockout fee', 'Still pay the CP $40', 'Document it in internal notes', 'Coach the CP'] },
       { ico: 'FiPhoneMissed', title: 'Cancelled via Support, not actioned', items: ['Don\'t charge the customer', 'Refund or cancel on the C-side', 'Pay the CP via MCP, if on site and tried', 'Lateness doesn\'t matter here'] },
       1.45, 1.85);
+    // Clickable: "Watch & Learn" right after the first bullet opens the admin refund video (its own box, so it keeps the teal style in Google).
+    s.addText('▷ Watch & Learn', { x: 2.63, y: 2.255, w: 1.0, h: 0.15, margin: 0, fontFace: BODY, bold: true, fontSize: 8, color: C.teal, valign: 'middle',
+      hyperlink: { url: 'https://drive.google.com/file/d/1tCfXer937DtMgutZGSs0BcBjtjThbOSH/view?usp=sharing', tooltip: 'Watch: how to admin refund the lockout fee' } });
     // Details: click 1 shows the left description, click 2 the right one (both stay).
     const cw = (9.1 - 0.15) / 2, desc = [
       [{ text: 'CP was denied entry because:', options: { bold: true, breakLine: true } },
@@ -777,6 +787,235 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ['5-min writing challenge', 'Create your comms for the customer.'],
   ], 'TRAINER: share a live Lockout ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is the lockout valid or invalid, and why? Walk the four questions in order: did the customer want the appointment, did the CP arrive on time (30 min before to 30 min after start), did the CP arrive at the address, and did the CP try to complete it (2+ contact attempts, 5+ min apart, 15+ min on site, entry notes followed). Remember the exception if the customer refused entry or wanted to cancel on arrival. 2) What actions are you going to take? Invalid: refund through the CP Dashboard (and the Premium fee if charged). Valid: only if the customer asks for a refund or contests the charge, go straight to their customer category offer. Check the special scenarios (entry denied for CP fault or T&S; cancelled via Support but not actioned). Leave an internal note with your findings. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Lockouts.');
 
+  // ================= 4. PRIORITY FEE =================
+  const PRI = 'Priority Fee';
+  await topic('Priority Fee', 'Charged for booking or rescheduling on short notice. Valid by default, but not always.',
+    ['What triggers it', 'The 48-hour rule', 'Their choice or ours?', 'Refund vs courtesy credit'],
+    'ill22.png',
+    'AG – Refund – Priority Fee. A Priority Fee is a charge automatically applied when a customer books or reschedules on short notice (less than 48 hours out). It compensates for the extra effort and urgency needed to secure CP availability on short notice. This topic covers what to do when a customer contacts Support asking for a refund on that charge: investigate the charge, decide whether it was rightfully applied, and resolve it correctly. The fee is valid by default: the system only applies it under a specific condition, and it\'s disclosed at booking. But valid by default doesn\'t mean it always stands. If something on Homeaglow\'s or the CP\'s end pushed the customer into that window, charging them for it isn\'t fair.');
+
+  {
+    const s = content(PRI, 'What triggers it?', 'The system adds it automatically. The customer sees it at booking.',
+      'The system automatically applies a Priority Fee when the customer books a cleaning scheduled to take place within 12–48 hours from the time they book it, or reschedules a cleaning and the new appointment is within 48 hours from the time they make the change. The Priority Fee is also subject to the standard 15% processing fee charged on billable services. Whenever we talk about refunding the Priority Fee, that includes the associated 15% processing fee. Example: Priority Fee $15/hr x 3 hrs = $45; processing fee (15%) $6.75; total charged $51.75. When refunding, refund both, since the processing fee was charged because of the Priority Fee.');
+    const w = (9.1 - 0.3) / 3;
+    stat(s, 0.45, 1.45, w, 1.6, '< 48 hrs', 'Booked (12–48 hrs out) or rescheduled into this window');
+    stat(s, 0.45 + (w + 0.15), 1.45, w, 1.6, '+ 15%', 'Processing fee charged on top of the Priority Fee');
+    stat(s, 0.45 + 2 * (w + 0.15), 1.45, w, 1.6, '$51.75', 'e.g. $15/hr × 3 hrs = $45, plus $6.75 processing', C.gold);
+    await tip(s, 3.3, 'Refunding it?', 'refund the 15% processing fee with it.', 'FiInfo');
+  }
+
+  {
+    const s = content(PRI, 'The 48-hour rule', 'Ignore the original appointment. Only look at the NEW one.',
+      'Quick rule: ignore the original appointment date. Only look at the new appointment. If the new appointment is within 48 hours of when the booking or reschedule is made, a Priority Fee applies. Example 1 (fee applies): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to July 29, 9:00 AM. The new appointment is only 47 hours away, so the Priority Fee applies. Example 2 (no fee): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to August 1, 9:00 AM. The new appointment is more than 48 hours away, so no Priority Fee applies.');
+    await twoCol(s,
+      { ico: 'FiCheckCircle', title: 'Fee applies', items: ['Now: Jul 27, 10:00 AM', 'Original: Jul 28, 2:00 PM', 'Changed to: Jul 29, 9:00 AM', [{ text: 'New slot is 47 hrs away', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiXCircle', title: 'No fee', items: ['Now: Jul 27, 10:00 AM', 'Original: Jul 28, 2:00 PM', 'Changed to: Aug 1, 9:00 AM', [{ text: 'New slot is more than 48 hrs away', options: { bold: true, color: C.teal } }]] },
+      1.45, 2.1);
+    await tip(s, 3.75, 'Same original date in both.', 'Only the new appointment decides it.', 'FiCalendar');
+  }
+
+  {
+    const s = content(PRI, 'Why did they end up in the window?', 'Check the account history before you say anything about a resolution.',
+      'Step 1: pull up the account history first. Before saying anything to the customer about a resolution, ask one question: why did the customer end up in the priority window? Their own scheduling choice, or because Homeaglow or the CP forced them into it? Step 2: choose the path. Customer chose the priority window (booked or rescheduled within 48 hours on their own, or picked a high-demand date, and nothing on our side drove it): explain the policy plainly, the fee stands. You can soften it with up to 100% of the Priority Fee in account credits as a courtesy. Treat 100% as a ceiling, not a starting point: base the amount on the customer\'s history and how the conversation is going. Frame it as goodwill, not "we got this wrong". Macro: Priority Fee: Issue Credits up to 100% of the Priority Fee. Homeaglow or the CP caused it: refund the full Priority Fee, including the 15% processing fee, to the original payment method, and acknowledge specifically what happened (e.g. "your last cleaner cancelled on short notice"). Macro: Priority Fee Refunded. The two paths are mutually exclusive. Not sure which? Escalate rather than deciding solo.');
+    const cx = 5.0, bw = 4.2;
+    await flowBox(s, cx - 2.0, 1.42, 4.0, 0.4, 'Pull up the account history', 'action');
+    flowLine(s, [[cx, 1.82], [cx, 1.98]], true);
+    await flowBox(s, cx - 2.3, 1.98, 4.6, 0.46, 'Why did they end up in the priority window?', 'decision');
+    const lx = 0.45 + bw / 2, rx = 9.55 - bw / 2;
+    flowSplit(s, cx, 2.44, 2.6, lx, rx, 2.76, '', '');
+    T(s, 'Their own choice', { x: lx + 0.08, y: 2.61, w: 1.6, h: 0.15, fontSize: 8, bold: true, color: C.soft });
+    T(s, 'Homeaglow or the CP caused it', { x: rx + 0.08, y: 2.6, w: 2.0, h: 0.16, fontSize: 8, bold: true, color: C.soft });
+    await flowBox(s, 0.45, 2.76, bw, 0.5, 'Fee stands. Explain the policy plainly.', 'end');
+    flowLine(s, [[lx, 3.26], [lx, 3.38]], true);
+    await flowBox(s, 0.45, 3.38, bw, 0.5, 'Courtesy credits, up to 100% of the fee\n(a ceiling, not a starting point)', 'action');
+    await flowBox(s, 9.55 - bw, 2.76, bw, 0.5, 'Refund the full fee + 15% processing\nto the original payment method', 'action');
+    flowLine(s, [[rx, 3.26], [rx, 3.38]], true);
+    await flowBox(s, 9.55 - bw, 3.38, bw, 0.5, 'Name exactly what happened\n("your last cleaner cancelled…")', 'end');
+    await macroFlag(s, 0.45, 4.0, 'Macro:', 'Priority Fee: Issue Credits up to 100%', bw);
+    await macroFlag(s, 9.55 - bw, 4.0, 'Macro:', 'Priority Fee Refunded', bw);
+    await tip(s, 4.52, 'Not sure which?', 'escalate before you commit to either. Never refund and credit the same fee.', 'FiHelpCircle');
+  }
+
+  {
+    const s = content(PRI, 'When it\'s on us', 'Known examples. Not an exhaustive list.',
+      'Only take the refund path if you can point to one of these known scenarios (not exhaustive): 1) the customer\'s previous CP was a no-show or cancelled at the last minute; 2) the customer\'s previous CP requested to reschedule; 3) the customer was affected by a system bug; 4) the customer immediately booked another cleaning after reporting their previous CP for Poor Cleaning Quality (PCQ). If a case doesn\'t match exactly but is genuinely comparable (something on Homeaglow\'s or the CP\'s end forced the customer into the window, not their own scheduling choice), treat it the same way. If you\'re not sure whether it\'s truly comparable or the customer\'s own choice dressed up differently, escalate. Worked example: "I was charged a $15/hr priority fee for my cleaning yesterday. I didn\'t do anything different from usual." The account history shows their scheduled CP cancelled the day before, so they had to rebook on short notice. That\'s scenario 1: skip the credit macro, send Priority Fee Refunded, refund the $15/hr fee and its 15% processing fee to the original payment method, and acknowledge that the previous CP\'s cancellation caused it.');
+    await cards(s, 1.42, 1.75, [
+      { ico: 'FiUserX', title: 'CP no-show', body: 'Previous CP didn\'t show or cancelled last minute.' },
+      { ico: 'FiRepeat', title: 'CP rescheduled', body: 'Previous CP asked to move the appointment.' },
+      { ico: 'FiAlertTriangle', title: 'System bug', body: 'The customer was affected by a bug.' },
+      { ico: 'FiThumbsDown', title: 'Rebooked after PCQ', body: 'Booked again right after reporting Poor Cleaning Quality.' },
+    ]);
+    await tip(s, 3.32, 'Genuinely comparable?', 'treat it the same. Their own choice dressed up differently? Escalate.', 'FiHelpCircle');
+    await tip(s, 3.86, 'Repeat disputes?', 'check for earlier Priority Fee disputes before offering credits again.', 'FiSearch');
+  }
+
+  await knowledgeCheck(PRI, [
+    ['Now Jul 27, 10 AM. The customer moves tomorrow\'s 2 PM cleaning to Jul 29, 9 AM. Fee valid?', 'Yes. Only the new slot counts, and it\'s 47 hours away.'],
+    ['Their CP cancelled last minute, so they rebooked for tomorrow and were charged. What do you do?', 'Refund the full fee + 15% processing to the original payment method. Macro: Priority Fee Refunded.'],
+    ['The customer picked a short-notice slot themselves and is upset. What can you offer?', 'The fee stands. Courtesy credits up to 100% of the fee, as goodwill.'],
+    ['Can you refund and credit the same Priority Fee?', 'No. The paths are mutually exclusive unless a supervisor approves an exception.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await practice(PRI, [
+    ['Was the Priority Fee valid? Why?', 'Their choice, or ours? Check the account history.'],
+    ['What actions are you going to take?', 'Their choice: credits up to 100%. Ours: refund fee + 15%.'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live Priority Fee ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Was the Priority Fee valid, and why? Apply the 48-hour rule to the new appointment only, then check the account history: did the customer choose the window, or did Homeaglow or the CP force them into it (no-show or last-minute cancel, CP reschedule, system bug, rebooked after PCQ)? 2) What actions are you going to take? Customer\'s choice: explain the policy and offer courtesy credits up to 100% of the fee (macro: Priority Fee: Issue Credits up to 100%). Our fault: refund the full fee plus the 15% processing fee to the original payment method (macro: Priority Fee Refunded). Not sure: escalate. 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on the Priority Fee.');
+
+  // ================= 5. PREMIUM UPSELL =================
+  const PRE = 'Premium Upsell';
+  await topic('Premium Upsell', 'An optional $20 upgrade the customer chooses at booking.',
+    ['What the Premium Fee is', 'Two reasons to refund it', 'A failed charge keeps retrying', 'Where to find it'],
+    'ill29.png',
+    'AG – Refund – Premium Upsell. Category: Job-Related Charges Refund Requests. A Premium Fee (also called "Premium Upsell") is a $20 charge, plus applicable taxes, applied when a customer selects Premium as their level of experience during booking. Unlike the Priority Fee, which is triggered when a job is booked or rescheduled, the Premium Fee is an optional charge the customer chooses at booking for a higher service tier.');
+
+  {
+    const s = content(PRE, 'What is the Premium Fee?', 'Chosen by the customer. Not triggered by timing.',
+      'The Premium Fee is a $20 charge plus applicable taxes, applied when the customer selects Premium as their level of experience at booking. It\'s an optional, higher service tier. Don\'t confuse it with the Priority Fee: that one is applied automatically when a job is booked or rescheduled into the 48-hour window. Where to find it: New CRM: Payment History section. Legacy CRM: Manual Charges section.');
+    stat(s, 0.45, 1.45, 2.5, 2.1, '$20', 'plus applicable taxes, per job', C.gold);
+    const panels = [
+      { ico: 'FiStar', title: 'Premium Fee', items: ['Optional: the customer picks it', 'Chosen at booking', 'A higher service tier'] },
+      { ico: 'FiClock', title: 'Not the Priority Fee', items: ['Automatic, not chosen', 'Triggered by booking or rescheduling', 'Inside the 48-hour window'] },
+    ];
+    const pw = (9.55 - 3.1 - 0.15) / 2;
+    for (const [i, p] of panels.entries()) {
+      const x = 3.1 + i * (pw + 0.15);
+      box(s, x, 1.45, pw, 2.1, C.white, C.border);
+      await iconDot(s, x + 0.2, 1.65, p.ico, 0.42);
+      T(s, p.title, { x: x + 0.75, y: 1.65, w: pw - 0.9, h: 0.42, fontFace: HEAD, bold: true, fontSize: 13, valign: 'middle' });
+      T(s, bullets(p.items), { x: x + 0.2, y: 2.23, w: pw - 0.4, h: 1.2, fontSize: 10, paraSpaceAfter: 5 });
+    }
+    await tip(s, 3.8, 'Where to find it:', 'New CRM › Payment History. Legacy CRM › Manual Charges.', 'FiSearch');
+  }
+
+  {
+    const s = content(PRE, 'Two reasons to refund it', 'Only one needs to apply.',
+      'The Premium Fee can be refunded under two independent circumstances, and only one needs to apply: (1) the customer requests a refund for the Premium Fee; (2) the job has a confirmed service issue, even if the customer never mentions the Premium Fee. The second trigger is the one agents most often overlook. When a job has a confirmed service issue (such as Poor Cleaning Quality), always check whether a Premium Fee was charged. If it was, refund it as part of resolving the service issue, even if the customer only complained about the cleaning.');
+    await cards(s, 1.45, 1.85, [
+      { ico: 'FiMessageCircle', title: 'The customer asks', body: 'They request a refund of the Premium Fee.' },
+      { ico: 'FiAlertCircle', title: 'Confirmed service issue', body: 'E.g. Poor Cleaning Quality. Refund it even if they never mention Premium.' },
+    ]);
+    s.addText('Most often missed', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 9.55 - 1.65, y: 1.6, w: 1.45, h: 0.3, rectRadius: 0.06,
+      fill: { color: C.goldSoft }, line: { color: C.gold, width: 0.75 }, fontFace: BODY, bold: true, fontSize: 8.5, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
+    await tip(s, 3.5, 'Confirmed service issue?', 'always check for a Premium Fee, and refund it.', 'FiCheckSquare');
+  }
+
+  {
+    const s = content(PRE, 'A failed charge keeps retrying', 'The opposite of a failed LMC. A failed Premium Fee is not resolved.',
+      'If the Premium Fee charge fails, it keeps retrying until it succeeds. That\'s the opposite of a failed LMC charge, which the system tries a couple of times and then lets go. A failed Premium Fee is not resolved: the customer will still be charged. So when a customer asks not to be charged the Premium Fee and the charge has already failed: switch the experience to Standard, and issue a credit equal to the Premium Fee to offset the retry when it lands. Explain both to the customer, so the later charge doesn\'t read as us ignoring the request. Why this matters: a failed charge looks resolved, and the instinct carried over from LMC is to leave it alone. Check how the specific fee behaves on retry before deciding nothing is owed.');
+    table(s, ['Failed charge', 'What the system does', 'What you do'], [
+      ['LMC', 'Tries a couple of times, then stops', 'Let it go'],
+      ['Premium Fee', 'Keeps retrying until it succeeds', 'Act: it will still land'],
+    ], { y: 1.42, colW: [2.0, 3.8, 3.3], fontSize: 10, rowH: [0.34, 0.42, 0.42] });
+    eyebrow(s, 'Customer doesn\'t want Premium, and the charge already failed', 0.45, 2.85, 8, C.soft);
+    const w = 2.15, gap = 0.17, flow = [
+      ['Switch the experience to Standard', 'action'],
+      ['Credit equal to the Premium Fee', 'action'],
+      ['The retry lands, offset by the credit', 'end'],
+      ['Explain both to the customer', 'end'],
+    ];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 3.12, w, 0.62, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 3.43], [x + w + gap, 3.43]], true);
+    }
+    await tip(s, 4.0, 'Looks resolved?', 'check how the fee behaves on retry before deciding nothing is owed.', 'FiRefreshCw');
+  }
+
+  await knowledgeCheck(PRE, [
+    ['A customer reports Poor Cleaning Quality and never mentions Premium. Premium was charged. Refund it?', 'Yes. A confirmed service issue is enough on its own.'],
+    ['How much is the Premium Fee, and who chooses it?', '$20 plus applicable taxes. The customer chooses it at booking.'],
+    ['The Premium charge failed and the customer doesn\'t want it. Leave it, like a failed LMC?', 'No. It keeps retrying. Switch to Standard, credit the fee amount, explain both.'],
+    ['Where do you find the Premium charge?', 'New CRM › Payment History. Legacy CRM › Manual Charges.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await practice(PRE, [
+    ['Should the Premium Fee be refunded? Why?', 'Did they ask, or is there a confirmed service issue?'],
+    ['What actions are you going to take?', 'Refund it. Failed charge? Standard + equal credit.'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live ticket with a Premium Fee. Give trainees a few minutes to review it on their own, then work through it together. 1) Should the Premium Fee be refunded, and why? Either trigger is enough: the customer asked for a refund, or the job has a confirmed service issue (e.g. PCQ), even if Premium was never mentioned. 2) What actions are you going to take? Find the charge (New CRM › Payment History; Legacy CRM › Manual Charges) and refund it. If the charge failed and the customer doesn\'t want Premium: switch the experience to Standard and issue a credit equal to the Premium Fee to offset the retry, and explain both. 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on the Premium Upsell.');
+
+  // ================= 6. PROCESSING FEE =================
+  const PRO = 'Processing Fee';
+  await topic('Processing Fee', 'A standard part of every cleaning. The question is why the customer is contesting it.',
+    ['What it is: 5% or 15%', 'Expectation gap vs our failure', 'Goodwill, refund or ETF waiver', 'If they don\'t want future fees'],
+    'ill_pay.png',
+    'AG – Refund: Processing Fee. Category: Job-Related Charges & Refund Requests. A Processing Fee is a standard percentage-based charge included in the total cost of every cleaning. This topic covers customers who contest or question it. For the pricing formula, see Billing (C Price and CP Pay). It\'s also one specific, worked-out example of the Incorrect Information Provided rule from Topic 1.');
+
+  {
+    const s = content(PRO, 'What is the Processing Fee?', 'Standard pricing, not a penalty. Don\'t debate whether it applies.',
+      'The Processing Fee is a standard percentage-based charge included in the total cost of every cleaning. The percentage depends on membership status: 5% for non-ForeverClean and deactivated ForeverClean customers; 15% for active ForeverClean customers. It\'s a standard part of Homeaglow\'s pricing, not a penalty or a discretionary charge, so your role is not to decide whether it should have been charged: in most cases it\'s valid. Most customers contest it because of expectation gaps, not billing errors: they didn\'t realize it applied when they signed up, or they enrolled through Sales and only remember an "around $23/hour" price without the fee called out separately. That doesn\'t make the fee wrong, but it can leave them feeling misled.');
+    const w = (9.1 - 0.15) / 2;
+    stat(s, 0.45, 1.45, w, 1.45, '5%', 'Non-ForeverClean and deactivated ForeverClean customers');
+    stat(s, 0.45 + w + 0.15, 1.45, w, 1.45, '15%', 'Active ForeverClean customers');
+    await tip(s, 3.15, 'Usually contested because of', 'an expectation gap, not a billing error. Find out why they\'re contesting it.', 'FiMessageSquare');
+  }
+
+  {
+    const s = content(PRO, 'Why are they contesting it?', 'The fee can be legitimate. So can the frustration.',
+      'Step 1: determine why the customer is contesting the fee. Homeaglow properly set expectations: the customer simply wasn\'t aware of the fee or doesn\'t remember it being disclosed (overlooked it at signup, forgot the pricing details, assumed the quoted hourly rate included all fees). That\'s an expectation gap, not a billing error. Homeaglow failed to set proper expectations: the fee wasn\'t properly disclosed or was misrepresented before booking (a Sales rep didn\'t mention it when it should have been disclosed, a Sales rep said there were no additional fees, or a system or onboarding issue hid the disclosure). That\'s a Homeaglow-caused expectation issue. Separate the legitimacy of the fee from the customer\'s experience: your resolution should reflect why they\'re contesting it, not just the fact that they are.');
+    await twoCol(s,
+      { ico: 'FiCheckCircle', title: 'We set expectations properly', items: ['Overlooked the fee at signup', 'Forgot the pricing details', 'Assumed the hourly rate included all fees', [{ text: 'An expectation gap', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiXCircle', title: 'We failed to set expectations', items: ['Sales didn\'t mention the fee', 'Sales said there were no extra fees', 'A system issue hid the disclosure', [{ text: 'Our expectation issue', options: { bold: true, color: C.teal } }]] },
+      1.45, 2.2);
+    await tip(s, 3.85, 'Verify first:', 'what were they actually told? Check the sales call or notes, like Topic 1.', 'FiSearch');
+  }
+
+  {
+    const s = content(PRO, 'Choose the resolution', 'Based on why they\'re contesting it, not just that they are.',
+      'Homeaglow properly set expectations: explain that the Processing Fee is a standard charge included in every cleaning. Keep it neutral; don\'t imply it was charged incorrectly. If they only wanted clarification, the explanation is enough. If they\'re still unhappy but staying, you may issue a one-time $10 or $20 account credit as goodwill (use your judgment). Never issue a credit equal to the Processing Fee itself: that implies the fee was inappropriate. If they specifically want cash back instead of credits, or will cancel unless refunded, you may issue a $10 or $20 partial refund instead. Set clear expectations that the fee is standard and ongoing: this is a one-time exception, not a waiver. Homeaglow failed to set proper expectations: refund the Processing Fee in full to the original payment method, and acknowledge the specific expectation-setting issue without suggesting the fee is generally invalid. If they no longer want their ForeverClean membership because of it, waive the ETF when processing the cancellation. Macro: Processing Fee.');
+    const cx = 5.0, bw = 4.2, lx = 0.45 + bw / 2, rx = 9.55 - bw / 2;
+    await flowBox(s, cx - 2.3, 1.42, 4.6, 0.44, 'Did Homeaglow set expectations properly?', 'decision');
+    flowSplit(s, cx, 1.86, 2.0, lx, rx, 2.14, '', '');
+    T(s, 'Yes: expectation gap', { x: lx + 0.08, y: 2.0, w: 1.8, h: 0.14, fontSize: 8, bold: true, color: C.soft });
+    T(s, 'No: we failed to', { x: rx + 0.08, y: 2.0, w: 1.8, h: 0.14, fontSize: 8, bold: true, color: C.soft });
+    const lsteps = [['Explain: a standard charge on every cleaning', 'end'], ['Still unhappy, staying? One-time $10 or $20 credit', 'action'], ['Wants cash or will cancel? $10 or $20 partial refund', 'action']];
+    for (let i = 0; i < lsteps.length; i++) {
+      const y = 2.14 + i * 0.6;
+      await flowBox(s, 0.45, y, bw, 0.46, lsteps[i][0], lsteps[i][1]);
+      if (i < lsteps.length - 1) flowLine(s, [[lx, y + 0.46], [lx, y + 0.6]], true);
+    }
+    await flowBox(s, 9.55 - bw, 2.14, bw, 0.46, 'Refund the Processing Fee in full\nto the original payment method', 'action');
+    flowLine(s, [[rx, 2.6], [rx, 2.74]], true);
+    await flowBox(s, 9.55 - bw, 2.74, bw, 0.46, 'Name the specific expectation issue', 'end');
+    flowLine(s, [[rx, 3.2], [rx, 3.34]], true);
+    await flowBox(s, 9.55 - bw, 3.34, bw, 0.46, 'Cancelling FC over it? Waive the ETF', 'penalty');
+    await tip(s, 4.02, 'Never', 'issue a credit equal to the exact Processing Fee. It says the fee was wrong.', 'FiSlash');
+    await macroFlag(s, 0.45, 4.56, 'Recommended Macro:', 'Processing Fee', 3.2);
+  }
+
+  {
+    const s = content(PRO, 'They don\'t want future fees', 'A retention conversation, not a refund one.',
+      'If the customer\'s concern is paying the Processing Fee on future bookings rather than this specific charge, move into the appropriate retention flow. Offer a $10–$15 Membership Fee reduction. If the situation calls for more, escalate to Support or a TL, who can approve reductions of up to 50%. Things to watch for: don\'t investigate whether the Processing Fee is generally valid (it\'s standard pricing); investigate why the customer is contesting it and whether we set expectations properly; goodwill acknowledges the experience, it doesn\'t mean the fee was wrong; never credit the exact fee amount; if we failed to disclose it, refund it in full; if they cancel FC because of our misrepresentation, waive the ETF.');
+    const w = 2.85, gap = 0.27, flow = [
+      ['Move into the retention flow', 'end'],
+      ['Offer a $10–$15 Membership Fee reduction', 'action'],
+      ['Need more? Escalate to Support or a TL (up to 50%)', 'decision'],
+    ];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 1.5, w, 0.7, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 1.85], [x + w + gap, 1.85]], true);
+    }
+    await twoCol(s,
+      { ico: 'FiCheck', title: 'Do', items: ['Ask why they\'re contesting it', 'Check what they were told', 'Keep goodwill one-time'] },
+      { ico: 'FiX', title: 'Don\'t', items: ['Debate whether the fee is valid', 'Credit the exact fee amount', 'Promise a permanent waiver'] },
+      2.5, 1.75);
+  }
+
+  await knowledgeCheck(PRO, [
+    ['An active ForeverClean customer asks what their Processing Fee is.', '15%. It\'s 5% for non-FC and deactivated FC customers.'],
+    ['The customer forgot about the fee, is annoyed, but is staying. What can you offer?', 'Explain it\'s standard. One-time $10 or $20 credit, never the exact fee amount.'],
+    ['Sales told them "no extra fees". They want to cancel FC. What do you do?', 'Refund the Processing Fee in full and waive the ETF.'],
+    ['They\'re fine with this charge but don\'t want the fee in future. Next step?', 'Retention: offer a $10–$15 Membership Fee reduction. More needs Support or a TL.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+
+  await practice(PRO, [
+    ['Why is the customer contesting the fee?', 'An expectation gap, or did we fail to disclose it?'],
+    ['What actions are you going to take?', 'Explain + goodwill, or a full refund (+ ETF waiver).'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live Processing Fee ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Why is the customer contesting the fee? Don\'t debate whether the fee applies (5% non-FC or deactivated FC, 15% active FC): find out whether we set expectations properly (expectation gap) or failed to (Sales omitted it, said no extra fees, or a system issue hid it). Verify what they were told. 2) What actions are you going to take? Expectation gap: explain neutrally; if still unhappy but staying, a one-time $10 or $20 credit (never the exact fee); wants cash or will cancel, a $10 or $20 partial refund. Our failure: refund the Processing Fee in full and waive the ETF if they cancel FC over it. Future fees: retention flow, $10–$15 Membership Fee reduction, escalate for more. Macro: Processing Fee. 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on the Processing Fee.');
+
   // ---------- Close ----------
   {
     const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -784,7 +1023,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     T(s, 'Thank you!', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
     T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
     await panel(s, 'ill9.png');
-    s.addNotes('Close the module. Recap: Incorrect Information (test the exact words, own the error, one light offer, else waive ETF), LMC (validate against the automatic waivers, then refund by category, not a ladder; leave failed charges alone), and Lockouts (four validation questions; invalid goes through the CP Dashboard; valid goes by category, keeping $40 for the CP).');
+    s.addNotes('Close the module. Recap: Incorrect Information (test the exact words, own the error, one light offer, else waive ETF); LMC (validate against the automatic waivers, then refund by category, not a ladder; leave failed charges alone); Lockouts (four validation questions; invalid goes through the CP Dashboard; valid goes by category, keeping $40 for the CP); Priority Fee (only the new appointment counts; their choice gets courtesy credits up to 100%, our fault gets a full refund plus the 15% processing fee); Premium Upsell (refund it when asked or when there is a confirmed service issue; a failed charge keeps retrying); Processing Fee (standard pricing; find out why they are contesting it; goodwill $10 or $20, or a full refund and ETF waiver if we failed to disclose it).');
   }
 
   // Point every agenda row (card, number and arrow) at its topic's title slide.
