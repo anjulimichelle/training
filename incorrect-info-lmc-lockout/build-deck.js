@@ -978,17 +978,27 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   // ================= 6. PROCESSING FEE =================
   const PRO = 'Processing Fee';
   await topic('Processing Fee', 'A standard part of every cleaning. The question is why the customer is contesting it.',
-    ['What it is: 5% or 15%', 'Expectation gap vs our failure', 'Goodwill, refund or ETF waiver', 'If they don\'t want future fees'],
+    ['What it is: 5% or 15%', 'Expectation gap vs our failure', 'Goodwill, refund or ETF waiver', 'Reminders'],
     'ill_pay.png',
     'AG – Refund: Processing Fee. Category: Job-Related Charges & Refund Requests. A Processing Fee is a standard percentage-based charge included in the total cost of every cleaning. This topic covers customers who contest or question it. For the pricing formula, see Billing (C Price and CP Pay). It\'s also one specific, worked-out example of the Incorrect Information Provided rule from Topic 1.');
 
   {
     const s = content(PRO, 'What is the Processing Fee?', 'Standard pricing, not a penalty. Don\'t debate whether it applies.',
-      'The Processing Fee is a standard percentage-based charge included in the total cost of every cleaning. The percentage depends on membership status: 5% for non-ForeverClean and deactivated ForeverClean customers; 15% for active ForeverClean customers. It\'s a standard part of Homeaglow\'s pricing, not a penalty or a discretionary charge, so your role is not to decide whether it should have been charged: in most cases it\'s valid. Most customers contest it because of expectation gaps, not billing errors: they didn\'t realize it applied when they signed up, or they enrolled through Sales and only remember an "around $23/hour" price without the fee called out separately. That doesn\'t make the fee wrong, but it can leave them feeling misled.');
+      'The Processing Fee is a standard percentage-based charge included in the total cost of every cleaning. The percentage depends on membership status: 5% for non-ForeverClean and deactivated ForeverClean customers; 15% for active ForeverClean customers. It helps cover online bookings, secure credit card payment, background checks and 24/7 support. It\'s a standard part of Homeaglow\'s pricing, not a penalty or a discretionary charge, so your role is not to decide whether it should have been charged: in most cases it\'s valid. Most customers contest it because of expectation gaps, not billing errors: they didn\'t realize it applied when they signed up, or they enrolled through Sales and only remember an "around $23/hour" price without the fee called out separately. That doesn\'t make the fee wrong, but it can leave them feeling misled.');
     const w = (9.1 - 0.15) / 2;
-    stat(s, 0.45, 1.45, w, 1.45, '5%', 'Non-ForeverClean and deactivated ForeverClean customers');
-    stat(s, 0.45 + w + 0.15, 1.45, w, 1.45, '15%', 'Active ForeverClean customers');
-    await tip(s, 3.15, 'Usually contested because of', 'an expectation gap, not a billing error. Find out why they\'re contesting it.', 'FiMessageSquare');
+    stat(s, 0.45, 1.45, w, 1.3, '5%', 'Non-ForeverClean and deactivated ForeverClean customers');
+    stat(s, 0.45 + w + 0.15, 1.45, w, 1.3, '15%', 'Active ForeverClean customers');
+    // What the fee pays for.
+    box(s, 0.45, 2.9, 9.1, 1.05, C.white, C.border);
+    eyebrow(s, 'It helps cover', 0.65, 3.02, 4);
+    const covers = [['FiCalendar', 'Online bookings'], ['FiCreditCard', 'Secure credit card payment'], ['FiShield', 'Background checks'], ['FiHeadphones', '24/7 support']];
+    const cw = (9.1 - 0.4) / covers.length;
+    for (const [i, [ico, label]] of covers.entries()) {
+      const x = 0.65 + i * cw;
+      await iconDot(s, x, 3.3, ico, 0.42);
+      T(s, label, { x: x + 0.52, y: 3.3, w: cw - 0.6, h: 0.42, fontFace: HEAD, bold: true, fontSize: 10.5, valign: 'middle' });
+    }
+    await tip(s, 4.15, 'Usually contested because of', 'an expectation gap, not a billing error. Find out why they\'re contesting it.', 'FiMessageSquare');
   }
 
   {
@@ -1037,22 +1047,13 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(PRO, 'They don\'t want future fees', 'A retention conversation, not a refund one.',
-      'If the customer\'s concern is paying the Processing Fee on future bookings rather than this specific charge, move into the appropriate retention flow. Offer a $10–$15 Membership Fee reduction. If the situation calls for more, escalate to Support or a TL, who can approve reductions of up to 50%. Things to watch for: don\'t investigate whether the Processing Fee is generally valid (it\'s standard pricing); investigate why the customer is contesting it and whether we set expectations properly; goodwill acknowledges the experience, it doesn\'t mean the fee was wrong; never credit the exact fee amount; if we failed to disclose it, refund it in full; if they cancel FC because of our misrepresentation, waive the ETF.');
-    const w = 2.85, gap = 0.27, flow = [
-      ['Move into the retention flow', 'end'],
-      ['Offer a $10–$15 Membership Fee reduction', 'action'],
-      ['Need more? Escalate to Support or a TL (up to 50%)', 'decision'],
-    ];
-    for (let i = 0; i < flow.length; i++) {
-      const x = 0.45 + i * (w + gap);
-      await flowBox(s, x, 1.5, w, 0.7, flow[i][0], flow[i][1]);
-      if (i < flow.length - 1) flowLine(s, [[x + w, 1.85], [x + w + gap, 1.85]], true);
-    }
+    const s = content(PRO, 'Reminders', 'Keep these in mind on every Processing Fee ticket.',
+      'Reminders. Do: ask why the customer is contesting the fee; check what they were actually told (sales call or notes); keep goodwill one-time. Don\'t: debate whether the Processing Fee is valid (it\'s standard pricing); credit the exact fee amount (it implies the fee was wrong); promise a permanent waiver. Also remember: goodwill acknowledges the experience, it doesn\'t mean the fee was wrong; if we failed to disclose it, refund it in full; if they cancel FC because of our misrepresentation, waive the ETF; if they object to future fees, offer a $10–$15 Membership Fee reduction (up to 50% via a TL).');
     await twoCol(s,
       { ico: 'FiCheck', title: 'Do', items: ['Ask why they\'re contesting it', 'Check what they were told', 'Keep goodwill one-time'] },
       { ico: 'FiX', title: 'Don\'t', items: ['Debate whether the fee is valid', 'Credit the exact fee amount', 'Promise a permanent waiver'] },
-      2.5, 1.75);
+      1.45, 1.9);
+    await tip(s, 3.6, 'Remember:', 'goodwill acknowledges the experience. It doesn\u2019t mean the fee was wrong.', 'FiInfo');
   }
 
   await knowledgeCheck(PRO, [
