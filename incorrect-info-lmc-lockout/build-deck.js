@@ -293,8 +293,8 @@ async function macroFlag(s, x, y, label, macro, w = 3.2) {
 }
 
 // Knowledge check: question on the left, answer on the right revealed one per click (step1..step4).
-async function knowledgeCheck(eb, qa, notes, title = 'Knowledge check') {
-  const s = content(eb + '  ·  Knowledge check', title, 'Ask each question, then click to reveal the answer.', notes);
+async function knowledgeCheck(eb, qa, notes, title = 'Knowledge check', sub = 'Ask each question, then click to reveal the answer.') {
+  const s = content(eb + '  ·  Knowledge check', title, sub, notes);
   const n = qa.length, h = Math.min(0.86, (3.75 - 0.08 * (n - 1)) / n);
   for (let i = 0; i < n; i++) {
     const y = 1.4 + i * (h + 0.08);
@@ -814,8 +814,8 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     const s = content(PRI, 'The 48-hour rule', 'Check the job history. Ignore the original appointment. Only look at the NEW one.',
       'Quick rule: ignore the original appointment date. Only look at the new appointment. If the new appointment is within 48 hours of when the booking or reschedule is made, a Priority Fee applies. Example 1 (fee applies): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to July 29, 9:00 AM. The new appointment is only 47 hours away, so the Priority Fee applies. Example 2 (no fee): current time July 27, 10:00 AM; original cleaning July 28, 2:00 PM; customer changes it to August 1, 9:00 AM. The new appointment is more than 48 hours away, so no Priority Fee applies.');
     await twoCol(s,
-      { ico: 'FiCheckCircle', title: 'Fee applies', items: ['Customer booked/rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Jul 29, 9:00 AM', [{ text: 'New slot is 47 hrs away', options: { bold: true, color: C.teal } }]] },
-      { ico: 'FiXCircle', title: 'No fee', items: ['Customer booked/rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Aug 1, 9:00 AM', [{ text: 'New slot is more than 48 hrs away', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiCheckCircle', title: 'Fee applies', items: ['Customer rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Jul 29, 9:00 AM', [{ text: 'New slot is 47 hrs away', options: { bold: true, color: C.teal } }]] },
+      { ico: 'FiXCircle', title: 'No fee', items: ['Customer rescheduled: Jul 27, 10:00 AM', 'Original cleaning date: Jul 28, 2:00 PM', 'Changed to: Aug 1, 9:00 AM', [{ text: 'New slot is more than 48 hrs away', options: { bold: true, color: C.teal } }]] },
       1.45, 2.1);
     await tip(s, 3.75, 'Same original date in both.', 'Only the new appointment decides it.', 'FiCalendar');
   }
@@ -871,7 +871,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ['Their CP cancelled last minute, so they rebooked for tomorrow and were charged. What do you do?', 'Refund the full fee + 15% processing to the original payment method. Macro: Priority Fee Refunded.'],
     ['The customer picked a short-notice slot themselves and is upset. What can you offer?', 'The fee stands. Courtesy credits up to 100% of the fee, as goodwill.'],
     ['Can you refund and credit the same Priority Fee?', 'No. The paths are mutually exclusive unless a supervisor approves an exception.'],
-  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', 'Let\u2019s See What You\u2019ve Got!', '');
 
   await practice(PRI, [
     ['Was the Priority Fee valid? Why?', 'Their choice, or ours? Check the account history.'],
@@ -907,14 +907,26 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(PRE, 'Two reasons to refund it', 'Only one needs to apply.',
-      'The Premium Fee can be refunded under two independent circumstances, and only one needs to apply: (1) the customer requests a refund for the Premium Fee; (2) the job has a confirmed service issue, even if the customer never mentions the Premium Fee. The second trigger is the one agents most often overlook. When a job has a confirmed service issue (such as Poor Cleaning Quality), always check whether a Premium Fee was charged. If it was, refund it as part of resolving the service issue, even if the customer only complained about the cleaning.');
-    await cards(s, 1.45, 1.85, [
+      'The Premium Fee can be refunded under two independent circumstances, and only one needs to apply: (1) the customer requests a refund for the Premium Fee; (2) the job has a confirmed service issue, even if the customer never mentions the Premium Fee. The second trigger is the one agents most often overlook. When a job has a confirmed service issue (such as Poor Cleaning Quality), always check whether a Premium Fee was charged. If it was, refund it as part of resolving the service issue, even if the customer only complained about the cleaning. ON THE SLIDE: the customer\'s Payment History in the CRM. The Premium Fee shows as premium_surcharge in the Reason column, usually $20 plus tax (here $21.35); the boxed rows are the Premium charges.');
+    await cards(s, 1.42, 1.45, [
       { ico: 'FiMessageCircle', title: 'The customer asks', body: 'They request a refund of the Premium Fee.' },
       { ico: 'FiAlertCircle', title: 'Confirmed service issue', body: 'E.g. Poor Cleaning Quality. Refund it even if they never mention Premium.' },
     ]);
     s.addText('Most often missed', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 9.55 - 1.65, y: 1.6, w: 1.45, h: 0.3, rectRadius: 0.06,
       fill: { color: C.goldSoft }, line: { color: C.gold, width: 0.75 }, fontFace: BODY, bold: true, fontSize: 8.5, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
-    await tip(s, 3.5, 'Confirmed service issue?', 'always check for a Premium Fee, and refund it.', 'FiCheckSquare');
+    // How to spot it: CRM › Payment History, the premium_surcharge rows.
+    eyebrow(s, 'Spot it in the CRM › Payment History', 0.45, 3.0, 6, C.soft);
+    const ih = 1.75, iw = ih * 805 / 213;
+    s.addImage({ path: path.join(IMG, 'premium_payment_history.png'), x: 0.45, y: 3.2, w: iw, h: ih });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.45, y: 3.2, w: iw, h: ih, fill: { type: 'none' }, line: { color: C.border, width: 0.75 } });
+    const cx = 0.45 + iw + 0.15, cw = 9.55 - cx;
+    box(s, cx, 3.0, cw, 1.95, C.tealSoft);
+    T(s, [
+      { text: 'Look for', options: { bold: true, fontFace: HEAD, color: C.teal, breakLine: true } },
+      { text: 'premium_surcharge', options: { bold: true, color: C.ink, breakLine: true } },
+      { text: '$20 + tax, e.g. $21.35', options: { color: C.ink, breakLine: true } },
+      { text: 'Confirmed service issue? Always check for it, and refund it.', options: { color: C.soft } },
+    ], { x: cx + 0.15, y: 3.1, w: cw - 0.3, h: 1.75, fontSize: 9.5, paraSpaceAfter: 4, valign: 'top' });
   }
 
   {
