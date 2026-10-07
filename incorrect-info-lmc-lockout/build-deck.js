@@ -303,6 +303,31 @@ async function knowledgeCheck(eb, qa, notes, title = 'Knowledge check') {
   return s;
 }
 
+// Practice: a live ticket on the left (trainer provides it), three numbered prompts on the right, then the Questions strip.
+async function practice(eb, prompts, notes) {
+  const s = content(eb + '  ·  Practice', 'Let\'s investigate together!', 'Review the live ticket and investigate.', notes);
+  const top = 1.42, bottom = 4.3, gap = 0.15, lw = 3.7;
+  box(s, 0.45, top, lw, bottom - top, C.white, C.border);
+  await iconDot(s, 0.65, top + 0.2, 'FiInbox', 0.42);
+  T(s, 'Live ticket', { x: 0.65, y: top + 0.78, w: lw - 0.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 13 });
+  T(s, 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.', { x: 0.65, y: top + 1.15, w: lw - 0.4, h: 0.8, fontSize: 10.5, color: C.soft });
+  s.addText('Trainer provides', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.65, y: bottom - 0.58, w: 1.5, h: 0.36, rectRadius: 0.08,
+    fill: { color: C.goldSoft }, line: { color: C.goldSoft }, fontFace: BODY, bold: true, fontSize: 9.5, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
+  const rx = 0.45 + lw + gap, rw = 9.55 - rx, rh = (bottom - top - 2 * gap) / 3;
+  for (let n = 0; n < prompts.length; n++) {
+    const y = top + n * (rh + gap);
+    box(s, rx, y, rw, rh, C.white, C.border);
+    badge(s, rx + 0.2, y + (rh - 0.3) / 2, n + 1);
+    T(s, prompts[n][0], { x: rx + 0.7, y: y + 0.14, w: rw - 0.9, h: 0.32, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
+    T(s, prompts[n][1], { x: rx + 0.7, y: y + 0.48, w: rw - 0.9, h: 0.28, fontSize: 10, color: C.soft, valign: 'middle' });
+  }
+  box(s, 0.45, 4.45, 9.1, 0.55, C.teal);
+  s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.7, y: 4.585, w: 0.28, h: 0.28 });
+  T(s, [{ text: 'Questions?  ', options: { bold: true, fontFace: HEAD, fontSize: 14 } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
+    { x: 1.15, y: 4.45, w: 8.2, h: 0.55, color: C.white, valign: 'middle' });
+  return s;
+}
+
 // Wrap-up: three key takeaways plus the open-floor banner.
 async function wrapUp(eb, takeaways, notes) {
   const s = content(eb + '  ·  Wrap-up', 'Wrap-up', 'Key takeaways before we move on.', notes);
@@ -506,39 +531,11 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     ['The rep said the Happiness Guarantee right after explaining the ETF. Customer wants to cancel. ETF?', 'Waive it. Pairing the guarantee with cancellation terms is misrepresentation.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', 'Quick check');
 
-  {
-    const s = content(INC + '  ·  Practice', 'Let\'s investigate together!', 'Review the live ticket and investigate.',
-      'TRAINER: share a live Incorrect Information ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is there verified misinformation? What exactly was said, and by whom? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Would this need a Sales call review (request, internal note with the escalation link, status Waiting on CSQ)? 2) What was the misinformation, and how do we correct it? Refund the gap, own the error, correct the charges or expectations, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Incorrect Information Provided.');
-    const top = 1.42, bottom = 4.3, gap = 0.15;
-    // Left: the live ticket the trainer provides.
-    const lw = 3.7;
-    box(s, 0.45, top, lw, bottom - top, C.white, C.border);
-    await iconDot(s, 0.65, top + 0.2, 'FiInbox', 0.42);
-    T(s, 'Live ticket', { x: 0.65, y: top + 0.78, w: lw - 0.4, h: 0.32, fontFace: HEAD, bold: true, fontSize: 13 });
-    T(s, 'Your trainer will provide a live ticket. Review it and investigate before you decide anything.', { x: 0.65, y: top + 1.15, w: lw - 0.4, h: 0.8, fontSize: 10.5, color: C.soft });
-    s.addText('Trainer provides', { shape: pres.shapes.ROUNDED_RECTANGLE, x: 0.65, y: bottom - 0.58, w: 1.5, h: 0.36, rectRadius: 0.08,
-      fill: { color: C.goldSoft }, line: { color: C.goldSoft }, fontFace: BODY, bold: true, fontSize: 9.5, color: C.gold, align: 'center', valign: 'middle', margin: 0 });
-    // Right: three prompts, in order.
-    const rx = 0.45 + lw + gap, rw = 9.55 - rx, rh = (bottom - top - 2 * gap) / 3;
-    const prompts = [
-      ['Is there verified misinformation?', 'What exactly was said: a promise or an estimate?'],
-      ['What are those, and how do we correct them?', 'Refund the gap, own it, correct it, one light offer.'],
-      ['5-min writing challenge', 'Create your comms for the customer.'],
-    ];
-    for (let n = 0; n < prompts.length; n++) {
-      const y = top + n * (rh + gap);
-      box(s, rx, y, rw, rh, C.white, C.border);
-      badge(s, rx + 0.2, y + (rh - 0.3) / 2, n + 1);
-      T(s, prompts[n][0], { x: rx + 0.7, y: y + 0.14, w: rw - 0.9, h: 0.32, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
-      T(s, prompts[n][1], { x: rx + 0.7, y: y + 0.48, w: rw - 0.9, h: 0.28, fontSize: 10, color: C.soft, valign: 'middle' });
-    }
-    // Questions strip.
-    box(s, 0.45, 4.45, 9.1, 0.55, C.teal);
-    s.addImage({ data: await icon('FiMessageCircle', C.white), x: 0.7, y: 4.585, w: 0.28, h: 0.28 });
-    T(s, [{ text: 'Questions?  ', options: { bold: true, fontFace: HEAD, fontSize: 14 } }, { text: 'Open the floor before we move to the next topic.', options: { fontSize: 11 } }],
-      { x: 1.15, y: 4.45, w: 8.2, h: 0.55, color: C.white, valign: 'middle' });
-
-  }
+  await practice(INC, [
+    ['Is there verified misinformation?', 'What exactly was said: a promise or an estimate?'],
+    ['What are those, and how do we correct them?', 'Refund the gap, own it, correct it, one light offer.'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live Incorrect Information ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is there verified misinformation? What exactly was said, and by whom? "At $23/hour" is a guarantee; "around" or "starting at" is an estimate. Would this need a Sales call review (request, internal note with the escalation link, status Waiting on CSQ)? 2) What was the misinformation, and how do we correct it? Refund the gap, own the error, correct the charges or expectations, one light offer; declined or not retainable: waive the ETF and cancel the FC. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Incorrect Information Provided.');
 
   // ================= 2. LAST-MINUTE CANCELLATION =================
   const LMC = 'Last-Minute Cancellation';
@@ -604,19 +601,19 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       'Use this table only when the customer explicitly requests a refund, or contests the charge expecting it to be reversed or credited. If they\'re only asking for an explanation and haven\'t expressed dissatisfaction or asked for removal, don\'t use it. It\'s deliberately not a ladder: don\'t start small and escalate only if they push back. New customer (0-2 invoiced jobs): refund the LMC fee outright. They\'re brand new; charging $40 this early risks losing them before they see the membership\'s value. Low to moderate expected future LTNR (3-4 invoiced jobs): offer credits up to 100% of the LMC fee, not cash. If they say no but don\'t threaten to cancel, tell them this is the most we can offer. If they get upset, send them to Service Recovery so someone can explain by phone. If they still want to cancel, put the LMC fee toward their ETF. Very high-value customer (more than 4 invoiced jobs, high retention): refund the whole $40. Macros: Last-minute cancel: high-value customer; Last-minute cancel: no refund (standard customer).');
     table(s, ['Customer', 'Invoiced jobs', 'What to do'], [
       ['New customer', '0–2', 'Refund the LMC fee outright.'],
-      ['Low to moderate LTNR', '3–4', 'Credits up to 100% of the fee, not cash. Upset? Service Recovery. Cancelling? Apply it to the ETF.'],
+      ['Low to moderate LTNR', '3–4', 'Offer credits up to 100% of the fee, not cash refund. reason code: lmc\nUpset? Send to Service Recovery. \nCancelling? Offer to apply the LMC fee to the ETF.'],
       ['Very high-value', 'More than 4, high retention', 'Refund the full $40.'],
     ], { y: 1.45, colW: [2.2, 2.0, 4.9], fontSize: 10, rowH: [0.34, 0.5, 0.62, 0.5] });
-    await tip(s, 3.55, 'Only if asked:', 'use this when they want the charge reversed, not when they just want it explained.', 'FiMessageSquare');
-    await macroFlag(s, 0.45, 4.15, 'Recommended Macros:', 'Last-minute cancel: high-value customer · Last-minute cancel: no refund (standard customer)', 9.1);
+    await tip(s, 3.55, 'Only if asked:', 'use this table only when the customer explicitly asks a refund or contests the charge, not when they just want it explained.', 'FiMessageSquare');
+    await macroFlag(s, 0.45, 4.15, 'Recommended Macro:', 'Last-minute cancel: high-value customer · Last-minute cancel: no refund (standard customer)', 9.1);
   }
 
   {
     const s = content(LMC, 'Finding the charge, and when it fails', 'A failed LMC charge is finished. Leave it.',
       'Where to find LMC charges: on the CRM under Manual Charges, or C CRM > View > ManualCustomerPaymentTxn. When issuing credits for an LMC, use "lmc" as the internal reason. If the LMC charge fails to collect, let it go: the system makes a couple of attempts and then stops. We don\'t collect it again, and we don\'t pay the cleaner from it. There\'s nothing to void and nothing to run through the manual-charge refund flow: the charge never landed. This applies to LMC specifically: other fees don\'t all behave this way (a failed Premium fee keeps retrying until it succeeds), so check the fee before assuming a failed charge is finished. The cleaner is paid only if they ask: a CP who reaches out for compensation on a last-minute cancellation is handled on its own merits through the usual CP-side path. A failed charge looks like an open loop and the instinct is to chase it: void it, refund it, re-run it. All three are wrong.');
     await twoCol(s,
-      { ico: 'FiSearch', title: 'Where to find it', items: ['CRM › Manual Charges', 'C CRM › View › ManualCustomerPaymentTxn', 'Credits reason code: lmc'] },
-      { ico: 'FiSlash', title: 'Charge failed?', items: ['Let it go: the system stops retrying', 'Don\'t void, refund or re-run it', 'CP paid only if they ask (CP-side path)'] },
+      { ico: 'FiSearch', title: 'Where to check', items: ['New CRM › Payment History ', 'Open Customer Stripe Charges', 'Failed charges: Tracked in Stripe only'] },
+      { ico: 'FiSlash', title: 'Charge failed?', items: ['Let it go: the system stops retrying after a couple of times', 'Don\'t void, refund or re-run it', 'CP paid only if they ask (CP-side path)'] },
       1.45, 2.1);
     await tip(s, 3.75, 'LMC only:', 'other fees behave differently. A failed Premium fee keeps retrying.', 'FiAlertCircle');
   }
@@ -624,15 +621,15 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   await knowledgeCheck(LMC, [
     ['A customer cancels 3 hours before start. The job was still Submitted. LMC?', 'No. Automatically waived: no CP was matched.'],
     ['The CP no-showed and the customer cancelled. LMC was charged. What do you do?', 'Refund it from Manual Charges and create a $20 CleanerPaymentHoldback.'],
-    ['Valid LMC, 3 invoiced jobs, customer wants a refund. What do you offer?', 'Credits up to 100% of the fee, not cash.'],
+    ['Valid LMC, 3 invoiced jobs, customer wants a refund. What do you offer?', 'Credits up to 100% of the fee, not cash refund.'],
     ['The LMC charge failed to collect. What now?', 'Nothing. Let it go: don\'t void, refund or re-run it.'],
   ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.');
 
-  await wrapUp(LMC, [
-    ['Validate first', 'Check the six automatic waivers before anything else.'],
-    ['Invalid? Both sides', 'Refund the customer, hold back the CP\'s $20.'],
-    ['Valid? Not a ladder', 'Go straight to the category\'s offer.'],
-  ], 'TRAINER: recap the three takeaways, then open the floor for questions on Last-Minute Cancellation.');
+  await practice(LMC, [
+    ['Is this a valid or invalid LMC fee? Why?', 'Check the six waivers first, then the messages.'],
+    ['What actions are you going to take?', 'Invalid: refund + $20 holdback. Valid: customer category.'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live Last-Minute Cancellation ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is this a valid or invalid LMC fee, and why? Check the six automatic waivers first: job still Submitted (no CP matched), severe weather, CP rescheduled less than 24 hours before, Alternate Start Time claimed, ETA asked with no check-in, or all of these together. Then read what the customer and the CP said (e.g. the CP asked to reschedule or cancel, or no-showed). 2) What actions are you going to take? Invalid: refund the LMC charge and create a $20 Cleaner Payment Holdback (invalid_lmc, 2000 cents); special case if the job was completed anyway. Valid: only if the customer asks for a refund or contests it, go straight to their customer category offer. Which macro? 3) 5-minute writing challenge: each trainee writes the comms they would send the customer. Read a few aloud and compare. Then open the floor for questions on Last-Minute Cancellation.');
 
   // ================= 3. LOCKOUT =================
   const LO = 'Lockout';
