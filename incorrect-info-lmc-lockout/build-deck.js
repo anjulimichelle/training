@@ -656,7 +656,7 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   {
     const s = content(LO, 'Step 1: validate the claim', 'Ask in order. Any "no" usually means the lockout is invalid.',
       'Ask these four questions in order. Any "no" typically means the lockout is invalid. Always leave an internal note documenting your findings: it\'s your reference if either party disputes the outcome later. Invalid: refund through the CP Dashboard (it charges the cost back to the CP, who made the error), not an admin refund; also refund the Premium fee if any. All yes: valid, go to Step 3 (click the All yes box). WHAT TO CHECK: 1) Customer\'s messages to the CP. Mentioned cancelling or rescheduling more than 6 hours before start: invalid, the CP shouldn\'t have gone. Within 6 hours: if the CP acknowledged the appointment wouldn\'t happen, still invalid. 2) CPs may arrive 30 minutes before up to 30 minutes after the start time. Check call/text timestamps, CP-to-Care comms, check-in messages, GPS screenshots, CP App "approaching" notifications. More than 30 min late: invalid. Exception: the evidence shows the customer had already decided not to have the appointment (e.g. told Support but the job wasn\'t cancelled and the CP wasn\'t told; or told the CP after start time that they\'d cancelled long before). The CP still has to show they were on site and tried to reach the customer. Coach lateness separately. 3) CP messages confirming arrival, CTJ logs, pre-evidence photos, or a selfie at the home. A photo of the house without the CP in frame: check it isn\'t reused or reverse-searchable. A photo is only required for CP Dashboard submissions, not the CP App. Faked (not just weak) evidence: stop and go to AG – Fraud › CP Document Fraud. 4) At least 2 contact attempts, at least 5 minutes apart, staying at least 15 minutes, and following any entry notes. Same rule for CP App and CP Dashboard. Confirm with timestamps: contact attempts, the lockout action in Job History, CP messages to the customer or CS. Waived if the CP says the customer refused entry or asked to cancel on arrival: then look for other proof the CP was on site on time. IMPORTANT: These requirements may be disregarded if the CP claims that the C did not let them in or wanted to cancel upon their arrival. If this is the case, check for other indicators proving that CP did arrive on time at the C\'s location.' +
-      ' TRAINER: the details are hidden when the slide opens. Click 1 opens question 1\'s details, click 2 swaps to question 2, click 3 to question 3, click 4 to question 4, click 5 closes them. In slideshow mode, click the All yes box to jump to Step 3.');
+      ' TRAINER: the Always note shows on the right when the slide opens; the details are hidden. Click 1 opens question 1\'s details, click 2 swaps to question 2, click 3 to question 3, click 4 to question 4, click 5 closes them. In slideshow mode, click the All yes box to jump to Step 3.');
     step1Slide = s;
     const qx = 0.45, qw = 3.8, qh = 0.42, qgap = 0.14, top = 1.42;
     const qs = ['Did the customer want the appointment?', 'Did the CP arrive on time?', 'Did the CP arrive at the address?', 'Did the CP try to complete it?'];
@@ -683,23 +683,27 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     }
     // Every "no" feeds the Invalid box.
     flowLine(s, [[barX, mid(0)], [barX, mid(3)]]);
-    const ix = 4.68, iw = 1.6, iy = mid(1) + 0.05;
-    flowLine(s, [[barX, iy + 0.25], [ix, iy + 0.25]], true);
-    await flowBox(s, ix, iy, iw, 0.5, 'Invalid: refund via\nCP Dashboard', 'penalty');
-    T(s, 'Also refund the Premium fee, if any.', { x: ix - 0.05, y: iy + 0.55, w: iw + 0.35, h: 0.25, fontSize: 8, bold: true, color: C.ink, align: 'center' });
+    const ix = 4.68, iw = 1.6, iy = 2.1;
+    flowLine(s, [[barX, mid(1) + 0.3], [ix, mid(1) + 0.3]], true);
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: ix, y: iy, w: iw, h: 0.74, fill: { color: C.ink }, line: { color: C.ink, width: 1 }, rectRadius: 0.08 });
+    T(s, [{ text: 'Invalid: refund via', options: { fontSize: 10, breakLine: true } }, { text: 'CP Dashboard', options: { fontSize: 10, breakLine: true } },
+      { text: 'Premium fee charged? → Refund  ', options: { fontSize: 8 } }],
+      { x: ix + 0.04, y: iy, w: iw - 0.08, h: 0.78, fontFace: HEAD, bold: true, color: C.white, align: 'center', valign: 'middle' });
     // All yes: clickable, jumps to Step 3 (forward link, patched once that slide exists).
     const yEnd = top + 4 * qh + 3 * qgap;
     flowLine(s, [[qx + 1.3, yEnd], [qx + 1.3, yEnd + 0.14]], true);
     T(s, 'Yes', { x: qx + 1.36, y: yEnd, w: 0.4, h: 0.14, fontSize: 7.5, bold: true, color: C.soft, valign: 'middle' });
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: qx, y: yEnd + 0.14, w: qw, h: 0.42, fill: { color: C.teal }, line: { color: C.teal, width: 1 }, rectRadius: 0.08, hyperlink: allYesLinks[0] });
     s.addText('All yes: valid. Check the customer category  ›', { x: qx, y: yEnd + 0.14, w: qw, h: 0.42, margin: 0, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'middle', hyperlink: allYesLinks[1] });
-    // Default view on the right: the Important note.
+    // Default view on the right: the Always note, with the trainer's example internal note.
     const px = 6.4, pw = 9.55 - px, py = top, ph = yEnd + 0.56 - top;
-    box(s, px, py, pw, ph, C.goldSoft, C.gold);
-    s.addImage({ data: await icon('FiAlertTriangle', C.gold), x: px + 0.18, y: py + 0.2, w: 0.2, h: 0.2 });
-    T(s, 'Important', { x: px + 0.45, y: py + 0.15, w: pw - 0.6, h: 0.3, fontFace: HEAD, bold: true, fontSize: 11.5, color: C.gold, valign: 'middle' });
-    T(s, 'These requirements may be disregarded if the CP claims that the C did not let them in or wanted to cancel upon their arrival. If this is the case, check for other indicators proving that CP did arrive on time at the C’s location.',
-      { x: px + 0.18, y: py + 0.55, w: pw - 0.36, h: ph - 0.7, fontSize: 9.5, color: C.ink, paraSpaceAfter: 4 });
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: px, y: py, w: pw, h: ph, fill: { color: C.white }, line: { color: C.teal, width: 1.5 }, rectRadius: 0.06 });
+    s.addImage({ data: await icon('FiEdit3', C.teal), x: px + 0.2, y: py + 0.22, w: 0.2, h: 0.2 });
+    T(s, 'Always:', { x: px + 0.48, y: py + 0.15, w: pw - 0.6, h: 0.34, fontFace: HEAD, bold: true, fontSize: 12, color: C.teal, valign: 'middle' });
+    T(s, 'Leave an internal note with your findings.', { x: px + 0.2, y: py + 0.58, w: pw - 0.4, h: 0.5, fontFace: HEAD, bold: true, fontSize: 11, color: C.ink });
+    box(s, px + 0.2, py + 1.2, pw - 0.4, 0.95, C.tealSoft);
+    T(s, [{ text: 'Job ID 45371', options: { breakLine: true } }, { text: 'Invalid Lockout', options: { breakLine: true } }, { text: 'Job start 10AM, CP arrived 11AM (more than 30 mins late)' }],
+      { x: px + 0.35, y: py + 1.28, w: pw - 0.7, h: 0.8, fontSize: 9.5, bold: true, color: C.ink, paraSpaceAfter: 3, valign: 'middle' });
     // Pop-ups: question i's details open on click i and close on click i+1.
     for (let i = 0; i < details.length; i++) {
       const nm = `pop${i + 1}_${i + 2}`;
@@ -710,16 +714,6 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
       T(s, details[i][0], { x: px + 0.55, y: py + 0.15, w: pw - 0.7, h: 0.32, fontFace: HEAD, bold: true, fontSize: 11.5, color: C.teal, valign: 'middle', objectName: nm + 'Title' });
       T(s, details[i][1], { x: px + 0.18, y: py + 0.58, w: pw - 0.36, h: ph - 0.7, fontSize: 9, color: C.ink, paraSpaceAfter: 5, objectName: nm + 'Body' });
     }
-    // Always note, with the trainer's example internal note.
-    const ay = 4.2;
-    box(s, 0.45, ay, 9.1, 0.78, C.goldSoft);
-    s.addImage({ data: await icon('FiEdit3', C.gold), x: 0.62, y: ay + 0.12, w: 0.18, h: 0.18 });
-    T(s, [
-      { text: 'Always: ', options: { bold: true, color: C.gold, fontSize: 10 } }, { text: 'Leave an internal note with your findings.', options: { bold: true, fontSize: 10, breakLine: true } },
-      { text: 'Job ID 45371', options: { bold: true, fontSize: 8, breakLine: true } },
-      { text: 'Invalid Lockout', options: { bold: true, fontSize: 8, breakLine: true } },
-      { text: 'Job start 10AM, CP arrived 11AM (more than 30 mins late)', options: { bold: true, fontSize: 8 } },
-    ], { x: 0.9, y: ay + 0.09, w: 8.5, h: 0.64 });
   }
 
   {
