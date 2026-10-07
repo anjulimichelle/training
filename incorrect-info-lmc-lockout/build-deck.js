@@ -683,12 +683,10 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
     }
     // Every "no" feeds the Invalid box.
     flowLine(s, [[barX, mid(0)], [barX, mid(3)]]);
-    const ix = 4.68, iw = 1.6, iy = 2.1;
+    const ix = 4.68, iw = 1.6, iy = 2.16;
     flowLine(s, [[barX, mid(1) + 0.3], [ix, mid(1) + 0.3]], true);
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: ix, y: iy, w: iw, h: 0.74, fill: { color: C.ink }, line: { color: C.ink, width: 1 }, rectRadius: 0.08 });
-    T(s, [{ text: 'Invalid: refund via', options: { fontSize: 10, breakLine: true } }, { text: 'CP Dashboard', options: { fontSize: 10, breakLine: true } },
-      { text: 'Premium fee charged? → Refund  ', options: { fontSize: 8 } }],
-      { x: ix + 0.04, y: iy, w: iw - 0.08, h: 0.78, fontFace: HEAD, bold: true, color: C.white, align: 'center', valign: 'middle' });
+    await flowBox(s, ix, iy, iw, 0.5, 'Invalid: refund via\nCP Dashboard', 'penalty');
+    await macroFlag(s, 0.45, 4.62, 'Important:', 'Premium fee charged? → Always refund', 9.1);
     // All yes: clickable, jumps to Step 3 (forward link, patched once that slide exists).
     const yEnd = top + 4 * qh + 3 * qgap;
     flowLine(s, [[qx + 1.3, yEnd], [qx + 1.3, yEnd + 0.14]], true);
@@ -717,11 +715,11 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
   }
 
   {
-    const s = content(LO, 'Step 3: valid lockout, check the customer category', 'Same as LMC: go straight to the right offer.',
+    const s = content(LO, 'Step 3: valid lockout, check the customer category', 'Go straight to the right offer. Applies if Customer asks for a refund or contests the lockout charge.',
       'Same non-ladder principle as LMC. New customer (1-2 invoiced jobs): admin refund the full job cost; refunding now and educating protects a relationship that\'s still forming. Low to moderate expected future LTNR (3-4 invoiced jobs): credits up to 75% of the job cost, keeping at least $40 to cover the CP\'s costs. Declined but not escalating: this is the maximum. Escalates: route to Service Recovery. Insists on cancelling: apply the job cost toward the ETF (max reduction still 50%). Very high-value customer (more than 4 invoiced jobs, high retention): offer two options: the full LO fee as account credit, or a refund of the LO fee minus $40 (the CP cost). Explain why the fee exists either way. Applies to customers with an active FC in most cases; a customer actively using the service without an FC table is an edge case, use judgment. Deactivated FC, RC still active (cancelled FC but the Recurring Cleaning plan stayed on and a job still happened): admin refund the full charge and deactivate the RC plan. That\'s a product gap: FC self-cancel doesn\'t cancel RC. If vague, probe: check for a legitimate explanation (e.g. a messaging bug) before assuming the customer is at fault. It\'s fine to open with the full job cost as credits as a goodwill gesture before working through the tiers. Macros: Lockout fee: high-value customer; Lockout fee: no refund (standard customer).');
     table(s, ['Customer', 'Invoiced jobs', 'What to do'], [
       ['New customer', '1–2', 'Admin refund the full job cost.'],
-      ['Low to moderate LTNR', '3–4', 'Credits up to 75% of the job, keep $40 for the CP. Escalates? Service Recovery. Cancelling? Toward ETF (max 50% off).'],
+      ['Low to moderate LTNR', '3–4', 'Credits up to 75% of the job, keep $40 for the CP. \nEscalates? Send to Service Recovery. \nCancelling? Offer to apply the LO fee toward ETF (max 50% off).'],
       ['Very high-value', 'More than 4, high retention', 'Choice: full fee as credit, or refund minus $40. Explain the fee.'],
       ['Deactivated FC, RC still on', 'Any', 'Admin refund in full. Deactivate the RC plan.'],
     ], { y: 1.42, colW: [2.2, 1.9, 5.0], fontSize: 9.5, rowH: 0.56 });
@@ -731,11 +729,27 @@ async function checkRows(s, y, rows, h = 0.62, gap = 0.08) {
 
   {
     const s = content(LO, 'Special scenarios', 'When the miss isn\'t the customer\'s.',
-      'Customer denied entry because of the CP or a Trust & Safety concern (showed up unprofessional, brought an unauthorized guest, didn\'t have cleaning supplies): issue an admin refund for the lockout fee, still pay the CP $40 for their time and travel, document the incident clearly in internal notes, and coach the CP on why the customer denied entry. The customer\'s safety and trust come first, but the CP still showed up and is owed something. Customer cancelled through Support, but we didn\'t act on it (the job wasn\'t cancelled and the CP wasn\'t told): the miss is ours. Don\'t charge the customer: refund or cancel the job on the C-side. Pay the CP the standard lockout amount through MCP, as long as they show they were on site and tried to reach the customer. Their lateness doesn\'t matter here.');
+      'Customer denied entry because of the CP or a Trust & Safety concern (showed up unprofessional, brought an unauthorized guest, didn\'t have cleaning supplies): issue an admin refund for the lockout fee, still pay the CP $40 for their time and travel, document the incident clearly in internal notes, and coach the CP on why the customer denied entry. The customer\'s safety and trust come first, but the CP still showed up and is owed something. Customer cancelled through Support, but we didn\'t act on it (the job wasn\'t cancelled and the CP wasn\'t told): the miss is ours. Don\'t charge the customer: refund or cancel the job on the C-side. Pay the CP the standard lockout amount through MCP, as long as they show they were on site and tried to reach the customer. Their lateness doesn\'t matter here. TRAINER: click once to show why the CP was denied entry (left), click again to show why the Support cancellation case is our fault (right).');
     await twoCol(s,
       { ico: 'FiShield', title: 'Entry denied: CP fault or T&S', items: ['Admin refund the lockout fee', 'Still pay the CP $40', 'Document it in internal notes', 'Coach the CP'] },
       { ico: 'FiPhoneMissed', title: 'Cancelled via Support, not actioned', items: ['Don\'t charge the customer', 'Refund or cancel on the C-side', 'Pay the CP via MCP, if on site and tried', 'Lateness doesn\'t matter here'] },
-      1.45, 2.55);
+      1.45, 1.85);
+    // Details: click 1 shows the left description, click 2 the right one (both stay).
+    const cw = (9.1 - 0.15) / 2, desc = [
+      [{ text: 'CP was denied entry because:', options: { bold: true, breakLine: true } },
+        { text: 'Looked unprofessional', options: { bullet: { indent: 12 }, breakLine: true } },
+        { text: 'Brought an unauthorized guest', options: { bullet: { indent: 12 }, breakLine: true } },
+        { text: 'Did not have any cleaning supplies', options: { bullet: { indent: 12 } } }],
+      [{ text: 'Our fault → ', options: { bold: true, color: C.teal } },
+        { text: 'We missed to act on job cancellation request; CP wasn\u2019t notified, causing the lockout' }],
+    ];
+    for (let i = 0; i < 2; i++) {
+      const x = 0.45 + i * (cw + 0.15);
+      s.addText('Details  ›', { shape: pres.shapes.ROUNDED_RECTANGLE, x: x + cw - 1.05, y: 1.45 + 1.85 - 0.45, w: 0.85, h: 0.3, rectRadius: 0.06,
+        fill: { color: C.white }, line: { color: C.teal, width: 1 }, fontFace: BODY, bold: true, fontSize: 8.5, color: C.teal, align: 'center', valign: 'middle', margin: 0 });
+      s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 3.45, w: cw, h: 1.45, fill: { color: C.tealSoft }, line: { color: C.teal, width: 1.25 }, rectRadius: 0.06, objectName: `step${i + 1}Panel` });
+      T(s, desc[i], { x: x + 0.2, y: 3.55, w: cw - 0.4, h: 1.25, fontSize: 10.5, color: C.ink, paraSpaceAfter: 4, valign: 'middle', objectName: `step${i + 1}Text` });
+    }
   }
 
   {
