@@ -128,7 +128,7 @@ async function panel(s, ill, y = 0.68, h = 4.26) {
 }
 
 let topicNo = 0;
-const TOPICS = 4;
+const TOPICS = 7;
 async function topic(title, sub, learn, ill, notes) {
   topicNo++;
   const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -418,7 +418,7 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
     T(s, 'How we decide when to retain, when to make an offer, and how to let a customer go fairly.', { x: 0.62, y: 2.7, w: 4.6, h: 0.7, fontSize: 12.5, color: C.soft });
     T(s, 'Internal training material', { x: 0.62, y: 5.0, w: 3, h: 0.2, fontSize: 7, color: C.soft });
     await panel(s, 'ill6.png', 0.4, 4.82);
-    s.addNotes('Welcome. This module covers four Knowledge Library articles from the Retention and Membership Cancellation category: Washington State: Temporary FC Cancellation Handling; Understanding Offer Logic: When and How Should I Make an Offer?; Cancellation Intent Surfaced in C/CP Comms or Reported by CP; and the General Retention Playbook. The thread through all four: understand why the customer wants to leave, match what you do to that reason, and know the cases where retention is off the table.');
+    s.addNotes('Welcome. This module covers four Knowledge Library articles from the Retention and Membership Cancellation category: Washington State: Temporary FC Cancellation Handling; Understanding Offer Logic: When and How Should I Make an Offer?; Cancellation Intent Surfaced in C/CP Comms or Reported by CP; the General Retention Playbook; Unused DHJ Voucher; FCF Pre-Invoice Cancellation and Refund Requests; and Trial Cleaning / One-Time Cleaning Conversion. The thread through all four: understand why the customer wants to leave, match what you do to that reason, and know the cases where retention is off the table.');
   }
 
   // ---------- Agenda ----------
@@ -427,17 +427,20 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
   const addTopic = topic;
   topic = async (...args) => { const t = await addTopic(...args); topicSlides.push(t._slideNum); return t; };
   {
-    const s = agendaSlide = content('Overview', 'Agenda', 'Four topics. Click a topic to jump to it.',
-      'Topic 1 is a state-specific override: Washington customers cancel with no ETF, no MCT and no retention. Topic 2 explains what each offer is built to do, so you can pick the right one. Topic 3 covers opening the conversation when you spot cancellation intent in C/CP messages. Topic 4 is the foundation for every retention conversation: the five key factors, matching the offer to the root cause, and when retention is not the right call. In slideshow mode, click any topic to jump straight to it.');
+    const s = agendaSlide = content('Overview', 'Agenda', 'Seven topics. Click a topic to jump to it.',
+      'Topic 1 is a state-specific override: Washington customers cancel with no ETF, no MCT and no retention. Topic 2 explains what each offer is built to do, so you can pick the right one. Topic 3 covers opening the conversation when you spot cancellation intent in C/CP messages. Topic 4 is the foundation for every retention conversation: the five key factors, matching the offer to the root cause, and when retention is not the right call. Topic 5 covers customers with an unused DHJ voucher. Topic 6 covers FCF customers cancelling before their first completed job, and which refund applies. Topic 7 covers Trial Cleaning and One-Time Cleaning as alternatives to a full membership. In slideshow mode, click any topic to jump straight to it.');
     const rows = [
       ['Washington State: FC Cancellation', 'ETF $0, MCT 0. Cancel right away, no retention.'],
       ['Understanding Offer Logic', 'What each offer is built to do, and when to use it.'],
       ['Cancellation Intent in C/CP Comms', 'The customer told the CP, not us. Reach out first.'],
       ['General Retention Playbook', 'Fix the real problem. Weigh the five key factors.'],
+      ['Unused DHJ Voucher', 'Bought, not used. Sort the request, then act.'],
+      ['FCF Pre-Invoice Cancellation', 'No completed job yet. Which refund applies?'],
+      ['Trial & One-Time Cleaning', 'Alternatives to a full membership.'],
     ];
-    const cw = (9.1 - 0.15) / 2, h = 1.45, gy = 0.18;
+    const cw = (9.1 - 0.15) / 2, h = 0.8, gy = 0.1;
     for (let i = 0; i < rows.length; i++) {
-      const [title, line] = rows[i], x = 0.45 + (i % 2) * (cw + 0.15), y = 1.5 + Math.floor(i / 2) * (h + gy);
+      const [title, line] = rows[i], x = 0.45 + (i < 4 ? 0 : cw + 0.15), y = 1.42 + (i % 4) * (h + gy);
       const link = { slide: 1, tooltip: 'Go to ' + title };
       agendaLinks.push(link);
       s.addText([
@@ -487,15 +490,19 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
   }
 
   {
-    const s = content(WA, 'Steps 1–2: Confirm, then cancel', 'Check the account, then cancel immediately.',
+    const s = content(WA, 'The process - Steps 1-2', 'Check the account, then cancel immediately.',
       'Step 1, confirm WA residency and account state. Agent Do: verify in the account that MCT = 0 months and ETF = $0. If both are set correctly, go to Step 2. If either isn\'t set to $0 / 0 months, don\'t try to fix it yourself: escalate to TL/Support first so they can raise it to get fixed. Step 2, cancellation request handling: 1) Do not attempt retention. 2) Acknowledge the request and confirm the customer\'s intent to cancel. 3) Once the account state is confirmed, cancel the FC membership immediately. 4) In your response: confirm the membership is cancelled; do not reference ETF in any way; include a soft re-engagement note in general terms only. Only get into specific alternative plans or pricing if the customer follows up later and shows interest; don\'t lead with options. If an ETF was accidentally charged anyway (it shouldn\'t be, given the $0 setting): refund it immediately, no need to wait for the customer to ask.');
     const w = 2.1, gap = 0.233;
-    const flow = [['Confirm they live in WA', 'end'], ['Check: MCT 0, ETF $0', 'decision'], ['Confirm intent. No retention', 'end'], ['Cancel FC immediately', 'action']];
+    const flow = [['Confirm they live in WA', 'end'], ['Check: MCT 0, ETF $0', 'decision'], ['Confirm intent. No retention', 'end'], ['', 'action']];
     for (let i = 0; i < flow.length; i++) {
       const x = 0.45 + i * (w + gap);
       await flowBox(s, x, 1.45, w, 0.6, flow[i][0], flow[i][1]);
       if (i < flow.length - 1) flowLine(s, [[x + w, 1.75], [x + w + gap, 1.75]], true);
     }
+    T(s, 'Cancel FC immediately', { x: 0.45 + 3 * (w + gap), y: 1.47, w, h: 0.33, fontFace: HEAD, bold: true, fontSize: 10, color: C.white, align: 'center', valign: 'bottom' });
+    // Video link inside the last box (its own shape-level link so Google keeps the colour; keepU keeps the underline).
+    s.addText('▷ Watch & Learn', { x: 0.45 + 3 * (w + gap) + (w - 1.2) / 2, y: 1.83, w: 1.2, h: 0.18, margin: 0, fontFace: BODY, bold: true, fontSize: 9, color: 'B6D7A8', underline: { style: 'sng' }, align: 'center', valign: 'middle',
+      objectName: 'keepU_watch', hyperlink: { url: 'https://drive.google.com/file/d/1FNrb0bVkfw4z9XO_nxwU_teVxbLA2VtL/view?usp=sharing', tooltip: 'Play: cancel FC for a WA customer' } });
     const nx = 0.45 + w + gap + w / 2;
     flowLine(s, [[nx, 2.05], [nx, 2.3]], true);
     s.addText('Not set? Escalate to TL/Support. Don\'t fix it yourself.', { shape: pres.shapes.ROUNDED_RECTANGLE, x: nx - 1.5, y: 2.3, w: 3.0, h: 0.4, rectRadius: 0.08,
@@ -524,7 +531,7 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
       'Step 4, customers with unused DHJ vouchers (Legacy DHJ: the membership hasn\'t started yet) asking for the voucher to be refunded: proactively refund and invalidate the unused DHJ voucher and deactivate the FC table. No retention attempt needed. Step 5, the customer told the CP, not us: if a customer mentioned wanting to cancel to their CP but FC is still active in our system, reach out proactively. Let them know their CP flagged that they may want to cancel, and send the self-cancellation link, without mentioning ETF. Offer either option: they self-cancel, or you cancel it for them.');
     await cards(s, 1.45, 2.3, [
       { ico: 'FiGift', title: 'Step 4: Unused DHJ voucher', body: 'Legacy DHJ, membership not started, wants a refund: refund and invalidate the voucher, deactivate the FC table.' },
-      { ico: 'FiMessageCircle', title: 'Step 5: They told the CP', body: 'FC still active? Reach out first. Send the self-cancel link, no ETF mention. They self-cancel, or you do it.' },
+      { ico: 'FiMessageCircle', title: 'Step 5: They told the CP they want to cancel, not HG', body: 'FC still active? Reach out first. Send the self-cancel link, no ETF mention. They self-cancel, or you do it.' },
     ]);
     await tip(s, 4.0, 'Both cases:', 'no retention attempt needed.', 'FiSlash');
   }
@@ -1104,6 +1111,351 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
     ['5-min writing challenge', 'Create your comms for the customer.'],
   ], 'TRAINER: share a live cancellation ticket. Give trainees a few minutes to review it on their own, then work through it together. 1) Is the customer retainable? Weigh the five key factors (Intent, Issue type, Emotion, Escalation risk, History); check for hard overrides (material legal threat, abuse toward a cleaner) and the "usually not a retention target" situations, then confirm what the customer is asking for right now. 2) What actions are you going to take? Acknowledge, find the root cause, align the offer with it, decide whether to present it or issue it right away, and avoid the ladder. Run the Newspaper Test if unsure. 3) 5-minute writing challenge: each trainee writes the comms. Read a few aloud and compare. Then open the floor for questions.');
 
+  // ================= 5. UNUSED DHJ VOUCHER =================
+  const DV = 'Unused DHJ Voucher';
+  await topic('Unused DHJ Voucher', 'They bought a DHJ voucher, but haven\'t used it. FC hasn\'t started yet.',
+    ['Reading the account at this stage', 'Sorting the request into 4 cases', 'Retention offers for this customer', 'Refunds and closing the account'],
+    'ill_pay.png',
+    'Unused DHJ Voucher. Category: Retention and Membership Cancellation. This covers a customer who purchased a DHJ voucher but hasn\'t used it on a job yet: no cleaning has happened, so their FC membership hasn\'t technically started. This page is for refund and/or cancellation requests from these customers. If the customer has no refund or cancellation intent at all, only a gentle reminder is needed (case 1).');
+
+  {
+    const s = content(DV, 'What is this?', 'Bought, not used. The membership starts only after a completed job.',
+      'For Legacy DHJ, the membership only starts once the voucher is applied to a completed job. If the customer only bought the voucher and hasn\'t booked yet, the voucher shows on the account but there\'s no FC table. The FC table (with active status) only appears once the customer books an appointment, and it may show as "active with 0 paid months". That doesn\'t mean FC has started. This distinction matters constantly: it\'s exactly what leads a customer to think they\'ve already committed to something they haven\'t, or an agent to assume a membership exists when it doesn\'t yet.');
+    const w = 2.1, gap = 0.233;
+    const flow = [['Buys the voucher', 'end', 'Voucher shows. No FC table'], ['Books a cleaning', 'decision', 'FC table appears: "active, 0 paid months"'], ['Cleaning completed', 'end', 'Voucher applied to the job'], ['Membership starts', 'action', 'Now FC has really begun']];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 1.5, w, 0.55, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 1.775], [x + w + gap, 1.775]], true);
+      T(s, flow[i][2], { x, y: 2.12, w, h: 0.45, fontSize: 9, color: C.soft, align: 'center' });
+    }
+    await warn(s, 2.85, '"Active, 0 paid months"', 'doesn\'t mean FC has started. Not until the voucher is used on a completed job.', 0.5);
+    await tip(s, 3.55, 'Why it matters:', 'customers think they\'ve committed when they haven\'t, and agents assume a membership exists.', 'FiInfo');
+  }
+
+  {
+    const s = content(DV, 'What does the customer want?', 'Sort the request into one of four cases first. They lead to very different places.',
+      'How you handle this depends entirely on what the customer actually wants. Sort into one of the cases before doing anything else. 1) No refund or cancellation intent: they reached out about something unrelated. 2) Refund or cancellation intent. 3) Wants the account closed or deactivated, with no refund intent. 4) Wants a refund, but already self-refunded the voucher before or during their first outreach.');
+    const c = [
+      ['FiMessageCircle', 'No refund or cancel intent', 'Help with their concern. Remind them once about the membership.', C.tealSoft, C.teal],
+      ['FiRotateCcw', 'Wants a refund or to cancel', 'Probe, address the issue, present the right offer.', C.goldSoft, C.gold],
+      ['FiUserX', 'Wants the account closed', 'Treat it as cancellation intent. Then close it properly.', C.white, C.ink],
+      ['FiCheckCircle', 'Already self-refunded', 'Accept it. Give a clean, hassle-free cancellation.', PINK, RED],
+    ];
+    const w = (9.1 - 0.15) / 2, h = 1.3;
+    for (const [i, [ico, t, b, soft, col]] of c.entries()) {
+      const x = 0.45 + (i % 2) * (w + 0.15), y = 1.45 + Math.floor(i / 2) * (h + 0.15);
+      box(s, x, y, w, h, soft, col);
+      badge(s, x + 0.18, y + 0.2, i + 1);
+      await iconDot(s, x + w - 0.6, y + 0.15, ico, 0.42, C.white);
+      T(s, t, { x: x + 0.6, y: y + 0.15, w: w - 1.3, h: 0.42, fontFace: HEAD, bold: true, fontSize: 12.5, valign: 'middle' });
+      T(s, b, { x: x + 0.6, y: y + 0.62, w: w - 0.9, h: 0.55, fontSize: 10, color: C.soft });
+    }
+  }
+
+  {
+    const s = content(DV, 'Case 1: No refund or cancel intent', 'Don\'t make it bigger than it needs to be.',
+      'If the customer reaches out for something unrelated and shows no sign of wanting to cancel or get a refund, don\'t make this bigger than it needs to be. Aside from addressing their concern, gently remind them, once, that the voucher they purchased comes with a membership that starts once they use it, so they\'re not caught off guard later. If they\'re already clearly aware of this, skip the reminder. Including the terms is fine but not mandatory, unless the terms are part of what they\'re raising. For example, "I didn\'t realize this came with a monthly fee" is no longer a courtesy reminder: walk them through the actual terms (MF amount, MCT length, ETF), since that\'s the real issue.');
+    await cards(s, 1.45, 1.35, [
+      { ico: 'FiCheck', title: 'Help with their concern', body: 'That\'s why they reached out.' },
+      { ico: 'FiBell', title: 'Remind them once', body: 'Skip it if they clearly already know.' },
+      { ico: 'FiFileText', title: 'Terms are the issue?', body: 'Walk through MF, MCT and ETF.' },
+    ]);
+    quote(s, 0.45, 3.0, 9.1, 0.65, 'Just a quick reminder, your voucher comes with a membership which will start once it\'s used.', 'THIS IS ENOUGH');
+    await tip(s, 3.85, '"I didn\'t realize there\'s a monthly fee"?', 'that\'s no longer a reminder. Explain the actual terms.', 'FiAlertCircle');
+  }
+
+  {
+    const s = content(DV, 'Case 2: Refund or cancel intent', 'Know what you\'re solving before you offer anything.',
+      'Check if the customer already gave a reason. If they did, go to the Retention Strategy Table for the applicable offer. If not, probe first; don\'t skip straight to offers. Then: acknowledge as necessary. Address the actual issue: a service issue means blocking the C/CP pairing and coaching or penalizing the CP as needed; a membership-terms issue means checking the Retention Strategy Table. Present retention offers where applicable. Remind them the voucher is valid for a year, so they can use it later. Remind them the voucher comes with a membership. If they have refund intent specifically, provide the self-refund link, and only then: tell them to enter the voucher code before clicking "Refund Voucher", and double-check the code in your message, since a wrong code breaks the refund. Check upcoming appointments and an active RC plan; if there\'s no sign they want to keep them, cancel via CRM with the correct cancellation reason code. If they decline and insist on a refund: refund the voucher through CRM (CRM > voucher > refund DHJ/FC) and invalidate it right away, advise the 5–10 business day timeframe, and deactivate the FC table if there is one.');
+    const st = ['Reason given? If not, probe', 'Acknowledge', 'Fix the actual issue', 'Present the right offer', 'Valid for a year. Comes with a membership', 'Refund intent? Send the self-refund link', 'Cancel appointments and RC if not wanted'];
+    st.forEach((t, i) => {
+      const y = 1.42 + i * 0.44;
+      box(s, 0.45, y, 4.8, 0.38, C.white, C.border);
+      badge(s, 0.53, y + 0.04, i + 1);
+      T(s, t, { x: 0.95, y, w: 4.2, h: 0.38, fontSize: 9.5, valign: 'middle', bold: i === 5 });
+    });
+    headPanel(s, 5.45, 1.42, 4.1, 1.45, 'Self-refund link', ['Only if they want a refund', 'Enter the voucher code before "Refund Voucher"', 'Double-check the code in your message'], C.gold, C.goldSoft, 9.5);
+    headPanel(s, 5.45, 3.0, 4.1, 1.45, 'Still insists on a refund?', ['CRM > voucher > refund DHJ/FC, then invalidate', 'Refund in 5–10 business days', 'Deactivate the FC table if there is one'], C.ink, C.white, 9.5);
+  }
+
+  {
+    const s = content(DV, 'Case 2: Which offer?', 'The Retention Strategy Table for unused DHJ vouchers.',
+      'Retention Strategy Table. Service: service-related issues (CP no-show, CP cancellation, no CP claim): offer $10–$20 credits. Service limitations or personal reasons (found a different cleaner, wants same-day cleaning, moved, lack of phone support, will self-clean): no offers necessary. Membership-related: MF is expensive, offer to reduce the MF by $10–$15 off the original MF; MCT is too long, offer to reduce the MCT by 2 months from the original MCT; doesn\'t want a membership in general, no offers necessary, advise them to contact us if they want more flexible terms, and a one-time cleaning (full price, charged upfront) can be offered as applicable. One-time cleaning: offer at full price, charged upfront. Trial Cleaning: offer at regular price, charged upfront. Macros: Unused DHJ Voucher: Refund Request; Wants to "Try it Out" (Trial Cleaning); Wants One Time Cleaning.');
+    s.addTable([
+      ['Root cause', 'Condition', 'Offer'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } })),
+      ...[
+        ['Service', 'CP no-show, CP cancellation, no CP claim', '$10–$20 credits'],
+        ['Service', 'Found another cleaner, wants same-day, moved, no phone support, will self-clean', 'No offer needed'],
+        ['Membership', 'MF is expensive', 'MF −$10–$15 off the original MF'],
+        ['Membership', 'MCT is too long', 'MCT −2 months from the original'],
+        ['Membership', 'Doesn\'t want a membership at all', 'No offer. Mention flexible terms; OTC if it fits'],
+        ['Alternative', 'Wants one cleaning only', 'One-time cleaning: full price, upfront'],
+        ['Alternative', 'Wants to try it out', 'Trial Cleaning: regular price, upfront'],
+      ].map(r => r.map((t, i) => ({ text: t, options: { color: i === 1 ? C.soft : C.ink, bold: i !== 1, fill: { color: C.white } } })))
+    ], { x: 0.45, y: 1.42, w: 9.1, colW: [1.5, 4.5, 3.1], rowH: 0.38, fontFace: BODY, fontSize: 9.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0.03, 0.1, 0.03, 0.1] });
+  }
+
+  {
+    const s = content(DV, 'Case 3: Close the account', 'No refund intent. Treat the first reach-out as cancellation intent.',
+      'Treat the initial reach-out as a cancellation intent: acknowledge, probe for the reason, unsubscribe them and let them know they\'re off the mailing list, remind them the voucher is valid for a year and tied to a membership, and check upcoming appointments as in case 2. If they come back and insist on closing the account, first find out whether they also want their data deleted. Either way: invalidate the voucher (C Do > Voucher Invalidate); attempt to cancel FC and check whether the system flags that the voucher would be refunded (if it does, escalate to a TL to cancel and invalidate without a refund, then continue); send the closure email before deactivating, since you can\'t email them after; deactivate (CRM Do > Deactivate). If they want data deleted: credit card removal, escalate to a TL to remove the card from Stripe permanently; personal data removal, log it to the Data right to know/delete request tracker. If they ask for their personal information deleted specifically, clarify whether they want the membership cancelled, the data deleted, or both. With an unused voucher and an explicit data-deletion request, log the tracker ticket immediately. Macro: Deactivated (send before deactivating).');
+    eyebrow(s, 'First reach-out', 0.45, 1.42, 4, C.soft);
+    T(s, bullets(['Acknowledge, probe for the reason', 'Unsubscribe them from emails', 'Voucher valid for a year, tied to a membership', 'Check upcoming appointments']), { x: 0.45, y: 1.68, w: 3.0, h: 1.4, fontSize: 9.5, paraSpaceAfter: 4 });
+    eyebrow(s, 'Still insists? Close it in this order', 3.7, 1.42, 6, C.soft);
+    const st = [['Invalidate the voucher', 'C Do > Voucher Invalidate'], ['Try to cancel FC', 'System says the voucher would be refunded? TL cancels without refund'], ['Send the closure email', 'Before deactivating. You can\'t email them after'], ['Deactivate the account', 'CRM Do > Deactivate']];
+    st.forEach(([t, b], i) => {
+      const y = 1.68 + i * 0.5;
+      box(s, 3.7, y, 5.85, 0.44, i === 2 ? C.goldSoft : C.white, i === 2 ? C.gold : C.border);
+      badge(s, 3.8, y + 0.07, i + 1);
+      T(s, [{ text: t + '  ', options: { bold: true, fontFace: HEAD, fontSize: 10 } }, { text: b, options: { fontSize: 8.5, color: C.soft } }], { x: 4.2, y, w: 5.25, h: 0.44, valign: 'middle' });
+    });
+    headPanel(s, 0.45, 3.8, 9.1, 0.9, 'Wants their data deleted too?', [[{ text: 'Card removal: ', options: { bold: true } }, { text: 'TL removes it from Stripe.  ' }, { text: 'Personal data: ', options: { bold: true } }, { text: 'log to the Data right to know/delete tracker (right away if they asked explicitly).' }]], C.teal, C.tealSoft, 9.5);
+  }
+
+  {
+    const s = content(DV, 'Case 4: Already self-refunded', 'The retention attempt already ended. Make the exit clean.',
+      'Most of the time, customers want to take matters into their own hands. If the customer already initiated a self-refund, the system might leave a voucher behind as a last-ditch effort to retain them. If that happens: invalidate the system-generated voucher, if the system hasn\'t already; cancel FC, the recurring cleaning plan and any upcoming appointments, if applicable; address any remaining concerns. Since the refund was initiated before or during their first outreach, the retention attempt has technically already failed before we could intervene. Accept the customer\'s decision and focus on a clean, hassle-free cancellation.');
+    await cards(s, 1.45, 1.6, [
+      { ico: 'FiXSquare', title: 'Invalidate the leftover voucher', body: 'The system may leave one behind to retain them.' },
+      { ico: 'FiCalendar', title: 'Cancel FC, RC & appointments', body: 'Whatever is still active.' },
+      { ico: 'FiMessageCircle', title: 'Address what\'s left', body: 'Any remaining concerns.' },
+    ]);
+    await tip(s, 3.3, 'Accept their decision:', 'focus on a clean, hassle-free cancellation. No retention push.', 'FiCheckCircle');
+  }
+
+  await knowledgeCheck(DV, [
+    ['The FC table shows "active, 0 paid months". Has the membership started?', 'No. It starts only when the voucher is used on a completed job.'],
+    ['A customer with an unused voucher asks about something unrelated. Mention the membership?', 'Yes, once, gently. Skip it if they clearly already know.'],
+    ['They say the MF is too expensive. What can you offer?', 'Reduce the MF by $10–$15 off the original MF.'],
+    ['When do you send the self-refund link?', 'Only when they want a refund. Enter the voucher code before "Refund Voucher".'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', KC_TITLE, '');
+
+  await practice(DV, [
+    ['Which of the 4 cases is this? Why?', 'And is there an FC table yet?'],
+    ['What actions are you going to take?', 'Offer, refund link, refund, or close the account?'],
+    ['5-min writing challenge', 'Create your comms for the customer.'],
+  ], 'TRAINER: share a live ticket from a customer with an unused DHJ voucher. Give trainees a few minutes to review it on their own, then work through it together. 1) Which case is it (no intent, refund/cancel intent, close the account, already self-refunded), and what does the account show? 2) What actions are you going to take? Probe for the reason, fix the actual issue, use the Retention Strategy Table, remind them the voucher is valid for a year and comes with a membership, self-refund link only with refund intent, cancel appointments/RC if not wanted; or the account-closure order. 3) 5-minute writing challenge: each trainee writes the comms. Read a few aloud and compare. Then open the floor for questions.');
+
+  // ================= 6. FCF PRE-INVOICE CANCELLATION =================
+  const FP = 'FCF Pre-Invoice';
+  await topic('FCF Pre-Invoice Cancellation', 'Cancelling FCF before the first job is invoiced, and whether to refund.',
+    ['Why this only happens on FCF', 'The internal 24-hour window', 'The refund cheat sheet', 'How to process each refund'],
+    'ill24.png',
+    'FCF Pre-Invoice Cancellation and Refund Requests. Category: Retention and Membership Cancellation. This covers a customer wanting to cancel their FCF membership before their first job has been invoiced or completed. It\'s unique to FCF, since FCF membership starts immediately at sign-up rather than after a completed cleaning. A Legacy DHJ customer can\'t be in this situation: there\'s no membership to cancel until their first job happens.');
+
+  {
+    const s = content(FP, 'What is this?', 'FCF starts at sign-up, so customers can cancel before any cleaning.',
+      'FCF customers can self-cancel from their dashboard even with zero completed jobs, something DHJ customers were never able to do, so this comes up often. The refund answer depends on a combination of factors (how long they\'ve had it, which cleaning length they chose, whose fault any failure was), not a single rule. Picking the wrong row means refunding something that shouldn\'t be refunded, or denying a refund the customer is entitled to. Retention comes first, always: only use the refund table once all reasonable retention efforts have been exhausted and the customer has decided to cancel. Pricing: $19 for the first month and $59 each month after, charged upfront before the first cleaning, renewing automatically whether or not they book.');
+    headPanel(s, 0.45, 1.45, 4.45, 1.5, 'Legacy DHJ', ['Membership starts after a completed job', 'Nothing to cancel before the first cleaning'], C.ink, C.white, 10);
+    headPanel(s, 5.1, 1.45, 4.45, 1.5, 'FCF', ['Membership starts at sign-up', 'Can self-cancel with zero completed jobs', '$19 first month, then $59, auto-renewing'], C.teal, C.tealSoft, 10);
+    await warn(s, 3.15, 'Retention comes first, always.', 'Use the refund table only once they\'ve decided to cancel.', 0.5);
+    await tip(s, 3.85, 'The refund depends on:', 'how long they\'ve had it, the cleaning length they chose, and whose fault any failure was.', 'FiLayers');
+  }
+
+  {
+    const s = content(FP, 'The 24-hour window', 'Internal only. Never tell the customer.',
+      'INTERNAL ONLY: the 24-hour window is something we use to decide what to do, not a rule we tell the customer. Never say "you have 24 hours to cancel" or mention any deadline. If a customer asks why they got a refund (or didn\'t), explain the specific outcome, not the rule. It only applies if they haven\'t had a cleaning yet: zero completed jobs. After even one cleaning, handle it as a normal cancellation. Why it exists: we charge the MF upfront ($19 first month, $59 after) before the first cleaning, and it renews automatically, so we give customers about a day to change their mind. How the window works: 1st MF, from sign-up to when they first contacted us to request a cancellation or refund, or to when they self-cancelled. Succeeding MFs: from when that MF was charged to when they asked. Use reasonable judgment: it\'s a guideline, not a strict cutoff; signing up one day and contacting us the next can still count. Signed up and changed their mind fast: treat it like they never really committed. Waited days: that\'s a real cancellation. No request, no refund: even inside the window, don\'t offer one if they didn\'t ask.');
+    box(s, 0.45, 1.45, 3.0, 2.4, RED);
+    s.addImage({ data: await icon('FiLock', C.white), x: 0.7, y: 1.68, w: 0.42, h: 0.42 });
+    T(s, [{ text: 'Internal only', options: { bold: true, fontFace: HEAD, fontSize: 15, breakLine: true } }, { text: 'Never say "you have 24 hours to cancel". Explain the outcome, not the rule.', options: { fontSize: 10.5 } }], { x: 0.7, y: 2.2, w: 2.55, h: 1.5, color: C.white, valign: 'top' });
+    const r = [['FiAlertCircle', 'Zero completed jobs only', 'After one cleaning, it\'s a normal cancellation.'], ['FiClock', '1st MF: from sign-up', 'To their first request, or to their self-cancel.'], ['FiRepeat', 'Later MFs: from that charge', 'To when they asked.'], ['FiSliders', 'A guideline, not a cutoff', 'Signed up one day, asked the next? Can still count.']];
+    for (const [i, [ico, t, b]] of r.entries()) {
+      const y = 1.45 + i * 0.61;
+      box(s, 3.6, y, 5.95, 0.54, C.white, C.border);
+      await iconDot(s, 3.7, y + 0.09, ico, 0.36);
+      T(s, [{ text: t + '  ', options: { bold: true, fontFace: HEAD, fontSize: 10.5 } }, { text: b, options: { fontSize: 9, color: C.soft } }], { x: 4.18, y, w: 5.3, h: 0.54, valign: 'middle' });
+    }
+    await tip(s, 4.05, 'No request, no refund:', 'even inside the window, don\'t offer one if they didn\'t ask.', 'FiSlash');
+  }
+
+  {
+    const s = content(FP, 'Refund cheat sheet: no service issue', 'Timing and the cleaning length decide it.',
+      'No service issue, no completed job yet. 2–3 hour cleaning, within 24 hours: refund the 1st MF ($19). Use the Refund Voucher option in CRM (no tracker entry), then cancel FC in CRM and invalidate the voucher. 2–3 hour cleaning, after 24 hours: no refund unless there\'s a compelling reason (e.g. compassion, the customer doesn\'t have a card); cancel FC and invalidate the voucher; with a compelling reason, refund via the Refund Voucher option first. 4–6 hour cleaning, within 24 hours: refund the 1st MF and the add-on ($19 for 4 hours, $59 for 6 hours); log to the FCF Refund tracker for a Stripe FULL refund, then cancel FC and invalidate the voucher. 4–6 hour cleaning, after 24 hours: no refund of the 1st MF unless compelling; refund the add-on; log to the FCF Refund tracker for a Stripe PARTIAL refund, then cancel FC and invalidate the voucher.');
+    s.addTable([
+      ['Cleaning', 'Timing', '1st MF ($19)', 'Add-on ($19 4hr / $59 6hr)', 'How'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } })),
+      ...[
+        ['2–3 hr', 'Within 24 hrs', '✓ Refund', 'N/A', 'Refund Voucher option in CRM'],
+        ['2–3 hr', 'After 24 hrs', '✗ Unless compelling', 'N/A', 'Compelling? Refund Voucher option'],
+        ['4–6 hr', 'Within 24 hrs', '✓ Refund', '✓ Refund', 'FCF Refund tracker: Stripe FULL'],
+        ['4–6 hr', 'After 24 hrs', '✗ Unless compelling', '✓ Refund', 'FCF Refund tracker: Stripe PARTIAL'],
+      ].map(r => r.map((t, i) => ({ text: t, options: { color: t.startsWith('✓') ? C.teal : t.startsWith('✗') ? RED : C.ink, bold: i === 0 || t.startsWith('✓') || t.startsWith('✗'), fill: { color: C.white } } })))
+    ], { x: 0.45, y: 1.42, w: 9.1, colW: [1.0, 1.4, 1.75, 2.15, 2.8], rowH: 0.42, fontFace: BODY, fontSize: 9.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0.03, 0.1, 0.03, 0.1] });
+    await tip(s, 3.7, 'Every row ends with:', 'Cancel FC in CRM → Invalidate the voucher.', 'FiCheckSquare');
+    await tip(s, 4.22, 'Compelling reason:', 'e.g. compassion, or the customer doesn\'t have a card.', 'FiHeart');
+  }
+
+  {
+    const s = content(FP, 'Refund cheat sheet: service issues', 'Whose fault was it?',
+      'Service failure, company\'s or CP\'s fault: timing doesn\'t matter; refund the 1st MF and the add-on. Service failure, customer at fault, within 24 hours: refund both. Customer at fault (except biohazard), after 24 hours: no refund of the 1st MF unless there\'s a compelling reason; refund the add-on. Biohazard reported by the CP: timing doesn\'t matter; refund both. How to process: 2–3 hour cleaning, use the Refund Voucher option in CRM (no tracker entry); 4–6 hour cleaning, log to the FCF Refund tracker for a Stripe FULL refund. Then cancel FC in CRM and invalidate the voucher. Agent Do: for 4–6 hour cleanings, don\'t use the Refund Voucher option: it only refunds the $19 MF, not the add-on. Log to the FCF Refund tab so a TL issues the full Stripe refund.');
+    s.addTable([
+      ['Situation', 'Timing', '1st MF', 'Add-on'].map(t => ({ text: t, options: { bold: true, color: C.teal, fill: { color: C.tealSoft }, fontFace: HEAD } })),
+      ...[
+        ['Company or CP fault', 'Doesn\'t matter', '✓ Refund', '✓ Refund'],
+        ['Customer at fault', 'Within 24 hrs', '✓ Refund', '✓ Refund'],
+        ['Customer at fault (not biohazard)', 'After 24 hrs', '✗ Unless compelling', '✓ Refund'],
+        ['Biohazard reported by the CP', 'Doesn\'t matter', '✓ Refund', '✓ Refund'],
+      ].map(r => r.map((t, i) => ({ text: t, options: { color: t.startsWith('✓') ? C.teal : t.startsWith('✗') ? RED : C.ink, bold: i === 0 || t.startsWith('✓') || t.startsWith('✗'), fill: { color: C.white } } })))
+    ], { x: 0.45, y: 1.42, w: 9.1, colW: [3.4, 1.9, 1.9, 1.9], rowH: 0.4, fontFace: BODY, fontSize: 9.5, valign: 'middle', border: { type: 'solid', pt: 0.75, color: C.border }, margin: [0.03, 0.1, 0.03, 0.1] });
+    headPanel(s, 0.45, 3.6, 4.45, 1.0, '2–3 hr cleaning', ['Refund Voucher option in CRM. No tracker entry'], C.teal, C.tealSoft, 9.5);
+    headPanel(s, 5.1, 3.6, 4.45, 1.0, '4–6 hr cleaning', ['FCF Refund tracker: TL issues a Stripe FULL refund'], C.gold, C.goldSoft, 9.5);
+    await warn(s, 4.72, '4–6 hr? Not the Refund Voucher option:', 'it only refunds the $19 MF, not the add-on.', 0.42);
+  }
+
+  {
+    const s = content(FP, '2+ MFs paid, no jobs done', 'No refund by default. Any one condition qualifies.',
+      '2+ MFs paid with no jobs done: no refund by default (timing doesn\'t matter), unless one of these applies: 1) they reached out within 24 hours of being charged their most recent MF; 2) they tried to book within a specific MF\'s coverage period but didn\'t get a cleaning because of CP or platform fault: refund that specific MF; 3) they reached out within about 3 days of their most recent MF charge AND the root cause is CP or platform fault (not a strict 72-hour cutoff; before the 4th day can still qualify); 4) biohazard reported by the CP: refund all unused MFs in full if the customer asks (the 120-day timeframe still applies), regardless of timing, since they never had a real shot at using the membership. The add-on is refunded. If any apply, for the 1st charge: 2–3 hour cleaning, Refund Voucher option in CRM; 4–6 hour cleaning, FCF Refund tab for a Stripe FULL refund; then cancel FC in CRM and invalidate the voucher. Macros: FCF Refund (No Completed Cleaning): Cleaning Charge Only; Courtesy (Membership Fee); Courtesy (Service Issue); Partial MF Refund (1 of 2+ Charges).');
+    const c = [
+      ['FiClock', 'Within 24 hrs of the latest MF', 'They reached out fast after the charge.'],
+      ['FiCalendar', 'Tried to book, CP/platform fault', 'Refund that specific MF.'],
+      ['FiAlertTriangle', '~3 days + CP/platform fault', 'Before the 4th day can still count.'],
+      ['FiAlertOctagon', 'Biohazard reported by the CP', 'All unused MFs, if they ask (120 days).'],
+    ];
+    const w = (9.1 - 0.15) / 2, h = 0.95;
+    for (const [i, [ico, t, b]] of c.entries()) {
+      const x = 0.45 + (i % 2) * (w + 0.15), y = 1.45 + Math.floor(i / 2) * (h + 0.12);
+      box(s, x, y, w, h, C.white, C.border);
+      await iconDot(s, x + 0.18, y + 0.25, ico, 0.42);
+      T(s, [{ text: t, options: { bold: true, fontFace: HEAD, fontSize: 11, breakLine: true } }, { text: b, options: { fontSize: 9.5, color: C.soft } }], { x: x + 0.75, y, w: w - 0.9, h, valign: 'middle' });
+    }
+    await tip(s, 3.65, 'Then, for the 1st charge:', '2–3 hr, Refund Voucher option. 4–6 hr, FCF Refund tab for a Stripe FULL refund.', 'FiCreditCard');
+    await tip(s, 4.17, 'Finish with:', 'Cancel FC in CRM → Invalidate the voucher.', 'FiCheckSquare');
+  }
+
+  {
+    const s = content(FP, 'Changing the first cleaning\'s length', 'Keep FC in place. Settle the difference at sign-up pricing.',
+      'Related scenario, FCF first-cleaning duration change: FCF customers occasionally want to change the duration they picked at sign-up. Approved handling: keep FC in place, manually update the voucher duration in Django, and settle the price difference at sign-up-tier pricing: +$19 for 4 hours, +$59 for 6 hours; refund the difference on a downgrade. Agent Do: confirm the current and target tier, get the customer\'s agreement on the price difference, then update the voucher duration in Django and charge or refund accordingly.');
+    const w = 2.1, gap = 0.233;
+    const flow = [['Confirm current & target tier', 'end'], ['Customer agrees to the difference', 'decision'], ['Update voucher duration in Django', 'action'], ['Charge or refund the difference', 'action']];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 1.5, w, 0.7, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 1.85], [x + w + gap, 1.85]], true);
+    }
+    const sw = (9.1 - 0.3) / 3;
+    stat(s, 0.45, 2.5, sw, 1.3, '+$19', 'to move up to 4 hours');
+    stat(s, 0.45 + sw + 0.15, 2.5, sw, 1.3, '+$59', 'to move up to 6 hours');
+    stat(s, 0.45 + 2 * (sw + 0.15), 2.5, sw, 1.3, 'Refund', 'the difference on a downgrade', C.gold);
+    await tip(s, 4.0, 'Keep FC in place:', 'this isn\'t a cancellation.', 'FiCheckCircle');
+  }
+
+  await knowledgeCheck(FP, [
+    ['A customer asks how long they have to cancel for a refund. Tell them 24 hours?', 'No. The window is internal only. Explain the outcome, not the rule.'],
+    ['FCF, 2–3 hr cleaning, cancels 3 hours after sign-up and asks for a refund. What do you do?', 'Refund via the Refund Voucher option, cancel FC, invalidate the voucher.'],
+    ['FCF, 6-hr cleaning, within 24 hrs. Use the Refund Voucher option?', 'No. It only refunds $19. Log to the FCF Refund tracker for a Stripe FULL refund.'],
+    ['The customer had one completed cleaning. Does the 24-hour window apply?', 'No. Handle it as a normal cancellation.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', KC_TITLE, '');
+
+  await practice(FP, [
+    ['Which row of the cheat sheet applies? Why?', 'Completed jobs, timing, cleaning length, fault.'],
+    ['What actions are you going to take?', 'Refund how, then cancel FC and invalidate the voucher.'],
+    ['5-min writing challenge', 'Create your comms. No 24-hour talk!'],
+  ], 'TRAINER: share a live FCF ticket where the customer wants to cancel before their first completed job. Give trainees a few minutes to review it on their own, then work through it together. 1) Which row applies? Check there are zero completed jobs, retention was attempted, the timing (internal 24-hour window), the cleaning length (2–3 vs 4–6 hours), and whose fault any failure was. 2) What actions are you going to take? 2–3 hours: Refund Voucher option in CRM; 4–6 hours: FCF Refund tracker for a Stripe full or partial refund; then cancel FC and invalidate the voucher. 3) 5-minute writing challenge: each trainee writes the comms, without mentioning the 24-hour window. Read a few aloud and compare. Then open the floor for questions.');
+
+  // ================= 7. TRIAL / ONE-TIME CLEANING =================
+  const TC = 'Trial & One-Time Cleaning';
+  await topic('Trial Cleaning & One-Time Cleaning', 'Alternatives to a full ForeverClean membership.',
+    ['Trial Cleaning vs One-Time Cleaning', 'Pricing: what gets deducted', 'Converting an unused voucher or FCF', 'Cancellations and refunds afterwards'],
+    'ill27.png',
+    'Trial Cleaning (TC) / One-Time Cleaning (OTC). This covers two non-membership (or limited-membership) alternatives to a full ForeverClean membership. Both come up in two ways: 1) Conversion: a customer with an unused DHJ voucher, or an FCF membership with no completed job, can be converted to TC/OTC instead of using or refunding the voucher or continuing the membership. 2) Direct purchase: a customer can buy TC/OTC directly through Sales without ever signing up for ForeverClean (full regular rate from the FC Sales Calculator). This applies to both DHJ and FCF. Why it matters: not every customer wants an ongoing membership. Steering them into a refund by default, when a TC/OTC would get them what they want, is a missed opportunity.');
+
+  {
+    const s = content(TC, 'Trial Cleaning vs One-Time Cleaning', 'They look alike, but the consequences are completely different.',
+      'Both are one-off paid cleanings charged upfront, but they have completely different downstream consequences. Trial Cleaning (TC): triggers an FC table (membership). The customer has a 30-day window from the appointment to cancel with no obligation. If no cancellation request comes in during that window, the membership activates for real: $59/month, 6-month MCT, $99 ETF going forward. Use case: wants to try the membership before committing. One-Time Cleaning (OTC): no FC table; nothing further, no ongoing relationship. Use case: wants a single cleaning (e.g. a move-out clean) with no interest in a membership.');
+    headPanel(s, 0.45, 1.45, 4.45, 2.6, 'Trial Cleaning (TC)', ['Wants to try the membership first', 'Creates an FC table', 'Charged upfront', '30 days from the appointment to cancel, no obligation', 'Then $59/mo, 6-month MCT, $99 ETF'], C.teal, C.tealSoft, 10);
+    headPanel(s, 5.1, 1.45, 4.45, 2.6, 'One-Time Cleaning (OTC)', ['Wants a single cleaning (e.g. move-out)', 'No FC table', 'Charged upfront', 'Nothing after: no membership to track'], C.gold, C.goldSoft, 10);
+    await tip(s, 4.25, 'Don\'t default to a refund:', 'a TC or OTC may be exactly what they want.', 'FiGift');
+  }
+
+  {
+    const s = content(TC, 'Pricing: what gets deducted', 'Get the rate from the FC Sales Calculator first.',
+      'Use the (Transformation) FC SALES CALCULATOR to get the correct TC/OTC rate before applying either deduction. DHJ: deduct the voucher purchase price they already paid. FCF: deduct all membership fees paid to date (within 120 days), not just the initial $19 first MF, plus the add-on if they chose a 4-hour ($19) or 6-hour ($59) cleaning. If the deduction exceeds the TC/OTC price (FCF): no refund of the excess; the customer pays $0, but nothing comes back to them. Examples: 2 MFs + $59 add-on = $137 paid; a 6-hour clean at $378 means they pay the remaining $241. $150 in MFs paid vs a $120 OTC: $0 due, and the $30 is not refunded.');
+    headPanel(s, 0.45, 1.45, 4.45, 1.3, 'DHJ: deduct', ['The voucher price they already paid'], C.ink, C.white, 10);
+    headPanel(s, 5.1, 1.45, 4.45, 1.3, 'FCF: deduct', ['All MFs paid to date (within 120 days)', 'Plus the add-on: $19 (4 hr) or $59 (6 hr)'], C.teal, C.tealSoft, 10);
+    const ex = [['6-hr clean at $378', '2 MFs + $59 add-on = $137 paid', 'Pays $241'], ['OTC at $120', '$150 in MFs already paid', 'Pays $0. $30 is not refunded']];
+    ex.forEach(([a, b, c], i) => {
+      const x = 0.45 + i * 4.65;
+      box(s, x, 2.95, 4.45, 1.0, C.white, C.border);
+      T(s, [{ text: a, options: { bold: true, fontFace: HEAD, fontSize: 11, breakLine: true } }, { text: b, options: { fontSize: 9.5, color: C.soft, breakLine: true } }, { text: '→ ' + c, options: { bold: true, fontSize: 11, color: C.teal } }], { x: x + 0.2, y: 2.95, w: 4.1, h: 1.0, valign: 'middle' });
+    });
+    await tip(s, 4.15, 'First:', 'get the TC/OTC rate from the (Transformation) FC Sales Calculator.', 'FiDollarSign');
+  }
+
+  {
+    const s = content(TC, 'Offering it', 'Explain what they signed up for, then offer the better fit.',
+      'Acknowledge and empathize. DHJ only: if they have refund intent, provide the self-refund link, advise entering the voucher code before "Refund Voucher", and include the code in your email (not applicable to FCF: they signed up for a membership, not a voucher). Explain what they signed up for and offer the alternative. DHJ OTC: "The voucher you purchased comes with a membership, so if you\'re only looking for a one-time cleaning, using it wouldn\'t be the best route. What I can do instead is offer a one-time cleaning at $[X], that\'s the regular rate minus the $[X] you already paid for the voucher, charged upfront. Just let me know your preferred date and time and I\'ll get that booked for you." FCF OTC: "What you signed up for is a membership, so if you\'re only looking for a one-time cleaning…" DHJ/FCF TC: "I totally get that you might not want to commit to a membership right away. We actually have a Trial Cleaning option, which could be a better fit. It lets you try things out first… a standard [X]-hour clean is normally $[X], but we can apply what you\'ve already paid, bringing your total to $[X], charged upfront." For TC, set expectations: 30 days from the appointment to contact us if they don\'t want to continue, cancelled with no obligation; otherwise the $59/month membership starts automatically, with a 6-month MCT, and a $99 ETF if cancelled after the 30 days and before completing the 6 months. Check upcoming appointments and RC: cancel via CRM if there\'s no sign they want to keep them. Macros: "DHJ - Wants to \'Try it Out\' (Trial Cleaning)", "DHJ - Wants One Time Cleaning".');
+    quote(s, 0.45, 1.45, 4.45, 1.45, 'The voucher you purchased comes with a membership, so if you\'re only looking for a one-time cleaning, using it wouldn\'t be the best route. What I can do instead is offer a one-time cleaning at $[X]…', 'ONE-TIME CLEANING');
+    quote(s, 5.1, 1.45, 4.45, 1.45, 'We actually have a Trial Cleaning option, which could be a better fit. It lets you try things out first… we can apply what you\'ve already paid, bringing your total to $[X], charged upfront.', 'TRIAL CLEANING');
+    headPanel(s, 5.1, 3.05, 4.45, 1.5, 'Trial: set expectations', ['30 days from the appointment to cancel, no obligation', 'Then $59/mo starts automatically', '6-month MCT. $99 ETF if cancelled early'], C.teal, C.white, 9);
+    headPanel(s, 0.45, 3.05, 4.45, 1.5, 'Also', ['DHJ with refund intent: send the self-refund link', 'Paid upfront: get their preferred date and time', 'Cancel unwanted appointments and RC'], C.ink, C.white, 9);
+  }
+
+  {
+    const s = content(TC, 'They accept: set it up', 'The FC table and voucher steps differ by model.',
+      'If the customer accepts: confirm the account info (complete address, a valid card on file, appointment date, time and duration). If they still want a refund: DHJ, refund the voucher via CRM and invalidate it; FCF, log the 1st charge (1st MF + add-on, if any) to the FCF Refund log so a TL refunds it via Stripe. If they no longer want a refund, apply the deduction and invalidate the voucher (DHJ voucher price; FCF all MFs paid + add-on). Charge upfront using the FC Sales Calculator. Book the appointment (CRM if applicable, otherwise the customer dashboard). Handle the existing FC table: OTC (DHJ or FCF), invalidate the voucher and deactivate the FC table. DHJ TC: leave the FC table as is, since DHJ MFs only start after a completed job. FCF TC: deactivate the FC table, since FCF starts at sign-up and auto-renews. Prevent a double charge: issue an admin_courtesy voucher (don\'t notify the customer). TC only: click the voucher in Legacy CRM and select "ForeverClean force" (triggers FC once the job is completed) and "1 free month" (delays the next MF by 30 days); add the customer to the FC table (FCF); update the ETF to $99. Confirm to the customer: charged upfront, appointment booked, notified once the CP confirms.');
+    const st = ['Confirm address, card, date, time, duration', 'Still wants a refund? DHJ: CRM refund. FCF: FCF Refund log', 'No refund? Deduct what they paid, invalidate the voucher', 'Charge upfront (FC Sales Calculator), book it', 'admin_courtesy voucher, no notification', 'Confirm: charged, booked, CP will confirm'];
+    st.forEach((t, i) => {
+      const y = 1.42 + i * 0.5;
+      box(s, 0.45, y, 4.7, 0.44, C.white, C.border);
+      badge(s, 0.53, y + 0.07, i + 1);
+      T(s, t, { x: 0.93, y, w: 4.15, h: 0.44, fontSize: 9, valign: 'middle' });
+    });
+    tableAt(s, 5.3, 4.25, ['Existing FC table', 'Do'], [
+      ['OTC (DHJ or FCF)', 'Deactivate it'],
+      ['DHJ Trial', 'Leave it as is'],
+      ['FCF Trial', 'Deactivate, then force'],
+    ], { y: 1.42, colW: [2.0, 2.25], fontSize: 9, rowH: [0.32, 0.36, 0.36, 0.36] });
+    headPanel(s, 5.3, 2.95, 4.25, 1.55, 'Trial only', ['Legacy CRM voucher: "ForeverClean force" + "1 free month"', 'FCF: add them to the FC table', 'Update the ETF to $99'], C.teal, C.tealSoft, 9);
+  }
+
+  {
+    const s = content(TC, 'They decline the offer', 'Refund what they\'re owed and close things out.',
+      'If the customer declines the TC/OTC offer. Refund: DHJ, if they request a refund within 1 year of purchase, refund the DHJ voucher through CRM and invalidate it. FCF: check the Refund Eligibility Cheat Sheet (No Completed Job Yet) in the FCF Pre-Invoice Cancellation article. FC table: deactivate it in every case. Advise the customer: DHJ, refund processed, 5–10 business days; FCF, depends on the cheat sheet. CRM account: if they want their account closed, deactivate it, but send comms before deactivating.');
+    await cards(s, 1.45, 1.75, [
+      { ico: 'FiRotateCcw', title: 'Refund', body: 'DHJ: within 1 year, refund via CRM and invalidate. FCF: use the pre-invoice cheat sheet.' },
+      { ico: 'FiXSquare', title: 'Deactivate the FC table', body: 'In every case: DHJ or FCF, TC or OTC.' },
+      { ico: 'FiMail', title: 'Closing the account?', body: 'Send comms first, then deactivate the CRM account.' },
+    ]);
+    await tip(s, 3.45, 'DHJ refund:', 'tell them it\'s processed and takes 5–10 business days.', 'FiClock');
+  }
+
+  {
+    const s = content(TC, 'Cancelling a TC or OTC', 'Changed their mind, or we let them down?',
+      'Applies however the customer got here (Care or Sales). Changed their mind, or no clear reason: give a full admin refund of what they paid; invalidate the voucher tied to the order; if it was a Trial Cleaning, cancel the FC table too (easy to forget: OTC never had a table, but a TC did, and it doesn\'t go away just because you refunded); double-check the appointment itself is cancelled; if they say why, acknowledge warmly and say they\'re welcome back; if they don\'t, probe, since a vague reason might be fixable. If they come back to try again, don\'t charge upfront again; just help them book, and it\'s invoiced normally. Cancelled because of a service issue (no-show, cancellation, no CP claim): same refund steps, plus real acknowledgment: "I understand it\'s frustrating when your cleaning gets cancelled. I\'m here to help." Fix the root cause: block the CP/customer pairing and coach or penalize the CP. If they\'re open to it, offer a different, reliable cleaner, with priority booking if you can: "While your first cleaner cancelled, we can connect you with another trusted cleaner if you\'d like to try again." A small incentive ($10–$25 in credits, or a free hour) goes a long way: we\'re asking for a second chance. Completed the Trial and wants to cancel within the 30-day window: cancel FC, no ETF, whatever the reason. Even if the reason was a bad cleaning, cancel as asked; you can offer a second chance (a different cleaner plus around $20 in credits) if they seem open. If they come back later, follow the usual FC Reactivations.');
+    headPanel(s, 0.45, 1.45, 2.95, 2.75, 'Changed their mind', ['Full admin refund', 'Invalidate the voucher', 'Trial? Cancel the FC table too', 'Check the appointment is cancelled', 'No reason given? Probe'], C.teal, C.tealSoft, 9);
+    headPanel(s, 3.525, 1.45, 2.95, 2.75, 'We let them down', ['Same refund steps', 'Acknowledge: it wasn\'t on them', 'Block the pairing, coach the CP', 'Offer a reliable cleaner', '$10–$25 credits or a free hour'], RED, PINK, 9);
+    headPanel(s, 6.6, 1.45, 2.95, 2.75, 'Trial done, within 30 days', ['Cancel FC. No ETF', 'Whatever the reason', 'Bad cleaning? Still cancel', 'Open to it? New cleaner + ~$20 credits'], C.gold, C.goldSoft, 9);
+    await tip(s, 4.4, 'Coming back to try again?', 'don\'t charge upfront again. Just help them book.', 'FiRepeat');
+  }
+
+  {
+    const s = content(TC, 'Only part of the cleaning was done', 'They don\'t know the voucher exists. They expect real money back.',
+      'The customer paid upfront for a TC/OTC but only received part of the cleaning. Key point: the customer has no idea a voucher exists on their account; it\'s an internal way to avoid double-charging when the CP invoices. They paid upfront and expect real money back. If the CP already refunded part of it (as a voucher) and the customer wants cash: the CP already confirmed something went wrong, so invalidate that voucher, admin refund the matching amount from the original charge, and let the customer know. Example: a $252 OTC for 4 hours with 1 hour refunded: refund $63 ($252 / 4). If nothing has been confirmed and it looks like an overcharge: run the standard Overcharged Hours process first, and only refund once it\'s confirmed (real evidence, or the CP never responded). Match the refund to what wasn\'t done: paid 4 hours, got 2, half back. Steps: 1) Block automated comms (C CRM > Do > Deactivate block comms) so the customer doesn\'t get a confusing "your voucher was refunded" message, then refund from the CP dashboard so the CP is only paid for the hours worked. 2) Once you\'ve confirmed the message didn\'t go out, remove the block and invalidate the voucher. 3) Do the math and issue an admin refund for the TC/OTC manual charge.');
+    headPanel(s, 0.45, 1.45, 4.45, 1.55, 'CP already refunded (as a voucher)', ['Invalidate that voucher', 'Admin refund the matching amount', 'E.g. $252 for 4 hrs, 1 hr back = $63'], C.teal, C.tealSoft, 9.5);
+    headPanel(s, 5.1, 1.45, 4.45, 1.55, 'Nothing confirmed yet', ['Run the Overcharged Hours process first', 'Refund only once it\'s confirmed', 'Paid 4 hrs, got 2? Half back'], C.ink, C.white, 9.5);
+    eyebrow(s, 'Issuing the refund', 0.45, 3.15, 4, C.soft);
+    const w = 2.9, gap = 0.2;
+    const flow = [['Block comms, then\nrefund on the CP dashboard', 'decision'], ['No message sent? Unblock, invalidate voucher', 'end'], ['Admin refund the TC/OTC charge', 'action']];
+    for (let i = 0; i < flow.length; i++) {
+      const x = 0.45 + i * (w + gap);
+      await flowBox(s, x, 3.4, w, 0.62, flow[i][0], flow[i][1]);
+      if (i < flow.length - 1) flowLine(s, [[x + w, 3.71], [x + w + gap, 3.71]], true);
+    }
+    await tip(s, 4.2, 'Block comms first:', 'C CRM > Do > Deactivate block comms. They never knew the voucher existed.', 'FiVolumeX');
+  }
+
+  await knowledgeCheck(TC, [
+    ['A customer wants a move-out clean only, no membership. TC or OTC?', 'OTC. No FC table, nothing after.'],
+    ['FCF: 2 MFs + $59 add-on paid. 6-hr OTC is $378. What do they pay?', '$241 ($378 − $137).'],
+    ['FCF: $150 paid, OTC is $120. Refund the $30?', 'No. They pay $0; the excess isn\'t refunded.'],
+    ['Completed a Trial, cancels on day 20 over a bad cleaning. ETF?', 'No ETF. Cancel FC as asked; offer a second chance if they\'re open.'],
+  ], 'Ask each question and let trainees answer before revealing. Each click reveals the next answer.', KC_TITLE, '');
+
+  await practice(TC, [
+    ['Is TC or OTC the better fit? Why?', 'And DHJ or FCF: what gets deducted?'],
+    ['What actions are you going to take?', 'Price, charge, book, FC table, voucher.'],
+    ['5-min writing challenge', 'Create your offer for the customer.'],
+  ], 'TRAINER: share a live ticket where a TC or OTC could be offered (or a TC/OTC cancellation). Give trainees a few minutes to review it on their own, then work through it together. 1) TC or OTC, and why? DHJ or FCF? 2) What actions are you going to take? Get the rate from the FC Sales Calculator, deduct what was paid (voucher, or MFs + add-on within 120 days; no refund of any excess), charge upfront, book, handle the FC table by model, issue the admin_courtesy voucher, and for a TC force FC + 1 free month and set the ETF to $99. 3) 5-minute writing challenge: each trainee writes the offer, including TC expectations if relevant. Read a few aloud and compare. Then open the floor for questions.');
+
   // ---------- Close ----------
   {
     const s = pres.addSlide({ masterName: 'CONTENT' });
@@ -1111,7 +1463,7 @@ function headPanel(s, x, y, w, h, title, items, col = C.teal, soft = C.tealSoft,
     T(s, 'Thank you!', { x: 0.62, y: 2.15, w: 5, h: 0.75, fontFace: HEAD, bold: true, fontSize: 34 });
     T(s, 'When in doubt, check the Knowledge Library or ask your Trainer or Team Lead.', { x: 0.62, y: 2.95, w: 4.6, h: 0.5, fontSize: 12, color: C.soft });
     await panel(s, 'ill9.png');
-    s.addNotes('Close the module. Recap: Washington State (confirm residency and MCT 0 / ETF $0, cancel immediately, no retention, never mention the ETF; MF refunds default no). Offer Logic (no cancellation intent needed; Retention, Exit or Make-Right; pick the offer built for the problem; check existing offers; caps and guardrails). Cancellation Intent in C/CP Comms (reach out first; know something, not everything; probe; explain terms; route to the right playbook). General Retention Playbook (fix the real problem; weigh the five factors, don\'t count; hard overrides; match and present the offer; the Newspaper Test; don\'t close too soon).');
+    s.addNotes('Close the module. Recap: Washington State (confirm residency and MCT 0 / ETF $0, cancel immediately, no retention, never mention the ETF; MF refunds default no). Offer Logic (no cancellation intent needed; Retention, Exit or Make-Right; pick the offer built for the problem; check existing offers; caps and guardrails). Cancellation Intent in C/CP Comms (reach out first; know something, not everything; probe; explain terms; route to the right playbook). General Retention Playbook (fix the real problem; weigh the five factors, don\'t count; hard overrides; match and present the offer; the Newspaper Test; don\'t close too soon). Unused DHJ Voucher (FC hasn\'t started; sort into four cases; self-refund link only with refund intent; close accounts in order). FCF Pre-Invoice (retention first; internal 24-hour window; 2–3 hr Refund Voucher vs 4–6 hr Stripe via tracker; cancel FC and invalidate). Trial and One-Time Cleaning (TC creates an FC table with a 30-day window, OTC doesn\'t; deduct what was paid; never refund the excess).');
   }
 
   if (topicSlides.length * 3 !== agendaLinks.length) throw new Error(`agenda has ${agendaLinks.length / 3} rows but the deck has ${topicSlides.length} topics`);
