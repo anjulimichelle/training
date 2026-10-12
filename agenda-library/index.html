@@ -1,0 +1,703 @@
+<title>Training Agenda Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap">
+<style>
+/* Layout: sync bar on top; A–Z library (left) beside a sticky presentation-order panel (right); stacks on phones. */
+:root {
+  --bg: #f4f8f7;
+  --surface: #ffffff;
+  --ink: #1d1d1f;
+  --soft: #5f6b69;
+  --border: #d8e2e0;
+  --teal: #0b7a6f;
+  --teal-soft: #e3f4f1;
+  --teal-ink: #ffffff;
+  --ok: #2e7d32;
+  --ok-soft: #e4f2e1;
+  --warn: #9a6410;
+  --warn-soft: #fff3d6;
+  --bad: #b3261e;
+  --bad-soft: #fcebea;
+  --focus: #0b7a6f;
+  --display: "Play", "Trebuchet MS", Arial, sans-serif;
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #172221; --ink: #e8efee; --soft: #9fb0ad; --border: #2a3a38;
+    --teal: #3fb8aa; --teal-soft: #173a36; --teal-ink: #062421;
+    --ok: #7cc77f; --ok-soft: #1b3320; --warn: #e3b25c; --warn-soft: #3a2d14; --bad: #f08a83; --bad-soft: #3d1c1a;
+    --focus: #3fb8aa; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #172221; --ink: #e8efee; --soft: #9fb0ad; --border: #2a3a38;
+  --teal: #3fb8aa; --teal-soft: #173a36; --teal-ink: #062421;
+  --ok: #7cc77f; --ok-soft: #1b3320; --warn: #e3b25c; --warn-soft: #3a2d14; --bad: #f08a83; --bad-soft: #3d1c1a;
+  --focus: #3fb8aa; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.75rem; line-height: 1.15; }
+h2 { font-size: 1.15rem; }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); }
+.muted { color: var(--soft); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; }
+header.top .intro { display: grid; gap: 4px; min-width: 0; }
+header.top p { margin: 0; max-width: 62ch; }
+
+.btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--teal); }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: var(--teal-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .55; cursor: default; filter: none; }
+.btn.small { padding: 5px 10px; font-size: .85rem; }
+.btn.ghost { background: transparent; }
+
+/* Sync bar */
+.sync { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
+.sync-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: .85rem; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.busy { background: var(--teal-soft); color: var(--teal); }
+.pill.busy::before { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+.sync-msg { flex: 1 1 260px; min-width: 0; }
+.notice { border-radius: 8px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.notice.bad { background: var(--bad-soft); color: var(--bad); }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice p { margin: 0; flex: 1 1 240px; }
+details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft); font-size: .9rem; }
+.src-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.src { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--border); font-size: .88rem; }
+.src .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--soft); align-self: center; }
+.src.ok .dot { background: var(--ok); } .src.error .dot, .src.stale .dot { background: var(--bad); } .src.loading .dot { background: var(--teal); animation: pulse 1s infinite; }
+.src .name { min-width: 0; overflow-wrap: anywhere; }
+.src .name a { color: inherit; }
+.src .meta { color: var(--soft); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.src .err { grid-column: 2 / -1; color: var(--bad); }
+
+/* Main grid */
+.main { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.count { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .88rem; }
+
+.controls { display: grid; gap: 10px; }
+.search { width: 100%; border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 9px 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--border); background: transparent; border-radius: 999px; padding: 4px 11px; font-size: .84rem; font-weight: 700; color: var(--soft); }
+.chip[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: var(--teal-ink); }
+.chip.failed { border-style: dashed; }
+
+.lib { list-style: none; margin: 0; padding: 0; display: grid; }
+.letter { font-family: var(--display); font-weight: 700; color: var(--teal); padding: 10px 2px 4px; border-bottom: 1px solid var(--border); font-size: .95rem; }
+.topic { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 2px 10px; align-items: start; padding: 9px 4px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 6px; }
+.topic:hover { background: var(--teal-soft); }
+.topic input { margin: 3px 0 0; width: 17px; height: 17px; accent-color: var(--teal); cursor: pointer; }
+.topic .t { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.topic .d { grid-column: 2; color: var(--soft); font-size: .86rem; min-width: 0; }
+.topic .ref { grid-row: 1 / span 2; grid-column: 3; text-align: right; display: grid; gap: 3px; justify-items: end; }
+.tag { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--teal-soft); color: var(--teal); white-space: nowrap; }
+.slides { font-size: .78rem; color: var(--soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.topic.stale .tag { background: var(--bad-soft); color: var(--bad); }
+.empty { padding: 22px 8px; color: var(--soft); text-align: center; }
+.skeleton { height: 46px; border-radius: 6px; background: linear-gradient(90deg, var(--bg), var(--teal-soft), var(--bg)); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* Order panel */
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 16px; }
+@media (max-width: 860px) { .side { position: static; } }
+.order { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.oi { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.oi.dragging { opacity: .5; }
+.oi.over { border-color: var(--teal); }
+.oi .n { font-family: var(--display); font-weight: 700; color: var(--teal); text-align: center; font-variant-numeric: tabular-nums; cursor: grab; }
+.oi .body { min-width: 0; display: grid; gap: 2px; }
+.oi .t { font-weight: 700; overflow-wrap: anywhere; }
+.oi .s { font-size: .8rem; color: var(--soft); overflow-wrap: anywhere; }
+.oi.gone { border-color: var(--bad); }
+.oi.gone .s { color: var(--bad); }
+.oi .acts { display: flex; gap: 2px; }
+.icon { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 6px; color: var(--soft); font-size: 1rem; line-height: 1; }
+.icon:hover:not(:disabled) { background: var(--teal-soft); color: var(--teal); }
+.icon:disabled { opacity: .3; cursor: default; }
+.order-empty { border: 1px dashed var(--border); border-radius: 8px; padding: 18px 12px; color: var(--soft); text-align: center; font-size: .9rem; }
+
+.field { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; color: var(--soft); }
+.field input { border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 8px 10px; font-weight: 400; color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 5px 12px; font-size: .84rem; font-weight: 700; color: var(--soft); }
+.seg button[aria-pressed="true"] { background: var(--teal); color: var(--teal-ink); }
+.outline-box { overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 80px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toast { font-size: .85rem; font-weight: 700; color: var(--ok); }
+.toast.bad { color: var(--bad); }
+.foot { font-size: .82rem; color: var(--soft); max-width: 75ch; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="intro">
+      <span class="eyebrow">Homeaglow · New Hire Care Training</span>
+      <h1>Training Agenda Library</h1>
+      <p class="muted">Every topic from the training decks in one A–Z list, read live from Google Slides. Pick topics, put them in order, then copy or download the agenda.</p>
+    </div>
+    <button class="btn primary" id="refresh" type="button">🔄 Refresh Slides</button>
+  </header>
+
+  <section class="sync" aria-live="polite">
+    <div class="sync-row">
+      <span class="pill busy" id="sync-pill">Connecting</span>
+      <span class="sync-msg" id="sync-msg">Waiting for Google Drive…</span>
+    </div>
+    <div id="sync-notice" hidden></div>
+    <details class="sources" id="sources">
+      <summary id="sources-sum">Sources</summary>
+      <ul class="src-list" id="src-list"></ul>
+    </details>
+  </section>
+
+  <div class="main">
+    <section class="panel" aria-labelledby="lib-h">
+      <div class="panel-head">
+        <h2 id="lib-h">Master library <span class="muted" style="font-weight:400">A–Z</span></h2>
+        <span class="count" id="lib-count"></span>
+      </div>
+      <div class="controls">
+        <input class="search" id="q" type="search" placeholder="Search topics, descriptions or decks" autocomplete="off" aria-label="Search topics">
+        <div class="chips" id="deck-chips" role="group" aria-label="Filter by presentation"></div>
+      </div>
+      <ul class="lib" id="lib"></ul>
+    </section>
+
+    <aside class="side">
+      <section class="panel" aria-labelledby="ord-h">
+        <div class="panel-head">
+          <h2 id="ord-h">My Presentation Order</h2>
+          <span class="count" id="ord-count"></span>
+        </div>
+        <ol class="order" id="order"></ol>
+        <div class="actions">
+          <button class="btn small ghost" id="clear" type="button">Clear selection</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="out-h">
+        <div class="panel-head">
+          <h2 id="out-h">Agenda outline</h2>
+          <div class="seg" role="group" aria-label="Outline format">
+            <button type="button" id="fmt-txt" aria-pressed="true">Plain text</button>
+            <button type="button" id="fmt-md" aria-pressed="false">Markdown</button>
+          </div>
+        </div>
+        <label class="field" for="agenda-title">Agenda title
+          <input id="agenda-title" type="text" value="Training Agenda" maxlength="120">
+        </label>
+        <div class="outline-box"><pre class="outline" id="outline"></pre></div>
+        <div class="actions">
+          <button class="btn primary small" id="copy" type="button">Copy outline</button>
+          <button class="btn small" id="dl" type="button" hidden>Download</button>
+          <span class="toast" id="toast" role="status"></span>
+        </div>
+      </section>
+      <p class="foot">Read-only: this page never edits your Google Slides. Nothing is saved. Your selection is cleared when you close or reload the page.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const SERVER = "Google Drive";
+  const FOLDER_ID = "1rmAxGOzDkoh5NJFWIDBPSebejbBrx3fN";
+  // Used only when the folder listing itself fails, so the decks can still be read.
+  const FALLBACK_IDS = [
+    "14YN4HcekvxWppw-deVhT698VC-l8L69XM0Xopf74QqQ", "1O3sZWqlug6jj3Fu_TmGZQNE2GYuVErRj97D2uF7ADdw",
+    "1M2cFNRFxtnLjeLJs6y9-4iofw9KI4pYotL8RI937S_8", "1XkFuXT7dPbgAf113OlAQ3Sj2HfjtjoPIRRxJ_ZvnI5Y",
+    "10v3ektdkRtVSCh9csCCb3ACwi5Kf5uTjUMf99BpBxVE", "19FyVZnISj2BSxfrCdho2ierqb3iD2NMUokqiZXYOiGs",
+    "1IUvC_8iV_Z7TG1p0KMrPVK3GSr80WnZSVUmGdTQlw3Y", "1YxuIWEoHlouQgqjsJxHIcpP8rc5VZq5fGgpTqQcVCPI",
+    "1S-aG8XVthgtI1U-TEtt5qnWV87Ff06RtLGJhfDEjhHY", "1kGAnn1lJmJELqIpYAsrrJMXamhz1zyykoV6pt5vYYbk"
+  ];
+  const PRES_MIME = "application/vnd.google-apps.presentation";
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- In-memory state only (no storage, no history) ----------
+  const state = {
+    mcp: undefined,            // undefined = not resolved yet, null = unavailable
+    syncing: false,
+    run: null,                 // {startedAt, done, total, folderOk, folderErr, pageErr}
+    lastFullSyncAt: null,      // set only when the folder list and every deck read succeeded
+    decks: new Map(),          // id -> deck
+    selection: [],             // ordered topic keys
+    selected: new Map(),       // key -> snapshot of topic (kept if it disappears from the source)
+    q: "",
+    deckFilter: "all",
+    fmt: "txt"
+  };
+
+  // ---------- Parsing ----------
+  const TOPIC_RE = /^TOPIC\s+0*(\d+)(?:\s+OF\s+0*(\d+))?$/i;
+  const cleanLine = (l) => l.replace(/\\([\\!&*_#\[\]()<>`~|+.-])/g, "$1").replace(/\s+/g, " ").trim();
+  const isClosing = (lines) => !lines.length || /^HOMEAGLOW ·/.test(lines[0]) || /^knowledge check$/i.test(lines[0]) || /weekly quiz/i.test(lines[0]) ||
+    (/^WRAP-UP$/i.test(lines[0]) && /^thank you/i.test(lines[1] || ""));
+  const isLabel = (s) => !s || /·/.test(s) || (s === s.toUpperCase() && /[A-Z]/.test(s));
+  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+  function splitSlides(txt) {
+    let t = String(txt || "").replace(/\r/g, "").trim();
+    t = t.replace(/^-{5}\s*/, "").replace(/\s*-{5}$/, "");
+    if (!t) return [];
+    return t.split(/\n[ \t]*-{5}[ \t]*\n\s*-{5}[ \t]*\n/);
+  }
+
+  function parseDeck(txt, deckId) {
+    const slides = splitSlides(txt).map((s) => s.split("\n").map(cleanLine).filter(Boolean));
+    const starts = [];
+    slides.forEach((lines, i) => {
+      const k = lines.findIndex((l) => TOPIC_RE.test(l));
+      if (k < 0 || k > 2) return;
+      const m = lines[k].match(TOPIC_RE);
+      let title, desc;
+      if (k > 0 && !isLabel(lines[k - 1])) { title = lines[k - 1]; desc = lines[k + 1]; }
+      else { title = lines[k + 1]; desc = lines[k + 2]; }
+      if (!title) return;
+      if (desc && (/^YOU.?LL LEARN$/i.test(desc) || isLabel(desc))) desc = "";
+      starts.push({ slide: i + 1, title, desc: desc || "", num: +m[1], of: m[2] ? +m[2] : null });
+    });
+    const total = slides.length;
+    const seen = new Set();
+    const topics = [];
+    starts.forEach((s, j) => {
+      let end = j + 1 < starts.length ? starts[j + 1].slide - 1 : total;
+      // Drop closing slides that belong to the deck, not the topic (part title, thank-you, final deck-wide check).
+      while (end > s.slide && isClosing(slides[end - 1] || [])) end--;
+      const key = deckId + "::" + norm(s.title);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const label = "Topic " + String(s.num).padStart(2, "0") + (s.of ? " of " + String(s.of).padStart(2, "0") : "");
+      topics.push({ key, deckId, title: s.title, desc: s.desc, label, start: s.slide, end: Math.max(end, s.slide) });
+    });
+    return { topics, total };
+  }
+
+  // ---------- Helpers ----------
+  const shortName = (title) => { const m = /^\s*Day\s*0*(\d+)/i.exec(title || ""); return m ? "Day " + m[1] : (title || "Presentation").slice(0, 24); };
+  const dayNum = (title) => { const m = /^\s*Day\s*0*(\d+)/i.exec(title || ""); return m ? +m[1] : 999; };
+  const slideRef = (t) => t.start === t.end ? "Slide " + t.start : "Slides " + t.start + "–" + t.end;
+  const fmtTime = (ms) => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const fmtDate = (iso) => { try { return new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch { return ""; } };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v === true ? "" : v);
+    }
+    for (const c of kids.flat()) if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(String(c)));
+    return n;
+  }
+
+  // ---------- Error copy, by code ----------
+  function errInfo(e) {
+    const code = (e && e.code) || "upstream_error";
+    switch (code) {
+      case "needs_reauth": return { code, msg: "Your Google Drive connection has expired. Reconnect Google Drive in claude.ai Settings → Connectors, then refresh.", page: true };
+      case "server_not_connected": return { code, msg: "Google Drive isn't connected. Add Google Drive in claude.ai Settings → Connectors, then refresh.", page: true };
+      case "selection_required": return { code, msg: "You have more than one Google Drive connector. Choose which one this page should use when prompted, then refresh.", page: true };
+      case "not_in_manifest": return { code, msg: "Google Drive is turned off for this page. Turn it on in the page's permissions, then refresh.", page: true, perms: true };
+      case "approval_required": return { code, msg: "Reading from Google Drive needs your approval. Click Refresh Slides and allow it.", page: true };
+      case "blocked_by_policy": return { code, msg: "Your organization's policy blocks this Google Drive tool for your account.", page: true };
+      case "not_granted": case "capability_disabled": case "capability_removed":
+        return { code, msg: "Live sync isn't available in this view. Open the page in claude.ai with Google Drive connected.", page: true };
+      case "server_unavailable": case "rate_limited": return { code, msg: "Google Drive didn't respond in time.", retry: true };
+      case "tool_error": return { code, msg: "Google Drive couldn't read this file" + (e.message ? ": " + String(e.message).slice(0, 160) : ".") };
+      default: return { code, msg: (e && e.message) ? String(e.message).slice(0, 160) : "Something went wrong reading from Google Drive.", retry: !!(e && e.retryable) };
+    }
+  }
+
+  async function call(tool, input) {
+    try {
+      return await state.mcp.callTool(SERVER, tool, input, { cache: false });
+    } catch (e) {
+      if (e && e.retryable) {
+        await sleep(Math.min(e.retryAfterMs || 0, 15000) || 800 + Math.random() * 1200);
+        return await state.mcp.callTool(SERVER, tool, input, { cache: false });
+      }
+      throw e;
+    }
+  }
+  const payloadOf = (r) => {
+    let p = r && r.payload;
+    if (typeof p === "string") { try { p = JSON.parse(p); } catch { /* keep text */ } }
+    return p;
+  };
+
+  // ---------- Sync ----------
+  async function listFolder() {
+    const files = [];
+    let pageToken;
+    for (let i = 0; i < 10; i++) {
+      const input = { query: "parentId = '" + FOLDER_ID + "' and mimeType = '" + PRES_MIME + "'", excludeContentSnippets: true, pageSize: 50 };
+      if (pageToken) input.pageToken = pageToken;
+      const p = payloadOf(await call("search_files", input)) || {};
+      for (const f of p.files || []) if (f && f.id && (!f.mimeType || f.mimeType === PRES_MIME)) files.push(f);
+      pageToken = p.nextPageToken;
+      if (!pageToken || !(p.files || []).length) break;
+    }
+    return files;
+  }
+
+  async function readDeck(deck) {
+    deck.status = "loading"; renderSources();
+    try {
+      const p = payloadOf(await call("read_file_content", { fileId: deck.id }));
+      const text = p && typeof p === "object" ? p.fileContent : (typeof p === "string" ? p : "");
+      if (!text) throw { code: "tool_error", message: "the file came back empty" };
+      const { topics, total } = parseDeck(text, deck.id);
+      if (p && p.title) deck.title = p.title;
+      if (p && p.viewUrl) deck.viewUrl = p.viewUrl;
+      deck.topics = topics; deck.slideCount = total;
+      deck.status = "ok"; deck.error = null; deck.lastOkAt = Date.now();
+    } catch (e) {
+      const info = errInfo(e);
+      deck.error = info;
+      deck.status = deck.lastOkAt ? "stale" : "error";
+      if (info.page) state.run.pageErr = state.run.pageErr || info;
+    }
+    state.run.done++;
+    render();
+  }
+
+  async function sync() {
+    if (state.syncing || !state.mcp) return;
+    state.syncing = true;
+    state.run = { startedAt: Date.now(), done: 0, total: 0, folderOk: false, folderErr: null, pageErr: null };
+    render();
+
+    let files = null;
+    try {
+      files = await listFolder();
+      state.run.folderOk = true;
+    } catch (e) {
+      state.run.folderErr = errInfo(e);
+      if (state.run.folderErr.page) state.run.pageErr = state.run.folderErr;
+    }
+
+    if (state.run.pageErr) { finish(); return; }
+
+    const ids = new Set();
+    if (files) {
+      for (const f of files) {
+        ids.add(f.id);
+        const d = state.decks.get(f.id) || { id: f.id, topics: [], status: "pending", lastOkAt: null };
+        d.title = f.title || d.title || "Untitled presentation";
+        d.viewUrl = f.viewUrl || d.viewUrl || "https://docs.google.com/presentation/d/" + f.id + "/edit";
+        d.modifiedTime = f.modifiedTime || d.modifiedTime;
+        d.removed = false;
+        state.decks.set(f.id, d);
+      }
+      // Presentations no longer in the folder leave the library.
+      for (const id of [...state.decks.keys()]) if (!ids.has(id)) state.decks.delete(id);
+    } else {
+      const known = state.decks.size ? [...state.decks.keys()] : FALLBACK_IDS;
+      for (const id of known) {
+        ids.add(id);
+        if (!state.decks.has(id)) state.decks.set(id, { id, title: "Presentation", viewUrl: "https://docs.google.com/presentation/d/" + id + "/edit", topics: [], status: "pending", lastOkAt: null });
+      }
+    }
+    const queue = [...state.decks.values()];
+    state.run.total = queue.length;
+    render();
+
+    const workers = Array.from({ length: 3 }, async () => {
+      while (queue.length && !state.run.pageErr) await readDeck(queue.shift());
+    });
+    await Promise.all(workers);
+    finish();
+  }
+
+  function finish() {
+    const decks = [...state.decks.values()];
+    const allOk = state.run.folderOk && !state.run.pageErr && decks.length > 0 && decks.every((d) => d.status === "ok");
+    if (allOk) state.lastFullSyncAt = Date.now();
+    // Refresh snapshots of selected topics from current source data.
+    const live = topicIndex();
+    for (const key of state.selection) if (live.has(key)) state.selected.set(key, live.get(key));
+    state.syncing = false;
+    render();
+  }
+
+  function topicIndex() {
+    const m = new Map();
+    for (const d of state.decks.values()) for (const t of d.topics || []) m.set(t.key, { ...t, deckTitle: d.title, deckShort: shortName(d.title), viewUrl: d.viewUrl, stale: d.status !== "ok" });
+    return m;
+  }
+
+  // ---------- Selection ----------
+  function toggle(t) {
+    if (state.selected.has(t.key)) {
+      state.selected.delete(t.key);
+      state.selection = state.selection.filter((k) => k !== t.key);
+    } else {
+      state.selected.set(t.key, t);
+      state.selection.push(t.key);
+    }
+    render();
+  }
+  function move(i, d) {
+    const j = i + d;
+    if (j < 0 || j >= state.selection.length) return;
+    const s = state.selection;
+    [s[i], s[j]] = [s[j], s[i]];
+    render();
+    const btn = document.querySelector('#order [data-i="' + j + '"][data-d="' + d + '"]') || document.querySelector('#order [data-i="' + j + '"]');
+    if (btn && !btn.disabled) btn.focus();
+  }
+  function removeAt(i) {
+    const k = state.selection[i];
+    state.selection.splice(i, 1);
+    state.selected.delete(k);
+    render();
+  }
+
+  // ---------- Rendering ----------
+  function render() { renderSync(); renderSources(); renderChips(); renderLibrary(); renderOrder(); renderOutline(); }
+
+  function renderSync() {
+    const pill = $("sync-pill"), msg = $("sync-msg"), notice = $("sync-notice"), btn = $("refresh");
+    btn.disabled = state.syncing || !state.mcp;
+    btn.textContent = state.syncing ? "🔄 Refreshing…" : "🔄 Refresh Slides";
+    notice.hidden = true; notice.replaceChildren();
+
+    if (state.mcp === undefined) { pill.className = "pill busy"; pill.textContent = "Connecting"; msg.textContent = "Waiting for Google Drive…"; return; }
+    if (state.mcp === null) {
+      pill.className = "pill bad"; pill.textContent = "Not synced";
+      msg.textContent = "Live sync isn't available in this view. Open this page in claude.ai with the Google Drive connector added.";
+      return;
+    }
+    const decks = [...state.decks.values()];
+    const failed = decks.filter((d) => d.status === "error" || d.status === "stale");
+    const last = state.lastFullSyncAt ? " Last full sync: " + fmtTime(state.lastFullSyncAt) + "." : "";
+
+    if (state.syncing) {
+      pill.className = "pill busy"; pill.textContent = "Syncing";
+      msg.textContent = state.run && state.run.total ? "Reading presentations from Google Drive: " + state.run.done + " of " + state.run.total + "." + last : "Checking the Drive folder for presentations…" + last;
+      return;
+    }
+    const r = state.run;
+    if (r && r.pageErr) {
+      pill.className = "pill bad"; pill.textContent = "Not synced";
+      msg.textContent = (state.lastFullSyncAt ? "Showing topics from the last successful sync, which may be out of date." : "No topics could be read.") + last;
+      showNotice("bad", r.pageErr);
+      return;
+    }
+    if (r && r.folderOk && failed.length === 0 && decks.length) {
+      pill.className = "pill ok"; pill.textContent = "Up to date";
+      msg.textContent = "All " + decks.length + " presentations read successfully at " + fmtTime(state.lastFullSyncAt) + ".";
+      return;
+    }
+    pill.className = "pill warn"; pill.textContent = "Partly synced";
+    const parts = [];
+    if (r && !r.folderOk) parts.push("Couldn't check the Drive folder for new or removed presentations");
+    if (failed.length) parts.push(failed.length + " of " + decks.length + " presentations couldn't be read: " + failed.map((d) => shortName(d.title)).join(", "));
+    msg.textContent = parts.join(". ") + ". Topics from those sources may be missing or out of date." + last;
+    if (r && r.folderErr && !r.folderErr.page) showNotice("warn", r.folderErr);
+  }
+
+  function showNotice(kind, info) {
+    const n = $("sync-notice");
+    n.className = "notice " + kind; n.hidden = false;
+    n.replaceChildren(el("p", null, info.msg));
+    if (info.perms) {
+      n.append(el("button", { class: "btn small", type: "button", onclick: async () => {
+        try { const p = await claude.use("permissions"); if (p) await p.manage(); } catch { /* panel unavailable */ }
+      } }, "Open permissions"));
+    }
+  }
+
+  function renderSources() {
+    const decks = [...state.decks.values()].sort((a, b) => dayNum(a.title) - dayNum(b.title) || a.title.localeCompare(b.title));
+    const ok = decks.filter((d) => d.status === "ok").length;
+    $("sources-sum").textContent = decks.length ? "Sources: " + ok + " of " + decks.length + " read" : "Sources";
+    const list = $("src-list");
+    list.replaceChildren(...decks.map((d) => {
+      const meta = d.status === "loading" ? "Reading…" : d.status === "pending" ? "Queued" :
+        d.status === "ok" ? d.topics.length + " topics · " + (d.slideCount || "?") + " slides" :
+        d.lastOkAt ? "Failed · last read " + fmtTime(d.lastOkAt) : "Failed";
+      return el("li", { class: "src " + d.status },
+        el("span", { class: "dot", "aria-hidden": "true" }),
+        el("span", { class: "name" }, el("a", { href: d.viewUrl, target: "_blank", rel: "noopener" }, d.title),
+          d.modifiedTime ? el("span", { class: "muted" }, " · edited " + fmtDate(d.modifiedTime)) : null),
+        el("span", { class: "meta" }, meta),
+        d.error && d.status !== "ok" ? el("span", { class: "err" }, d.error.msg) : null);
+    }));
+    if (decks.some((d) => d.status === "error" || d.status === "stale")) $("sources").open = true;
+  }
+
+  function renderChips() {
+    const decks = [...state.decks.values()].sort((a, b) => dayNum(a.title) - dayNum(b.title));
+    if (state.deckFilter !== "all" && !state.decks.has(state.deckFilter)) state.deckFilter = "all";
+    const mk = (id, label, extra) => el("button", { class: "chip" + (extra || ""), type: "button", "aria-pressed": String(state.deckFilter === id), title: id === "all" ? null : state.decks.get(id).title, onclick: () => { state.deckFilter = id; renderChips(); renderLibrary(); } }, label);
+    $("deck-chips").replaceChildren(mk("all", "All decks"), ...decks.map((d) => mk(d.id, shortName(d.title), d.status === "error" || d.status === "stale" ? " failed" : "")));
+  }
+
+  function renderLibrary() {
+    const lib = $("lib");
+    const all = [...topicIndex().values()];
+    const anyLoaded = all.length > 0;
+    if (!anyLoaded) {
+      $("lib-count").textContent = "";
+      if (state.syncing || state.mcp === undefined) lib.replaceChildren(...Array.from({ length: 7 }, () => el("li", { class: "skeleton", "aria-hidden": "true" })));
+      else lib.replaceChildren(el("li", { class: "empty" }, state.mcp === null ? "Topics appear here once Google Drive is connected." : "No topics could be read yet. Fix the issue above, then click Refresh Slides."));
+      return;
+    }
+    const q = norm(state.q);
+    const rows = all.filter((t) => (state.deckFilter === "all" || t.deckId === state.deckFilter) &&
+      (!q || norm(t.title + " " + t.desc + " " + t.deckShort + " " + t.deckTitle).includes(q)))
+      .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true }) || dayNum(a.deckTitle) - dayNum(b.deckTitle));
+    $("lib-count").textContent = rows.length === all.length ? all.length + " topics" : rows.length + " of " + all.length + " topics";
+    if (!rows.length) { lib.replaceChildren(el("li", { class: "empty" }, "No topics match “" + state.q + "”.")); return; }
+    const out = [];
+    let letter = "";
+    for (const t of rows) {
+      const L = (t.title.match(/[A-Za-z0-9]/) || ["#"])[0].toUpperCase();
+      const LL = /[0-9]/.test(L) ? "#" : L;
+      if (LL !== letter) { letter = LL; out.push(el("li", { class: "letter", "aria-hidden": "true" }, LL)); }
+      const id = "t-" + t.key.replace(/[^a-z0-9]/gi, "_");
+      const checked = state.selected.has(t.key);
+      out.push(el("li", { class: "topic" + (t.stale ? " stale" : ""), onclick: (e) => { if (e.target.tagName !== "INPUT" && e.target.tagName !== "A") toggle(t); } },
+        el("input", { type: "checkbox", id, checked, "aria-label": "Add " + t.title, onchange: () => toggle(t) }),
+        el("span", { class: "t" }, t.title),
+        el("span", { class: "ref" }, el("span", { class: "tag", title: t.deckTitle + (t.stale ? " (couldn't refresh)" : "") }, t.deckShort), el("span", { class: "slides" }, slideRef(t))),
+        el("span", { class: "d" }, t.desc || t.label)));
+    }
+    lib.replaceChildren(...out);
+  }
+
+  let dragFrom = -1;
+  function renderOrder() {
+    const ol = $("order");
+    const live = topicIndex();
+    $("ord-count").textContent = state.selection.length ? state.selection.length + " selected" : "";
+    $("clear").hidden = !state.selection.length;
+    if (!state.selection.length) {
+      ol.replaceChildren(el("li", { class: "order-empty" }, "Nothing selected yet. Tick topics in the library and they'll line up here in the order you pick them."));
+      return;
+    }
+    const n = state.selection.length;
+    ol.replaceChildren(...state.selection.map((key, i) => {
+      const t = state.selected.get(key);
+      const gone = !live.has(key) && !state.syncing;
+      const li = el("li", { class: "oi" + (gone ? " gone" : ""), draggable: "true" },
+        el("span", { class: "n", title: "Drag to reorder" }, i + 1),
+        el("span", { class: "body" },
+          el("span", { class: "t" }, t.title),
+          el("span", { class: "s" }, gone ? "No longer found in " + t.deckShort + ". Left out of the outline." : t.deckShort + " · " + slideRef(t))),
+        el("span", { class: "acts" },
+          el("button", { class: "icon", type: "button", "data-i": i, "data-d": -1, disabled: i === 0, "aria-label": "Move " + t.title + " up", onclick: () => move(i, -1) }, "↑"),
+          el("button", { class: "icon", type: "button", "data-i": i, "data-d": 1, disabled: i === n - 1, "aria-label": "Move " + t.title + " down", onclick: () => move(i, 1) }, "↓"),
+          el("button", { class: "icon", type: "button", "aria-label": "Remove " + t.title, onclick: () => removeAt(i) }, "✕")));
+      li.addEventListener("dragstart", (e) => { dragFrom = i; li.classList.add("dragging"); try { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(i)); } catch {} });
+      li.addEventListener("dragend", () => { li.classList.remove("dragging"); dragFrom = -1; });
+      li.addEventListener("dragover", (e) => { if (dragFrom < 0) return; e.preventDefault(); li.classList.add("over"); });
+      li.addEventListener("dragleave", () => li.classList.remove("over"));
+      li.addEventListener("drop", (e) => {
+        e.preventDefault(); li.classList.remove("over");
+        if (dragFrom < 0 || dragFrom === i) return;
+        const [k] = state.selection.splice(dragFrom, 1);
+        state.selection.splice(i, 0, k);
+        dragFrom = -1; render();
+      });
+      return li;
+    }));
+  }
+
+  function outlineItems() {
+    const live = topicIndex();
+    return state.selection.filter((k) => live.has(k) || state.syncing).map((k) => live.get(k) || state.selected.get(k));
+  }
+  function buildOutline(fmt) {
+    const title = ($("agenda-title").value || "Training Agenda").trim();
+    const items = outlineItems();
+    if (!items.length) return "";
+    if (fmt === "md") {
+      return "# " + title + "\n\n" + items.map((t, i) =>
+        (i + 1) + ". **" + t.title + "**  \n   " + "[" + t.deckTitle + "](" + t.viewUrl + ")  \n   " + t.label + " · " + slideRef(t)).join("\n") + "\n";
+    }
+    return title + "\n\n" + items.map((t, i) =>
+      (i + 1) + ". " + t.title + "\n   Source: " + t.deckTitle + "\n   " + t.label + " · " + slideRef(t)).join("\n\n") + "\n";
+  }
+  function renderOutline() {
+    const txt = buildOutline(state.fmt);
+    $("outline").textContent = txt || "Your agenda appears here, in the order you set.";
+    $("outline").classList.toggle("muted", !txt);
+    $("copy").disabled = !txt; $("dl").disabled = !txt;
+    $("dl").textContent = "Download ." + state.fmt;
+    $("fmt-txt").setAttribute("aria-pressed", String(state.fmt === "txt"));
+    $("fmt-md").setAttribute("aria-pressed", String(state.fmt === "md"));
+  }
+
+  function toast(text, bad) {
+    const t = $("toast"); t.textContent = text; t.classList.toggle("bad", !!bad);
+    clearTimeout(toast._t); toast._t = setTimeout(() => { t.textContent = ""; }, 3500);
+  }
+
+  // ---------- Events ----------
+  $("refresh").addEventListener("click", () => sync());
+  $("q").addEventListener("input", (e) => { state.q = e.target.value; renderLibrary(); });
+  $("agenda-title").addEventListener("input", renderOutline);
+  $("fmt-txt").addEventListener("click", () => { state.fmt = "txt"; renderOutline(); });
+  $("fmt-md").addEventListener("click", () => { state.fmt = "md"; renderOutline(); });
+  $("clear").addEventListener("click", (e) => {
+    const b = e.currentTarget;
+    if (b.dataset.armed) { state.selection = []; state.selected.clear(); delete b.dataset.armed; b.textContent = "Clear selection"; render(); return; }
+    b.dataset.armed = "1"; b.textContent = "Click again to clear";
+    setTimeout(() => { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = "Clear selection"; } }, 3000);
+  });
+  $("copy").addEventListener("click", () => {
+    const txt = buildOutline(state.fmt);
+    if (!txt) return;
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents($("outline")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Copy blocked here. The outline is selected, press Ctrl/Cmd+C.", true); };
+    try { navigator.clipboard.writeText(txt).then(() => toast("Copied"), fallback); } catch { fallback(); }
+  });
+  $("dl").addEventListener("click", async () => {
+    const txt = buildOutline(state.fmt);
+    if (!txt) return;
+    const name = (($("agenda-title").value || "Training Agenda").trim().replace(/[^\w\- ]+/g, "").replace(/\s+/g, "-") || "Training-Agenda") + "." + state.fmt;
+    try {
+      const dl = await claude.use("downloads");
+      if (!dl) { $("dl").hidden = true; return; }
+      await dl.save({ filename: name, data: txt });
+      toast("Saved " + name);
+    } catch (e) {
+      const c = e && e.code;
+      if (c === "declined") toast("Download cancelled", true);
+      else if (c === "rate_limited") toast("A save prompt is already open", true);
+      else toast("Download isn't available here. Use Copy instead.", true);
+    }
+  });
+
+  // ---------- Boot ----------
+  render();
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("downloads").then((d) => { if (d) $("dl").hidden = false; }).catch(() => {});
+    window.claude.use("mcp").then((m) => { state.mcp = m || null; render(); if (m) sync(); }).catch(() => { state.mcp = null; render(); });
+  } else {
+    state.mcp = null; render();
+  }
+})();
+</script>
