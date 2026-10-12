@@ -896,7 +896,12 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
       mkStatus("busy", "Downloading " + shortName(d.title) + " (" + (i + 1) + " of " + ids.length + ")\u2026");
       let p;
       try { p = payloadOf(await call("download_file_content", { fileId: ids[i], exportMimeType: PPTX_MIME })); }
-      catch (e) { const info = errInfo(e); throw new Error("Couldn't download " + shortName(d.title) + ". " + info.msg); }
+      catch (e) {
+        if (/exceeded the 16 ?MB limit/i.test((e && e.message) || "")) {
+          throw new Error(shortName(d.title) + " is too large for the Google Drive connector to download (over its 16 MB limit). Remove " + shortName(d.title) + " topics from your order to combine the rest.");
+        }
+        const info = errInfo(e); throw new Error("Couldn't download " + shortName(d.title) + ". " + info.msg);
+      }
       const b64 = p && typeof p === "object" ? (p.content || p.base64Content || p.data) : null;
       if (!b64) throw new Error("Google Drive returned no file for " + shortName(d.title) + ".");
       sources[ids[i]] = b64ToBytes(b64);
