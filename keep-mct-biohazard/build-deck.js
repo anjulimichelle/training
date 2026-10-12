@@ -69,14 +69,23 @@ function bubble(s, x, y, w, h, text, label = 'CUSTOMER') {
 
   {
     const s = content(MCT, 'What is this?', 'C plans to complete their MCT, then cancel, so they don\'t pay the ETF.',
-      'What is this: a customer who intends to complete their Minimum Commitment Term and then cancel, usually explicitly stating this, sometimes just by not booking any cleanings during that period, in order to avoid paying the Early Termination Fee. Why this matters: the instinct is tricky in both directions. Some agents over-warn the customer about the ETF when they\'ve already made peace with paying off the term, which just sounds naggy. Others think "they\'re not using the service, we\'ve basically already been paid enough" and waive the ETF as the path of least resistance. That\'s the wrong call, and the next slides explain why.');
-    await cards(s, 1.45, 1.35, [
-      { ico: 'FiMessageCircle', title: 'They say it', body: 'Tells us they\'ll cancel once the MCT is done.' },
-      { ico: 'FiCalendar', title: 'They show it', body: 'Doesn\'t book any cleanings during the term.' },
-    ]);
-    eyebrow(s, 'Two traps to avoid', 0.45, 3.02, 4, RED);
-    headPanel(s, 0.45, 3.27, 4.45, 1.6, 'Trap 1: Over-warning about the ETF', ['They already accepted paying off the term', 'Bringing it up again just sounds naggy'], RED, PINK);
-    headPanel(s, 5.1, 3.27, 4.45, 1.6, 'Trap 2: Waiving the ETF', ['"They\'ve basically paid enough already"', 'Feels easy, but it\'s the wrong call'], RED, PINK);
+      'What is this: a customer who intends to complete their Minimum Commitment Term and then cancel, usually explicitly stating this, sometimes just by not booking any cleanings during that period, in order to avoid paying the Early Termination Fee. Why this matters: the instinct is tricky in both directions. Trap 1: some agents over-warn the customer about the ETF when they\'ve already made peace with paying off the term, which just sounds naggy. Trap 2: others think "they\'re not using the service, we\'ve basically already been paid enough" and waive the ETF as the path of least resistance. That\'s the wrong call. '
+      + 'When the customer hasn\'t booked any jobs on purpose, it requires real judgment, because it\'s easy to talk yourself into the wrong answer. Example: the customer has 1 invoiced job and 4 paid months, the ETF is $105, and they ask when they\'ll hit their MCT because they plan to cancel then. The reasoning trap: "the unused monthly fees basically already cover the ETF" or "we\'ve already earned enough from them". Neither is a valid reason to waive the ETF. The customer isn\'t disputing anything, and nothing unfair has happened to them: they\'ve simply accepted the financial terms and are planning around them. A waiver exists to fix something unfair or relieve a real burden. There\'s neither here. Don\'t waive the ETF. Why this matters for the business: MCT and ETF exist to keep terms fair and consistent for everyone. Waiving it here, just because a customer chose not to book and the math looks favorable, undermines the policy and sets an unrealistic precedent for every other customer who did book and is paying the ETF as agreed.');
+    const sig = [
+      ['FiMessageCircle', 'They say it', 'Tells us they\'ll cancel once the MCT is done.'],
+      ['FiCalendar', 'They show it', 'Doesn\'t book on purpose. Ex: 1 invoiced job, 4 paid MFs, $105 ETF, asks when they\'ll hit MCT.'],
+    ];
+    for (let i = 0; i < 2; i++) {
+      const x = 0.45 + i * 4.65;
+      box(s, x, 1.42, 4.45, 0.95, C.white, C.border);
+      await iconDot(s, x + 0.18, 1.42 + 0.29, sig[i][0], 0.38);
+      T(s, [{ text: sig[i][1], options: { bold: true, fontFace: HEAD, fontSize: 12, breakLine: true } }, { text: sig[i][2], options: { fontSize: 9.5, color: C.soft } }],
+        { x: x + 0.72, y: 1.42, w: 3.6, h: 0.95, valign: 'middle', paraSpaceAfter: 2 });
+    }
+    eyebrow(s, 'Two traps to avoid', 0.45, 2.52, 4, RED);
+    headPanel(s, 0.45, 2.75, 4.45, 1.55, 'Trap 1: Over-warning about the ETF', ['They already accepted paying off the term', 'Bringing it up again just sounds naggy'], RED, PINK);
+    headPanel(s, 5.1, 2.75, 4.45, 1.55, 'Trap 2: Waiving the ETF', ['"The unused MFs already cover the ETF"', 'Nothing unfair happened, and nothing is disputed', 'It sets a precedent for customers who pay as agreed'], RED, PINK, 9);
+    await warn(s, 4.45, 'Don\'t waive the ETF:', 'they\'re working within terms they already agreed to.');
   }
 
   {
@@ -91,18 +100,6 @@ function bubble(s, x, y, w, h, text, label = 'CUSTOMER') {
     ], 0.6, 0.08);
     bubble(s, 5.1, 1.45, 4.45, 1.2, 'I would like to cancel my membership. The agent who signed me up said she would allow me to cancel in 4 months without penalty. I would like to cancel in the 4th month without penalty as promised.');
     quote(s, 5.1, 2.8, 4.45, 2.05, 'Got it! We can definitely note that for you. Since you\'re still early in your membership and just planning ahead, can I ask what\'s making you feel you may not want to continue after the six months? And how was your cleaning with <<cleaner name>>?', 'SAMPLE PROBE');
-  }
-
-  {
-    const s = content(MCT, 'They show it: no bookings, on purpose', 'The math may look favorable. Still don\'t waive the ETF.',
-      'When the customer hasn\'t booked any jobs, on purpose. This case requires real judgment, because it\'s easy to talk yourself into the wrong answer. Example: the customer has 1 invoiced job and 4 paid months, the ETF is $105, and they ask when they\'ll hit their MCT because they plan to cancel then. The reasoning trap to avoid: it might feel like "the unused monthly fees basically already cover the ETF" or "we\'ve already earned enough from them". Neither is a valid reason to waive the ETF. The customer isn\'t disputing anything, and nothing unfair has happened to them: they\'ve simply accepted the financial terms and are planning around them. A waiver exists to fix something unfair or relieve a real burden. There\'s neither here. Don\'t waive the ETF. Why this matters for the business: MCT and ETF exist to keep terms fair and consistent for everyone. Waiving it here, just because a customer chose not to book and the math looks favorable, undermines the policy and sets an unrealistic precedent for every other customer who did book and is paying the ETF as agreed.');
-    const w = (9.1 - 0.3) / 3;
-    stat(s, 0.45, 1.45, w, 1.15, '1', 'invoiced job');
-    stat(s, 0.45 + w + 0.15, 1.45, w, 1.15, '4', 'paid months');
-    stat(s, 0.45 + 2 * (w + 0.15), 1.45, w, 1.15, '$105', 'ETF. Asks when they\'ll hit MCT', C.gold);
-    headPanel(s, 0.45, 2.78, 4.45, 1.5, 'The trap', ['"The unused MFs already cover the ETF"', '"We\'ve already earned enough from them"'], RED, PINK);
-    headPanel(s, 5.1, 2.78, 4.45, 1.5, 'Why not', ['Nothing unfair happened. Nothing is disputed.', 'A waiver fixes something unfair, or a real burden', 'It sets a precedent for customers who pay as agreed'], C.teal, C.tealSoft, 9);
-    await warn(s, 4.45, 'Don\'t waive the ETF:', 'they\'re working within terms they already agreed to.');
   }
 
   {
