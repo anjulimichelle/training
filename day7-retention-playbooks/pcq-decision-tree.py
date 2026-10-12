@@ -1,6 +1,5 @@
 """Day 7 (original deck): slide 4 keeps the trigger tile and gets the PCQ decision tree plus a
-baseline reminder; the Baseline slide (5) is removed and its list becomes a pop-up button on the
-Offers slide. Patches the live Google export so all other slides stay exactly as they are."""
+Baseline pop-up button; the Baseline slide (5) is removed since its list now lives in that pop-up. Patches the live Google export so all other slides stay exactly as they are."""
 import re, sys, io, zipfile
 from lxml import etree
 from pptx import Presentation
@@ -73,19 +72,19 @@ def card(k, y, yes, body):
     write(b, [(body, False)], 8.5, INK)
     return y + HH + 0.02 + BH / 2        # body mid-line, where branches leave
 
-QW = 2.55; qx = cen(1) - QW / 2
-start = box(s4, qx, 1.32, QW, 0.32, ORANGE, adj=0.15)
-write(start, [('Customer wants to cancel due to PCQ', True)], 9.5, WHITE, font='Play')
-q1 = box(s4, qx, 1.82, QW, 0.4, BLUE, adj=0.15)
-write(q1, [('Is the customer beyond their 6-month MCT?', True)], 9.5, WHITE, font='Play')
-seg(s4, cen(1), 1.64, cen(1), 1.82, arrow=True)
+QW = 2.8; qx = cen(1) - QW / 2
+start = box(s4, qx, 1.47, QW, 0.3, ORANGE, adj=0.15)
+write(start, [('Customer wants to cancel due to PCQ', True)], 9, WHITE, font='Play')
+q1 = box(s4, qx, 1.93, QW, 0.4, BLUE, adj=0.15)
+write(q1, [('Is the customer beyond their 6-month MCT?', True)], 9, WHITE, font='Play')
+seg(s4, cen(1), 1.77, cen(1), 1.93, arrow=True)
 
-R3, R4, R5 = 2.4, 3.27, 4.14
+R3, R4, R5 = 2.5, 3.35, 4.2
 def branch(from_left, from_right, mid_y, ytop, kyes, kno):
     seg(s4, from_left, mid_y, cen(kyes), mid_y); seg(s4, cen(kyes), mid_y, cen(kyes), ytop, arrow=True)
     seg(s4, from_right, mid_y, cen(kno), mid_y); seg(s4, cen(kno), mid_y, cen(kno), ytop, arrow=True)
 
-branch(qx, qx + QW, 2.02, R3, 0, 2)
+seg(s4, cen(0), 2.33, cen(0), R3, arrow=True); seg(s4, cen(2), 2.33, cen(2), R3, arrow=True)
 card(0, R3, True, 'Use “Beyond MCT” scenario')
 m = card(2, R3, False, 'Is this the customer’s 1st job?')
 branch(colx(2), colx(2) + W, m, R4, 1, 3)
@@ -95,13 +94,16 @@ branch(colx(3), colx(3) + W, m, R5, 2, 4)
 card(2, R5, True, 'Use “1st Job” scenario')
 card(4, R5, False, 'Use “Any Job Except 1st Job” scenario')
 
-# Baseline reminder under the trigger tile, linked to the Offers slide (where the list now lives).
-note = box(s4, 0.45, 3.45, 2.93, 0.95, GOLDSOFT, adj=0.08)
+# Baseline reminder + pop-up button under the trigger tile.
+note = box(s4, 0.45, 3.45, 2.93, 0.62, GOLDSOFT, adj=0.1)
 write(note, [], 9, paras=[
     [('Check the baseline responses first', True, GOLD, 9.5, 'Play')],
-    [('Every PCQ gets them, whatever the scenario. Open the list with the Baseline button on the Offers slide.', False, GOLD, 8.5)]],
+    [('Every PCQ gets them, whatever the scenario.', False, GOLD, 8.5)]],
     align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE, margin=0.12)
-note.click_action.target_slide = s6
+btn = box(s4, 0.45, 4.17, 2.93, 0.4, TEAL, adj=0.2, name='baselineButton')
+write(btn, [('▶  Baseline for every PCQ', True)], 10, WHITE, font='Play')
+hint = tbox(s4, 0.45, 4.62, 2.93, 0.25, 'baselineHint')
+write(hint, [('Click once to show the list, click again to close.', False)], 8, SOFT, align=PP_ALIGN.LEFT, margin=0)
 
 s4.notes_slide.notes_text_frame.text = (
     "The trigger: the CP showed up and did the job, but the result was poor, and now the customer wants to cancel. "
@@ -110,14 +112,10 @@ s4.notes_slide.notes_text_frame.text = (
     "If no: is this the customer's first job? If yes, use the 1st Job scenario. If not, was the previous job also an issue job (back-to-back)? "
     "If yes, use the 1st Job scenario; a second consecutive issue job is a broken promise on top of a broken promise, which is what the ETF Waivers policy addresses. "
     "If no, use the Any Job Except 1st Job scenario.\n"
-    "Before any scenario, check the baseline responses. Every PCQ gets them; they are behind the Baseline button on the Offers slide.")
+    "Before any scenario, check the baseline responses (Baseline button: click to show, click again to close). " + s5.notes_slide.notes_text_frame.text)
 
+# ---------------- Baseline pop-up on slide 4 ----------------
 # ---------------- Offers slide: Baseline button + pop-up ----------------
-btn = box(s6, 0.45, 4.6, 3.2, 0.4, TEAL, adj=0.2, name='baselineButton')
-write(btn, [('▶  Baseline for every PCQ', True)], 10, WHITE, font='Play')
-hint = tbox(s6, 3.8, 4.6, 5.0, 0.4, 'baselineHint')
-write(hint, [('Click once to show the list, click again to close.', False)], 9, SOFT, align=PP_ALIGN.LEFT, margin=0)
-
 items = [
     ('Acknowledge', "Use the Empathy Statements macro, matched to the customer's specific situation."),
     ("Probe, don't withhold", 'We already know the root cause. Give the resolution while letting the customer vent.'),
@@ -126,28 +124,24 @@ items = [
     ('Pairing and CP', 'Block C/CP pairing unless they want the same CP. Coach or penalize with the CP-facing PCQ macro.'),
     ('Flag and RC', 'Flag customer_unsatisfied if no review yet. Cancel RC and upcoming jobs unless they want to keep them.'),
 ]
-panel = box(s6, 0.38, 1.25, 9.24, 3.95, WHITE, line=BORDER, name='pop1_2Panel', adj=0.03)
-t = tbox(s6, 0.65, 1.38, 8.7, 0.32, 'pop1_2Title')
+panel = box(s4, 0.38, 1.42, 9.24, 3.75, WHITE, line=BORDER, name='pop1_2Panel', adj=0.03)
+t = tbox(s4, 0.65, 1.52, 8.7, 0.32, 'pop1_2Title')
 write(t, [('Baseline for every PCQ', True)], 14, INK, align=PP_ALIGN.LEFT, font='Play', margin=0)
 for k, (head, body) in enumerate(items):
     col, row = k % 2, k // 2
-    x, y = 0.65 + col * 4.5, 1.85 + row * 1.05
-    tile = box(s6, x, y, 4.3, 0.92, TEALSOFT, name=f'pop1_2Tile{k}', adj=0.08)
+    x, y = 0.65 + col * 4.5, 1.97 + row * 1.0
+    tile = box(s4, x, y, 4.3, 0.88, TEALSOFT, name=f'pop1_2Tile{k}', adj=0.08)
     write(tile, [], 9, paras=[[(head, True, INK, 10.5, 'Play')], [(body, False, SOFT, 9)]],
           align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.MIDDLE, margin=0.15)
-
-s6.notes_slide.notes_text_frame.text = (
-    s6.notes_slide.notes_text_frame.text +
-    "\nBaseline button (click to show, click again to close): " + s5.notes_slide.notes_text_frame.text)
 
 # ---------------- Remove the Baseline slide ----------------
 sldIdLst = prs.slides._sldIdLst
 sid = sldIdLst[4]; rId = sid.get(qn('r:id'))
 prs.part.drop_rel(rId); sldIdLst.remove(sid)
-offers_part = s6.part.partname
+offers_part = s4.part.partname
 buf = io.BytesIO(); prs.save(buf)
 
-# ---------------- Click animation on the Offers slide only ----------------
+# ---------------- Click animation on slide 4 only ----------------
 ns = {}
 exec(open(__file__.replace('pcq-decision-tree.py', 'add_story_anim.py')).read().split('\nzin = ')[0].split('src, dst = sys.argv[1], sys.argv[2]')[1], ns)
 zin = zipfile.ZipFile(buf); zout = zipfile.ZipFile(dst, 'w', zipfile.ZIP_DEFLATED)
@@ -167,6 +161,6 @@ for item in zin.infolist():
         for sid_ in ids:
             bld += [f'<p:bldP spid="{sid_}" grpId="0" animBg="1"/>', f'<p:bldP spid="{sid_}" grpId="1" animBg="1"/>']
         x = x.replace('</p:sld>', ns['timing']([c1, c2], bld) + '</p:sld>')
-        data = x.encode('utf8'); print('offers pop-up shapes', len(ids))
+        data = x.encode('utf8'); print('slide 4 pop-up shapes', len(ids))
     zout.writestr(item, data)
 zout.close()
