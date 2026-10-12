@@ -137,14 +137,13 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
 
 .field { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; color: var(--soft); }
 .field input { border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 8px 10px; font-weight: 400; color: var(--ink); }
-.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.seg button { border: 0; background: transparent; padding: 5px 12px; font-size: .84rem; font-weight: 700; color: var(--soft); }
-.seg button[aria-pressed="true"] { background: var(--teal); color: var(--teal-ink); }
-.outline-box { overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
-pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 80px; }
+.mk-note { margin: 0; font-size: .86rem; color: var(--soft); }
+.mk-status { font-size: .88rem; min-height: 1.2em; overflow-wrap: anywhere; }
+.mk-status.bad { color: var(--bad); }
+.mk-status.ok { color: var(--ok); font-weight: 700; }
+.mk-status a { color: var(--teal); font-weight: 700; }
+.mk-status .busy::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); margin-right: 8px; animation: pulse 1s infinite; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.toast { font-size: .85rem; font-weight: 700; color: var(--ok); }
-.toast.bad { color: var(--bad); }
 .foot { font-size: .82rem; color: var(--soft); max-width: 75ch; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
 </style>
@@ -154,7 +153,7 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
     <div class="intro">
       <span class="eyebrow">Homeaglow · New Hire Care Training</span>
       <h1>Training Agenda Library</h1>
-      <p class="muted">Every topic from the training decks in one A–Z list, read live from Google Slides. Pick topics, put them in order, then copy or download the agenda.</p>
+      <p class="muted">Every topic from the training decks in one A–Z list, read live from Google Slides. Pick topics, put them in order, then combine their slides into one presentation.</p>
     </div>
     <button class="btn primary" id="refresh" type="button">🔄 Refresh Slides</button>
   </header>
@@ -196,29 +195,27 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
         </div>
       </section>
 
-      <section class="panel" aria-labelledby="out-h">
+      <section class="panel" aria-labelledby="mk-h">
         <div class="panel-head">
-          <h2 id="out-h">Agenda outline</h2>
-          <div class="seg" role="group" aria-label="Outline format">
-            <button type="button" id="fmt-txt" aria-pressed="true">Plain text</button>
-            <button type="button" id="fmt-md" aria-pressed="false">Markdown</button>
-          </div>
+          <h2 id="mk-h">Combine into one presentation</h2>
+          <span class="count" id="mk-count"></span>
         </div>
-        <label class="field" for="agenda-title">Agenda title
-          <input id="agenda-title" type="text" value="Training Agenda" maxlength="120">
+        <p class="mk-note">Copies every slide of the selected topics, with speaker notes, into one new presentation in the order above.</p>
+        <label class="field" for="deck-title">Presentation name
+          <input id="deck-title" type="text" value="Training Session - Combined Topics" maxlength="120">
         </label>
-        <div class="outline-box"><pre class="outline" id="outline"></pre></div>
         <div class="actions">
-          <button class="btn primary small" id="copy" type="button">Copy outline</button>
-          <button class="btn small" id="dl" type="button" hidden>Download</button>
-          <span class="toast" id="toast" role="status"></span>
+          <button class="btn primary" id="make-gs" type="button">Create in Google Slides</button>
+          <button class="btn" id="make-dl" type="button" hidden>Download .pptx</button>
         </div>
+        <div class="mk-status" id="mk-status" role="status" aria-live="polite"></div>
       </section>
-      <p class="foot">Read-only: this page never edits your Google Slides. Nothing is saved. Your selection is cleared when you close or reload the page.</p>
+      <p class="foot">Your original Google Slides are never edited. "Create in Google Slides" adds one new file to your My Drive. Nothing else is saved, and your selection clears when you close or reload the page.</p>
     </aside>
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (() => {
   "use strict";
@@ -246,7 +243,8 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
     selected: new Map(),       // key -> snapshot of topic (kept if it disappears from the source)
     q: "",
     deckFilter: "all",
-    fmt: "txt"
+    making: false,
+    made: null              // {url, title} of the last combined presentation
   };
 
   // ---------- Parsing ----------
@@ -293,6 +291,233 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
     });
     return { topics, total };
   }
+
+// ==MERGE START==
+  // Combine chosen slides from several .pptx files into one, in order.
+  // sources: {key: Uint8Array}; picks: [{src, slide (1-based), title?}]. Returns {blob-able Uint8Array, count}.
+  const PptxMerge = (() => {
+    const R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/";
+    const relsPathOf = (p) => { const i = p.lastIndexOf("/"); return p.slice(0, i) + "/_rels/" + p.slice(i + 1) + ".rels"; };
+    const dirOf = (p) => p.slice(0, p.lastIndexOf("/"));
+    function resolve(from, target) {
+      if (target.startsWith("/")) return target.slice(1);
+      const parts = dirOf(from).split("/");
+      for (const seg of target.split("/")) { if (seg === "..") parts.pop(); else if (seg && seg !== ".") parts.push(seg); }
+      return parts.join("/");
+    }
+    function relTo(from, to) {
+      const a = dirOf(from).split("/"), b = to.split("/");
+      let i = 0; while (i < a.length && i < b.length - 1 && a[i] === b[i]) i++;
+      return "../".repeat(a.length - i) + b.slice(i).join("/");
+    }
+    const attrs = (s) => { const o = {}; for (const m of s.matchAll(/([\w:]+)="([^"]*)"/g)) o[m[1]] = m[2]; return o; };
+    const parseRels = (xml) => xml ? [...xml.matchAll(/<Relationship\b([^>]*?)\/?>/g)].map((m) => attrs(m[1])) : [];
+    const relsXml = (rels) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      rels.map((r) => '<Relationship Id="' + r.Id + '" Type="' + r.Type + '" Target="' + r.Target + '"' + (r.TargetMode ? ' TargetMode="' + r.TargetMode + '"' : "") + "/>").join("") + "</Relationships>";
+    const kind = (type) => type.slice(type.lastIndexOf("/") + 1);
+    function parseCT(xml) {
+      const d = {}, o = {};
+      for (const m of xml.matchAll(/<Default\b([^>]*?)\/?>/g)) { const a = attrs(m[1]); d[a.Extension.toLowerCase()] = a.ContentType; }
+      for (const m of xml.matchAll(/<Override\b([^>]*?)\/?>/g)) { const a = attrs(m[1]); o[a.PartName.replace(/^\//, "")] = a.ContentType; }
+      return { d, o };
+    }
+    const ctXml = (ct) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      Object.entries(ct.d).map(([e, t]) => '<Default Extension="' + e + '" ContentType="' + t + '"/>').join("") +
+      Object.entries(ct.o).map(([p, t]) => '<Override PartName="/' + p + '" ContentType="' + t + '"/>').join("") + "</Types>";
+    const slideText = (xml) => xml.split("</a:p>").map((p) => [...p.matchAll(/<a:t>([^<]*)<\/a:t>/g)].map((m) => m[1]).join("")).join(" ")
+      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+
+    async function openSource(JSZip, bytes) {
+      const zip = await JSZip.loadAsync(bytes);
+      const pres = await zip.file("ppt/presentation.xml").async("string");
+      const prels = parseRels(await zip.file("ppt/_rels/presentation.xml.rels").async("string"));
+      const byId = Object.fromEntries(prels.map((r) => [r.Id, r]));
+      const slides = [...pres.matchAll(/<p:sldId\b([^>]*?)\/?>/g)].map((m) => resolve("ppt/presentation.xml", byId[attrs(m[1])["r:id"]].Target));
+      const ct = parseCT(await zip.file("[Content_Types].xml").async("string"));
+      return { zip, slides, ct };
+    }
+
+    async function textOf(src, n) {
+      const f = src.slides[n - 1] && src.zip.file(src.slides[n - 1]);
+      return f ? slideText(await f.async("string")) : null;
+    }
+
+    async function combine(JSZip, sources, picks) {
+      if (!picks.length) throw new Error("No slides chosen.");
+      const src = {};
+      for (const k of Object.keys(sources)) src[k] = await openSource(JSZip, sources[k]);
+      const baseKey = picks[0].src;
+      const out = await JSZip.loadAsync(sources[baseKey]);
+      const ct = parseCT(await out.file("[Content_Types].xml").async("string"));
+      let pres = await out.file("ppt/presentation.xml").async("string");
+      let prels = parseRels(await out.file("ppt/_rels/presentation.xml.rels").async("string"));
+
+      // 1. Empty the base deck: drop every slide and notes page.
+      for (const name of Object.keys(out.files)) {
+        if (/^ppt\/(slides|notesSlides)\//.test(name)) { out.remove(name); delete ct.o[name]; }
+      }
+      for (const p of Object.keys(ct.o)) if (/^ppt\/(slides|notesSlides)\//.test(p)) delete ct.o[p];
+      prels = prels.filter((r) => kind(r.Type) !== "slide");
+      pres = pres.replace(/<p:sldIdLst>[\s\S]*?<\/p:sldIdLst>|<p:sldIdLst\/>/, "").replace(/<p14:sectionLst[\s\S]*?<\/p14:sectionLst>/, "").replace(/<p:custShowLst>[\s\S]*?<\/p:custShowLst>/, "");
+
+      const notesMasterRel = prels.find((r) => kind(r.Type) === "notesMaster");
+      const outNotesMaster = notesMasterRel ? resolve("ppt/presentation.xml", notesMasterRel.Target) : null;
+      const maxNum = (dir, stem) => Math.max(0, ...Object.keys(out.files).map((n) => { const m = n.match(new RegExp("^ppt/" + dir + "/" + stem + "(\\d+)\\.xml$")); return m ? +m[1] : 0; }));
+      const counters = { slideLayouts: maxNum("slideLayouts", "slideLayout"), slideMasters: maxNum("slideMasters", "slideMaster"), theme: maxNum("theme", "theme") };
+      let rIdN = Math.max(0, ...prels.map((r) => +(r.Id.match(/\d+/) || [0])[0])) + 1;
+      const ids = [...pres.matchAll(/<p:sldMasterId\b[^>]*\bid="(\d+)"/g)].map((m) => +m[1]);
+      for (const name of Object.keys(out.files)) if (/^ppt\/slideMasters\/[^/]+\.xml$/.test(name)) {
+        const x = await out.file(name).async("string");
+        for (const m of x.matchAll(/<p:sldLayoutId\b[^>]*\bid="(\d+)"/g)) ids.push(+m[1]);
+      }
+      let nextId = Math.max(2147483648, ...ids) + 1;
+
+      const memo = new Map();       // srcKey|path -> out path
+      const masters = new Map();    // out master path -> {xml, rels, layouts: []}
+      const slideMap = new Map();   // srcKey|srcSlidePath -> out slide path
+      picks.forEach((p, i) => slideMap.set(p.src + "|" + src[p.src].slides[p.slide - 1], "ppt/slides/slide" + (i + 1) + ".xml"));
+      const isBase = (k) => k === baseKey;
+
+      async function readRels(s, path) { const f = s.zip.file(relsPathOf(path)); return f ? parseRels(await f.async("string")) : []; }
+      function setCT(outPath, s, srcPath) {
+        const t = s.ct.o[srcPath];
+        if (t) ct.o[outPath] = t;
+        else { const ext = outPath.split(".").pop().toLowerCase(); if (!ct.d[ext] && s.ct.d[ext]) ct.d[ext] = s.ct.d[ext]; }
+      }
+      function uniqueName(dir, base) {
+        let name = dir + "/" + base, i = 1;
+        while (out.file(name)) { const dot = base.lastIndexOf("."); name = dir + "/" + base.slice(0, dot) + "_" + (i++) + base.slice(dot); }
+        return name;
+      }
+
+      // Copy any part (and its relationships) into the output; returns the out path or null to drop it.
+      async function copyPart(k, path) {
+        const s = src[k];
+        const top = path.split("/")[1];
+        if (top === "slides") return slideMap.get(k + "|" + path) || null;
+        if (top === "notesMasters") return outNotesMaster;
+        if (isBase(k) && top !== "notesSlides") return out.file(path) ? path : null;
+        const key = k + "|" + path;
+        if (memo.has(key)) return memo.get(key);
+        if (!s.zip.file(path)) return null;
+        let outPath;
+        if (top === "slideLayouts") outPath = "ppt/slideLayouts/slideLayout" + (++counters.slideLayouts) + ".xml";
+        else if (top === "slideMasters") outPath = "ppt/slideMasters/slideMaster" + (++counters.slideMasters) + ".xml";
+        else if (top === "theme") outPath = "ppt/theme/theme" + (++counters.theme) + ".xml";
+        else outPath = uniqueName(dirOf(path), "d" + Object.keys(src).indexOf(k) + "_" + path.split("/").pop());
+        memo.set(key, outPath);
+        const rels = await readRels(s, path);
+        const isXml = /\.xml$/i.test(path);
+        let body = await s.zip.file(path).async(isXml ? "string" : "uint8array");
+        const keep = [];
+        const layoutRels = [];
+        for (const r of rels) {
+          if (r.TargetMode === "External") { keep.push(r); continue; }
+          const t = kind(r.Type);
+          if (t === "slideLayout" && top === "slideMasters") { layoutRels.push(r); continue; }
+          const target = await copyPart(k, resolve(path, r.Target));
+          if (target) keep.push({ ...r, Target: relTo(outPath, target) });
+        }
+        if (top === "slideMasters") { masters.set(outPath, { xml: body, rels: keep, layouts: [] }); }
+        else {
+          if (top === "slideLayouts") {
+            const mr = keep.find((r) => kind(r.Type) === "slideMaster");
+            if (mr) masters.get(resolve(outPath, mr.Target)).layouts.push(outPath);
+          }
+          out.file(outPath, body);
+          if (rels.length) out.file(relsPathOf(outPath), relsXml(keep));
+        }
+        setCT(outPath, s, path);
+        return outPath;
+      }
+
+      function stripLinks(xml, rid) {
+        for (const tag of ["a:hlinkClick", "a:hlinkHover"]) {
+          xml = xml.replace(new RegExp("<" + tag + "\\b[^>]*r:id=\"" + rid + "\"[^>]*/>", "g"), "")
+            .replace(new RegExp("<" + tag + "\\b[^>]*r:id=\"" + rid + "\"[^>]*>[\\s\\S]*?</" + tag + ">", "g"), "");
+        }
+        return xml;
+      }
+
+      // 2. Copy each chosen slide, in order.
+      const sldIds = [];
+      for (let i = 0; i < picks.length; i++) {
+        const p = picks[i], s = src[p.src];
+        const srcPath = s.slides[p.slide - 1];
+        if (!srcPath) throw new Error("Slide " + p.slide + " no longer exists in its presentation.");
+        const outPath = "ppt/slides/slide" + (i + 1) + ".xml";
+        let xml = await s.zip.file(srcPath).async("string");
+        const keep = [];
+        for (const r of await readRels(s, srcPath)) {
+          if (r.TargetMode === "External") { keep.push(r); continue; }
+          const t = kind(r.Type);
+          if (/comment/i.test(t)) continue;
+          let target = null;
+          if (t === "notesSlide") target = outNotesMaster ? await copyNotes(p.src, resolve(srcPath, r.Target), outPath, i + 1) : null;
+          else target = await copyPart(p.src, resolve(srcPath, r.Target));
+          if (target) keep.push({ ...r, Target: relTo(outPath, target) });
+          else xml = stripLinks(xml, r.Id);
+        }
+        out.file(outPath, xml);
+        out.file(relsPathOf(outPath), relsXml(keep));
+        ct.o[outPath] = "application/vnd.openxmlformats-officedocument.presentationml.slide+xml";
+        const rid = "rId" + (rIdN++);
+        prels.push({ Id: rid, Type: R + "slide", Target: "slides/slide" + (i + 1) + ".xml" });
+        sldIds.push('<p:sldId id="' + (256 + i) + '" r:id="' + rid + '"/>');
+      }
+
+      async function copyNotes(k, path, slideOut, n) {
+        const s = src[k];
+        if (!s.zip.file(path)) return null;
+        const outPath = "ppt/notesSlides/notesSlide" + n + ".xml";
+        const keep = [];
+        for (const r of await readRels(s, path)) {
+          if (r.TargetMode === "External") { keep.push(r); continue; }
+          const t = kind(r.Type);
+          const target = t === "slide" ? slideOut : t === "notesMaster" ? outNotesMaster : await copyPart(k, resolve(path, r.Target));
+          if (target) keep.push({ ...r, Target: relTo(outPath, target) });
+        }
+        out.file(outPath, await s.zip.file(path).async("string"));
+        out.file(relsPathOf(outPath), relsXml(keep));
+        ct.o[outPath] = "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml";
+        return outPath;
+      }
+
+      // 3. Finish imported masters: link only the layouts actually used.
+      const masterIds = [];
+      for (const [mPath, m] of masters) {
+        const layoutRels = m.layouts.map((l, j) => ({ Id: "rIdL" + (j + 1), Type: R + "slideLayout", Target: relTo(mPath, l) }));
+        const list = "<p:sldLayoutIdLst>" + layoutRels.map((r) => '<p:sldLayoutId id="' + (nextId++) + '" r:id="' + r.Id + '"/>').join("") + "</p:sldLayoutIdLst>";
+        let xml = m.xml.replace(/<p:sldLayoutIdLst>[\s\S]*?<\/p:sldLayoutIdLst>|<p:sldLayoutIdLst\/>/, "");
+        xml = xml.replace(/(<\/p:clrMap>|<p:clrMap\b[^>]*\/>)/, "$1" + list);
+        out.file(mPath, xml);
+        out.file(relsPathOf(mPath), relsXml([...m.rels, ...layoutRels]));
+        const rid = "rId" + (rIdN++);
+        prels.push({ Id: rid, Type: R + "slideMaster", Target: relTo("ppt/presentation.xml", mPath) });
+        masterIds.push('<p:sldMasterId id="' + (nextId++) + '" r:id="' + rid + '"/>');
+      }
+
+      pres = pres.replace("</p:sldMasterIdLst>", masterIds.join("") + "</p:sldMasterIdLst>");
+      pres = pres.replace(/<p:sldSz\b/, "<p:sldIdLst>" + sldIds.join("") + "</p:sldIdLst><p:sldSz");
+      out.file("ppt/presentation.xml", pres);
+      out.file("ppt/_rels/presentation.xml.rels", relsXml(prels));
+      // 4. Drop images that only the removed base slides used.
+      const used = new Set();
+      for (const name of Object.keys(out.files)) {
+        if (!name.endsWith(".rels") || out.files[name].dir) continue;
+        const owner = name.replace("/_rels/", "/").replace(/\.rels$/, "");
+        for (const r of parseRels(await out.file(name).async("string"))) if (r.TargetMode !== "External") used.add(resolve(owner, r.Target));
+      }
+      for (const name of Object.keys(out.files)) {
+        if (/^ppt\/media\//.test(name) && !out.files[name].dir && !used.has(name)) { out.remove(name); delete ct.o[name]; }
+      }
+      out.file("[Content_Types].xml", ctXml(ct));
+      const data = await out.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 } });
+      return { data, count: picks.length };
+    }
+    return { openSource, textOf, combine };
+  })();
+// ==MERGE END==
 
   // ---------- Helpers ----------
   const shortName = (title) => { const m = /^\s*Day\s*0*(\d+)/i.exec(title || ""); return m ? "Day " + m[1] : (title || "Presentation").slice(0, 24); };
@@ -456,6 +681,7 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
       state.selected.set(t.key, t);
       state.selection.push(t.key);
     }
+    state.made = null;
     render();
   }
   function move(i, d) {
@@ -463,6 +689,7 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
     if (j < 0 || j >= state.selection.length) return;
     const s = state.selection;
     [s[i], s[j]] = [s[j], s[i]];
+    state.made = null;
     render();
     const btn = document.querySelector('#order [data-i="' + j + '"][data-d="' + d + '"]') || document.querySelector('#order [data-i="' + j + '"]');
     if (btn && !btn.disabled) btn.focus();
@@ -471,11 +698,12 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
     const k = state.selection[i];
     state.selection.splice(i, 1);
     state.selected.delete(k);
+    state.made = null;
     render();
   }
 
   // ---------- Rendering ----------
-  function render() { renderSync(); renderSources(); renderChips(); renderLibrary(); renderOrder(); renderOutline(); }
+  function render() { renderSync(); renderSources(); renderChips(); renderLibrary(); renderOrder(); renderMake(); }
 
   function renderSync() {
     const pill = $("sync-pill"), msg = $("sync-msg"), notice = $("sync-notice"), btn = $("refresh");
@@ -606,7 +834,7 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
         el("span", { class: "n", title: "Drag to reorder" }, i + 1),
         el("span", { class: "body" },
           el("span", { class: "t" }, t.title),
-          el("span", { class: "s" }, gone ? "No longer found in " + t.deckShort + ". Left out of the outline." : t.deckShort + " · " + slideRef(t))),
+          el("span", { class: "s" }, gone ? "No longer found in " + t.deckShort + ". Left out of the combined presentation." : t.deckShort + " · " + slideRef(t))),
         el("span", { class: "acts" },
           el("button", { class: "icon", type: "button", "data-i": i, "data-d": -1, disabled: i === 0, "aria-label": "Move " + t.title + " up", onclick: () => move(i, -1) }, "↑"),
           el("button", { class: "icon", type: "button", "data-i": i, "data-d": 1, disabled: i === n - 1, "aria-label": "Move " + t.title + " down", onclick: () => move(i, 1) }, "↓"),
@@ -620,81 +848,136 @@ pre.outline { margin: 0; padding: 12px; font: .84rem/1.5 ui-monospace, "SFMono-R
         if (dragFrom < 0 || dragFrom === i) return;
         const [k] = state.selection.splice(dragFrom, 1);
         state.selection.splice(i, 0, k);
-        dragFrom = -1; render();
+        dragFrom = -1; state.made = null; render();
       });
       return li;
     }));
   }
 
-  function outlineItems() {
+  const PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+  function orderItems() {
     const live = topicIndex();
-    return state.selection.filter((k) => live.has(k) || state.syncing).map((k) => live.get(k) || state.selected.get(k));
+    return state.selection.filter((k) => live.has(k)).map((k) => live.get(k));
   }
-  function buildOutline(fmt) {
-    const title = ($("agenda-title").value || "Training Agenda").trim();
-    const items = outlineItems();
-    if (!items.length) return "";
-    if (fmt === "md") {
-      return "# " + title + "\n\n" + items.map((t, i) =>
-        (i + 1) + ". **" + t.title + "**  \n   " + "[" + t.deckTitle + "](" + t.viewUrl + ")  \n   " + t.label + " · " + slideRef(t)).join("\n") + "\n";
-    }
-    return title + "\n\n" + items.map((t, i) =>
-      (i + 1) + ". " + t.title + "\n   Source: " + t.deckTitle + "\n   " + t.label + " · " + slideRef(t)).join("\n\n") + "\n";
+  function mkStatus(kind, ...kids) {
+    const s = $("mk-status");
+    s.className = "mk-status" + (kind === "bad" ? " bad" : kind === "ok" ? " ok" : "");
+    s.replaceChildren(kind === "busy" ? el("span", { class: "busy" }, ...kids) : el("span", null, ...kids));
   }
-  function renderOutline() {
-    const txt = buildOutline(state.fmt);
-    $("outline").textContent = txt || "Your agenda appears here, in the order you set.";
-    $("outline").classList.toggle("muted", !txt);
-    $("copy").disabled = !txt; $("dl").disabled = !txt;
-    $("dl").textContent = "Download ." + state.fmt;
-    $("fmt-txt").setAttribute("aria-pressed", String(state.fmt === "txt"));
-    $("fmt-md").setAttribute("aria-pressed", String(state.fmt === "md"));
+  function renderMake() {
+    const items = orderItems();
+    const slides = items.reduce((n, t) => n + t.end - t.start + 1, 0);
+    $("mk-count").textContent = items.length ? items.length + " topics · " + slides + " slides" : "";
+    const off = !items.length || state.making || state.syncing || !state.mcp || typeof JSZip === "undefined";
+    $("make-gs").disabled = off; $("make-dl").disabled = off;
+    if (state.making) return;
+    if (state.made) {
+      mkStatus("ok", "Created: ", el("a", { href: state.made.url, target: "_blank", rel: "noopener" }, "Open \u201c" + state.made.title + "\u201d in Google Slides \u2197"));
+    } else if (typeof JSZip === "undefined") {
+      mkStatus("bad", "The slide combiner didn't load. Reload the page to try again.");
+    } else if (!items.length) {
+      mkStatus("", "Select topics to combine them.");
+    } else mkStatus("", "");
   }
 
-  function toast(text, bad) {
-    const t = $("toast"); t.textContent = text; t.classList.toggle("bad", !!bad);
-    clearTimeout(toast._t); toast._t = setTimeout(() => { t.textContent = ""; }, 3500);
+  const b64ToBytes = (b64) => { const bin = atob(String(b64).replace(/\s/g, "")); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+  const bytesToB64 = (u) => { let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+  const deckName = () => ($("deck-title").value || "").trim() || "Training Session - Combined Topics";
+
+  let built = null; // {sig, data}
+  async function buildDeck() {
+    const items = orderItems();
+    const sig = JSON.stringify(items.map((t) => [t.key, t.start, t.end])) + "|" + state.lastFullSyncAt;
+    if (built && built.sig === sig) return built.data;
+    const ids = [...new Set(items.map((t) => t.deckId))];
+    const sources = {};
+    for (let i = 0; i < ids.length; i++) {
+      const d = state.decks.get(ids[i]);
+      mkStatus("busy", "Downloading " + shortName(d.title) + " (" + (i + 1) + " of " + ids.length + ")\u2026");
+      let p;
+      try { p = payloadOf(await call("download_file_content", { fileId: ids[i], exportMimeType: PPTX_MIME })); }
+      catch (e) { const info = errInfo(e); throw new Error("Couldn't download " + shortName(d.title) + ". " + info.msg); }
+      const b64 = p && typeof p === "object" ? (p.content || p.base64Content || p.data) : null;
+      if (!b64) throw new Error("Google Drive returned no file for " + shortName(d.title) + ".");
+      sources[ids[i]] = b64ToBytes(b64);
+    }
+    mkStatus("busy", "Checking slide positions\u2026");
+    const opened = {};
+    for (const id of ids) opened[id] = await PptxMerge.openSource(JSZip, sources[id]);
+    for (const t of items) {
+      const txt = await PptxMerge.textOf(opened[t.deckId], t.start);
+      if (txt == null || !norm(txt).includes(norm(t.title))) {
+        throw new Error("\u201c" + t.title + "\u201d has moved in " + t.deckShort + " since the last sync. Click Refresh Slides, then try again.");
+      }
+    }
+    const picks = items.flatMap((t) => Array.from({ length: t.end - t.start + 1 }, (_, j) => ({ src: t.deckId, slide: t.start + j })));
+    mkStatus("busy", "Combining " + picks.length + " slides\u2026");
+    const { data } = await PptxMerge.combine(JSZip, sources, picks);
+    built = { sig, data };
+    return data;
+  }
+
+  async function makeInSlides() {
+    if (state.making) return;
+    state.making = true; state.made = null; renderMake();
+    const title = deckName();
+    try {
+      const data = await buildDeck();
+      mkStatus("busy", "Creating \u201c" + title + "\u201d in your Google Drive\u2026");
+      let fileArgs = false;
+      try { fileArgs = !!(await state.mcp.listTools()).fileArgs; } catch { /* assume inline */ }
+      let content;
+      if (fileArgs) content = { $file: { data: new Blob([data], { type: PPTX_MIME }), name: "combined.pptx", type: PPTX_MIME } };
+      else if (data.length <= 700000) content = bytesToB64(data);
+      else throw new Error("This presentation is too large to send to Google Drive from this view. Use Download .pptx, then upload it to Drive.");
+      const r = await state.mcp.callTool(SERVER, "create_file", { title, contentMimeType: PPTX_MIME, base64Content: content }, { cache: false });
+      const p = payloadOf(r) || {};
+      const id = p.id;
+      const url = p.viewUrl || (id ? "https://docs.google.com/presentation/d/" + id + "/edit" : null);
+      if (!url) throw new Error("Google Drive didn't return a link. Check My Drive for \u201c" + title + "\u201d before trying again.");
+      state.made = { url, title };
+    } catch (e) {
+      state.making = false; renderMake();
+      const msg = e instanceof Error ? e.message : errInfo(e).msg;
+      const ambiguous = e && (e.code === "server_unavailable" || e.code === "upstream_error");
+      mkStatus("bad", msg + (ambiguous ? " Check My Drive for \u201c" + title + "\u201d before trying again." : ""));
+      return;
+    }
+    state.making = false; renderMake();
+  }
+
+  async function makeDownload() {
+    if (state.making) return;
+    state.making = true; renderMake();
+    try {
+      const data = await buildDeck();
+      const dl = await claude.use("downloads");
+      if (!dl) throw new Error("Downloads aren't available in this view. Use Create in Google Slides instead.");
+      mkStatus("busy", "Waiting for you to confirm the download\u2026");
+      const name = deckName().replace(/[\\/:*?"<>|]+/g, "") + ".pptx";
+      await dl.save({ filename: name, data: new Blob([data], { type: PPTX_MIME }) });
+      state.making = false; renderMake();
+      if (!state.made) mkStatus("ok", "Saved " + name);
+    } catch (e) {
+      state.making = false; renderMake();
+      const c = e && e.code;
+      mkStatus("bad", c === "declined" ? "Download cancelled." : c === "rate_limited" ? "A save prompt is already open." : e instanceof Error ? e.message : "Download isn't available here.");
+    }
   }
 
   // ---------- Events ----------
   $("refresh").addEventListener("click", () => sync());
   $("q").addEventListener("input", (e) => { state.q = e.target.value; renderLibrary(); });
-  $("agenda-title").addEventListener("input", renderOutline);
-  $("fmt-txt").addEventListener("click", () => { state.fmt = "txt"; renderOutline(); });
-  $("fmt-md").addEventListener("click", () => { state.fmt = "md"; renderOutline(); });
-  $("clear").addEventListener("click", (e) => {
-    const b = e.currentTarget;
-    if (b.dataset.armed) { state.selection = []; state.selected.clear(); delete b.dataset.armed; b.textContent = "Clear selection"; render(); return; }
-    b.dataset.armed = "1"; b.textContent = "Click again to clear";
-    setTimeout(() => { if (b.dataset.armed) { delete b.dataset.armed; b.textContent = "Clear selection"; } }, 3000);
+  $("clear").addEventListener("click", () => {
+    state.selection = []; state.selected.clear(); state.made = null; render();
   });
-  $("copy").addEventListener("click", () => {
-    const txt = buildOutline(state.fmt);
-    if (!txt) return;
-    const fallback = () => { const r = document.createRange(); r.selectNodeContents($("outline")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Copy blocked here. The outline is selected, press Ctrl/Cmd+C.", true); };
-    try { navigator.clipboard.writeText(txt).then(() => toast("Copied"), fallback); } catch { fallback(); }
-  });
-  $("dl").addEventListener("click", async () => {
-    const txt = buildOutline(state.fmt);
-    if (!txt) return;
-    const name = (($("agenda-title").value || "Training Agenda").trim().replace(/[^\w\- ]+/g, "").replace(/\s+/g, "-") || "Training-Agenda") + "." + state.fmt;
-    try {
-      const dl = await claude.use("downloads");
-      if (!dl) { $("dl").hidden = true; return; }
-      await dl.save({ filename: name, data: txt });
-      toast("Saved " + name);
-    } catch (e) {
-      const c = e && e.code;
-      if (c === "declined") toast("Download cancelled", true);
-      else if (c === "rate_limited") toast("A save prompt is already open", true);
-      else toast("Download isn't available here. Use Copy instead.", true);
-    }
-  });
+  $("make-gs").addEventListener("click", makeInSlides);
+  $("make-dl").addEventListener("click", makeDownload);
 
   // ---------- Boot ----------
   render();
   if (window.claude && typeof window.claude.use === "function") {
-    window.claude.use("downloads").then((d) => { if (d) $("dl").hidden = false; }).catch(() => {});
+    window.claude.use("downloads").then((d) => { if (d) $("make-dl").hidden = false; }).catch(() => {});
     window.claude.use("mcp").then((m) => { state.mcp = m || null; render(); if (m) sync(); }).catch(() => { state.mcp = null; render(); });
   } else {
     state.mcp = null; render();
