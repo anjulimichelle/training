@@ -943,7 +943,10 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
       state.made = { url, title };
     } catch (e) {
       state.making = false; renderMake();
-      const msg = e instanceof Error ? e.message : errInfo(e).msg;
+      const msg = e instanceof Error ? e.message
+        : (e && (e.code === "blocked_by_policy" || e.code === "not_in_manifest"))
+          ? "Your organization doesn't let this page create files in Google Drive. Click Download .pptx instead, then drag the file into Google Drive and open it with Google Slides."
+          : errInfo(e).msg;
       const ambiguous = e && (e.code === "server_unavailable" || e.code === "upstream_error");
       mkStatus("bad", msg + (ambiguous ? " Check My Drive for \u201c" + title + "\u201d before trying again." : ""));
       return;
