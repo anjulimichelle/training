@@ -200,17 +200,16 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
           <h2 id="mk-h">Combine into one presentation</h2>
           <span class="count" id="mk-count"></span>
         </div>
-        <p class="mk-note">Copies every slide of the selected topics, with speaker notes, into one new presentation in the order above.</p>
+        <p class="mk-note">Copies every slide of the selected topics, with speaker notes, into one .pptx file in the order above. To open it in Google Slides, drag the file into Google Drive.</p>
         <label class="field" for="deck-title">Presentation name
           <input id="deck-title" type="text" value="Training Session - Combined Topics" maxlength="120">
         </label>
         <div class="actions">
-          <button class="btn primary" id="make-gs" type="button">Create in Google Slides</button>
-          <button class="btn" id="make-dl" type="button" hidden>Download .pptx</button>
+          <button class="btn primary" id="make-dl" type="button">Download .pptx</button>
         </div>
         <div class="mk-status" id="mk-status" role="status" aria-live="polite"></div>
       </section>
-      <p class="foot">Your original Google Slides are never edited. "Create in Google Slides" adds one new file to your My Drive. Nothing else is saved, and your selection clears when you close or reload the page.</p>
+      <p class="foot">Your original Google Slides are never edited. Nothing is saved, and your selection clears when you close or reload the page.</p>
     </aside>
   </div>
 </div>
@@ -243,8 +242,7 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     selected: new Map(),       // key -> snapshot of topic (kept if it disappears from the source)
     q: "",
     deckFilter: "all",
-    making: false,
-    made: null              // {url, title} of the last combined presentation
+    making: false
   };
 
   // ---------- Parsing ----------
@@ -681,7 +679,6 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
       state.selected.set(t.key, t);
       state.selection.push(t.key);
     }
-    state.made = null;
     render();
   }
   function move(i, d) {
@@ -689,7 +686,6 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     if (j < 0 || j >= state.selection.length) return;
     const s = state.selection;
     [s[i], s[j]] = [s[j], s[i]];
-    state.made = null;
     render();
     const btn = document.querySelector('#order [data-i="' + j + '"][data-d="' + d + '"]') || document.querySelector('#order [data-i="' + j + '"]');
     if (btn && !btn.disabled) btn.focus();
@@ -698,7 +694,6 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     const k = state.selection[i];
     state.selection.splice(i, 1);
     state.selected.delete(k);
-    state.made = null;
     render();
   }
 
@@ -848,7 +843,7 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
         if (dragFrom < 0 || dragFrom === i) return;
         const [k] = state.selection.splice(dragFrom, 1);
         state.selection.splice(i, 0, k);
-        dragFrom = -1; state.made = null; render();
+        dragFrom = -1; render();
       });
       return li;
     }));
@@ -869,11 +864,9 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     const slides = items.reduce((n, t) => n + t.end - t.start + 1, 0);
     $("mk-count").textContent = items.length ? items.length + " topics · " + slides + " slides" : "";
     const off = !items.length || state.making || state.syncing || !state.mcp || typeof JSZip === "undefined";
-    $("make-gs").disabled = off; $("make-dl").disabled = off;
+    $("make-dl").disabled = off;
     if (state.making) return;
-    if (state.made) {
-      mkStatus("ok", "Created: ", el("a", { href: state.made.url, target: "_blank", rel: "noopener" }, "Open \u201c" + state.made.title + "\u201d in Google Slides \u2197"));
-    } else if (typeof JSZip === "undefined") {
+    if (typeof JSZip === "undefined") {
       mkStatus("bad", "The slide combiner didn't load. Reload the page to try again.");
     } else if (!items.length) {
       mkStatus("", "Select topics to combine them.");
@@ -881,7 +874,6 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
   }
 
   const b64ToBytes = (b64) => { const bin = atob(String(b64).replace(/\s/g, "")); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
-  const bytesToB64 = (u) => { let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
   const deckName = () => ($("deck-title").value || "").trim() || "Training Session - Combined Topics";
 
   let built = null; // {sig, data}
@@ -922,38 +914,6 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     return data;
   }
 
-  async function makeInSlides() {
-    if (state.making) return;
-    state.making = true; state.made = null; renderMake();
-    const title = deckName();
-    try {
-      const data = await buildDeck();
-      mkStatus("busy", "Creating \u201c" + title + "\u201d in your Google Drive\u2026");
-      let fileArgs = false;
-      try { fileArgs = !!(await state.mcp.listTools()).fileArgs; } catch { /* assume inline */ }
-      let content;
-      if (fileArgs) content = { $file: { data: new Blob([data], { type: PPTX_MIME }), name: "combined.pptx", type: PPTX_MIME } };
-      else if (data.length <= 700000) content = bytesToB64(data);
-      else throw new Error("This presentation is too large to send to Google Drive from this view. Use Download .pptx, then upload it to Drive.");
-      const r = await state.mcp.callTool(SERVER, "create_file", { title, contentMimeType: PPTX_MIME, base64Content: content }, { cache: false });
-      const p = payloadOf(r) || {};
-      const id = p.id;
-      const url = p.viewUrl || (id ? "https://docs.google.com/presentation/d/" + id + "/edit" : null);
-      if (!url) throw new Error("Google Drive didn't return a link. Check My Drive for \u201c" + title + "\u201d before trying again.");
-      state.made = { url, title };
-    } catch (e) {
-      state.making = false; renderMake();
-      const msg = e instanceof Error ? e.message
-        : (e && (e.code === "blocked_by_policy" || e.code === "not_in_manifest"))
-          ? "Your organization doesn't let this page create files in Google Drive. Click Download .pptx instead, then drag the file into Google Drive and open it with Google Slides."
-          : errInfo(e).msg;
-      const ambiguous = e && (e.code === "server_unavailable" || e.code === "upstream_error");
-      mkStatus("bad", msg + (ambiguous ? " Check My Drive for \u201c" + title + "\u201d before trying again." : ""));
-      return;
-    }
-    state.making = false; renderMake();
-  }
-
   async function makeDownload() {
     if (state.making) return;
     state.making = true; renderMake();
@@ -965,7 +925,7 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
       const name = deckName().replace(/[\\/:*?"<>|]+/g, "") + ".pptx";
       await dl.save({ filename: name, data: new Blob([data], { type: PPTX_MIME }) });
       state.making = false; renderMake();
-      if (!state.made) mkStatus("ok", "Saved " + name);
+      mkStatus("ok", "Saved " + name);
     } catch (e) {
       state.making = false; renderMake();
       const c = e && e.code;
@@ -977,15 +937,14 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
   $("refresh").addEventListener("click", () => sync());
   $("q").addEventListener("input", (e) => { state.q = e.target.value; renderLibrary(); });
   $("clear").addEventListener("click", () => {
-    state.selection = []; state.selected.clear(); state.made = null; render();
+    state.selection = []; state.selected.clear(); render();
   });
-  $("make-gs").addEventListener("click", makeInSlides);
   $("make-dl").addEventListener("click", makeDownload);
 
   // ---------- Boot ----------
   render();
   if (window.claude && typeof window.claude.use === "function") {
-    window.claude.use("downloads").then((d) => { if (d) $("make-dl").hidden = false; }).catch(() => {});
+    window.claude.use("downloads").then((d) => { if (!d) { $("make-dl").hidden = true; mkStatus("bad", "Downloads aren\u2019t available in this view."); } }).catch(() => {});
     window.claude.use("mcp").then((m) => { state.mcp = m || null; render(); if (m) sync(); }).catch(() => { state.mcp = null; render(); });
   } else {
     state.mcp = null; render();
