@@ -220,6 +220,9 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
   "use strict";
   const SERVER = "Google Drive";
   const FOLDER_ID = "1rmAxGOzDkoh5NJFWIDBPSebejbBrx3fN";
+  // Compressed .pptx copies of decks too large for the connector's 16 MB limit. Each title carries
+  // "[download copy | src <deck modifiedTime> | id <deck id>]"; a copy is only used if it is not older than the deck.
+  const COPIES_FOLDER_ID = "1AN6_gDp7ZbM9XWSW8jk9Pu-B37-I-F1H";
   // Used only when the folder listing itself fails, so the decks can still be read.
   const FALLBACK_IDS = [
     "14YN4HcekvxWppw-deVhT698VC-l8L69XM0Xopf74QqQ", "1O3sZWqlug6jj3Fu_TmGZQNE2GYuVErRj97D2uF7ADdw",
@@ -883,16 +886,25 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     if (built && built.sig === sig) return built.data;
     const ids = [...new Set(items.map((t) => t.deckId))];
     const sources = {};
+    const usedCopies = [];
     for (let i = 0; i < ids.length; i++) {
       const d = state.decks.get(ids[i]);
       mkStatus("busy", "Downloading " + shortName(d.title) + " (" + (i + 1) + " of " + ids.length + ")\u2026");
       let p;
       try { p = payloadOf(await call("download_file_content", { fileId: ids[i], exportMimeType: PPTX_MIME })); }
       catch (e) {
-        if (/exceeded the 16 ?MB limit/i.test((e && e.message) || "")) {
-          throw new Error(shortName(d.title) + " is too large for the Google Drive connector to download (over its 16 MB limit). Remove " + shortName(d.title) + " topics from your order to combine the rest.");
+        if (!/exceeded the 16 ?MB limit/i.test((e && e.message) || "")) {
+          const info = errInfo(e); throw new Error("Couldn't download " + shortName(d.title) + ". " + info.msg);
         }
-        const info = errInfo(e); throw new Error("Couldn't download " + shortName(d.title) + ". " + info.msg);
+        mkStatus("busy", shortName(d.title) + " is too large to download directly. Using its compressed copy\u2026");
+        const copy = await findCopy(ids[i]);
+        if (!copy) throw new Error(shortName(d.title) + " is too large for the Google Drive connector, and it has no compressed download copy yet. Ask Claude to make one, or remove " + shortName(d.title) + " topics.");
+        if (d.modifiedTime && Date.parse(copy.src) < Date.parse(d.modifiedTime)) {
+          throw new Error(shortName(d.title) + " is too large for the Google Drive connector, and its compressed copy (" + fmtDate(copy.src) + ") is older than your latest edits (" + fmtDate(d.modifiedTime) + "). Ask Claude to refresh the download copy, or remove " + shortName(d.title) + " topics.");
+        }
+        try { p = payloadOf(await call("download_file_content", { fileId: copy.id })); }
+        catch (e2) { const info = errInfo(e2); throw new Error("Couldn't download the compressed copy of " + shortName(d.title) + ". " + info.msg); }
+        usedCopies.push(shortName(d.title));
       }
       const b64 = p && typeof p === "object" ? (p.content || p.base64Content || p.data) : null;
       if (!b64) throw new Error("Google Drive returned no file for " + shortName(d.title) + ".");
@@ -910,8 +922,20 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     const picks = items.flatMap((t) => Array.from({ length: t.end - t.start + 1 }, (_, j) => ({ src: t.deckId, slide: t.start + j })));
     mkStatus("busy", "Combining " + picks.length + " slides\u2026");
     const { data } = await PptxMerge.combine(JSZip, sources, picks);
-    built = { sig, data };
+    built = { sig, data, usedCopies };
     return data;
+  }
+
+  // The compressed copy of a deck, if one exists: {id, src}.
+  async function findCopy(deckId) {
+    const q = "parentId = '" + COPIES_FOLDER_ID + "'";
+    const p = payloadOf(await call("search_files", { query: q, excludeContentSnippets: true, pageSize: 100 })) || {};
+    let best = null;
+    for (const f of p.files || []) {
+      const m = /\[download copy \| src (\S+) \| id (\S+)\]/.exec(f.title || "");
+      if (m && m[2] === deckId && (!best || Date.parse(m[1]) > Date.parse(best.src))) best = { id: f.id, src: m[1] };
+    }
+    return best;
   }
 
   async function makeDownload() {
@@ -920,12 +944,13 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
     try {
       const data = await buildDeck();
       const dl = await claude.use("downloads");
-      if (!dl) throw new Error("Downloads aren't available in this view. Use Create in Google Slides instead.");
+      if (!dl) throw new Error("Downloads aren't available in this view.");
       mkStatus("busy", "Waiting for you to confirm the download\u2026");
       const name = deckName().replace(/[\\/:*?"<>|]+/g, "") + ".pptx";
       await dl.save({ filename: name, data: new Blob([data], { type: PPTX_MIME }) });
       state.making = false; renderMake();
-      mkStatus("ok", "Saved " + name);
+      const copies = (built && built.usedCopies) || [];
+      mkStatus("ok", "Saved " + name + (copies.length ? ". Images from " + copies.join(" and ") + " are compressed so the file could be downloaded." : ""));
     } catch (e) {
       state.making = false; renderMake();
       const c = e && e.code;
