@@ -57,18 +57,25 @@ cards = {
         [N('Handle a cleaning supplies issue if mentioned.')]]),
 }
 LINE_H = 0.155  # 9 pt Arial, approx inches per wrapped line
+CPL = 68        # approx characters per line in a card
+def lines(runs): return max(1, -(-sum(len(r[0]) for r in runs) // CPL))
+def need(items): return 0.42 + sum(lines(r) * LINE_H + 0.1 for r in items) + 0.06
+TOP, BOTTOM, GAP = 1.4, 5.08, 0.12
+for col in (('Customer', 'Resolution'), ('Account', 'CP')):
+    first, second = col
+    x, _, w, _, it1 = cards[first]; _, _, _, _, it2 = cards[second]
+    h1 = need(it1); h2 = BOTTOM - TOP - GAP - h1
+    assert h2 >= need(it2), (second, h2, need(it2))
+    cards[first] = (x, TOP, w, h1, it1); cards[second] = (x, TOP + h1 + GAP, w, h2, it2)
 for title, (x, y, w, h, items) in cards.items():
     box(x, y, w, h, WHITE, BORDER)
     box(x, y, 0.07, h, TEAL, adj=0.5)
     text(x + 0.2, y + 0.1, w - 0.4, 0.25, [(title, True, TEAL, 'Play'), (f'   {len(items)} steps', False, SOFT)], 11)
     cy = y + 0.42
     for runs in items:
-        chars = sum(len(r[0]) for r in runs)
-        lines = max(1, -(-chars // 78))
         box(x + 0.22, cy + 0.02, 0.13, 0.13, WHITE, TEAL, adj=0.15)
-        text(x + 0.45, cy, w - 0.62, lines * LINE_H, runs, 9)
-        cy += lines * LINE_H + 0.1
-    assert cy <= y + h + 0.02, (title, round(cy, 2), y + h)
+        text(x + 0.45, cy, w - 0.62, lines(runs) * LINE_H, runs, 9)
+        cy += lines(runs) * LINE_H + 0.1
 
 n = s.notes_slide.notes_text_frame
 n.text = ("Use this as the checklist; trainees tick each box. Customer: empathize with the specific experience (no generic \"I understand your frustration\") and probe if the explanation is vague. "
