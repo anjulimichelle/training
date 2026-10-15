@@ -1,0 +1,1317 @@
+[
+ {
+  "title": "Group A — Fraud & Identity Signals",
+  "sub": "Find the Sender code on the internal note, then follow its tile.",
+  "tiles": [
+   {
+    "title": "Repeated address changes",
+    "sender": "api.customerlocation  ·  views.customerprofilelocation (OCW)",
+    "fires": "C updates their address more than once.",
+    "steps": [
+     [
+      [
+       "One change isn't suspicious (people move, run an Airbnb, book for others). ",
+       false,
+       "INK"
+      ],
+      [
+       "Repeated",
+       true,
+       "INK"
+      ],
+      [
+       " changes are worth a review.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Follow the instructions on the action item.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Fraud looks likely → ",
+       true,
+       "INK"
+      ],
+      [
+       "follow ",
+       false,
+       "INK"
+      ],
+      [
+       "Customer Fraud Handling",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Shared address",
+    "sender": "utils.flag_multiple_customers_with_same_addresses",
+    "fires": "2+ accounts share the same address.",
+    "steps": [
+     [
+      [
+       "Usually harmless (roommates, family), but can get around the ",
+       false,
+       "INK"
+      ],
+      [
+       "one-voucher-per-household",
+       true,
+       "INK"
+      ],
+      [
+       " limit.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Check for fraud, note what you found, and follow the action item.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Active FC on more than one account:",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "High fraud risk → ",
+        true,
+        "INK"
+       ],
+       [
+        "cancel FC on all accounts, add ",
+        false,
+        "INK"
+       ],
+       [
+        "known_customer_fraud",
+        true,
+        "INK"
+       ],
+       [
+        ".",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "No sign of fraud → ",
+        true,
+        "INK"
+       ],
+       [
+        "add ",
+        false,
+        "INK"
+       ],
+       [
+        "admin_ignore_address_fraud_flags",
+        true,
+        "INK"
+       ],
+       [
+        ".",
+        false,
+        "INK"
+       ]
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "\"Fake\" in name or address",
+    "sender": "utils.flag_risky_customer_jobs",
+    "fires": "C has an upcoming job and \"fake\" in their name or address.",
+    "steps": [
+     [
+      [
+       "Another agent already confirmed it → note linking their note, clear the ticket.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Otherwise call: ",
+       false,
+       "INK"
+      ],
+      [
+       "Primary CRM → Google Voice → Secondary CRM",
+       true,
+       "INK"
+      ],
+      [
+       " (business hours).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Answers → ",
+       true,
+       "INK"
+      ],
+      [
+       "confirm and update details, remind them about the cleaning.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "No answer → ",
+       true,
+       "INK"
+      ],
+      [
+       "details look real: send a reminder. Look fake: cancel the appointment and RC (correct reason code); remind them FC is still active.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Matches a past disputer",
+    "sender": "utils.flag_upcoming_jobs_matching_past_dispute_signals",
+    "fires": "C's details look like another customer's who disputed before.",
+    "steps": [
+     [
+      [
+       "Review the account for fraud.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Matches only on address + last name → ",
+       true,
+       "INK"
+      ],
+      [
+       "household member, not fraud: add the 360-day flag, note both accounts, keep job and FC, clear.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Fraud likely → ",
+       true,
+       "INK"
+      ],
+      [
+       "follow Fraud (knowingly intended to dispute and not pay).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Unlikely, FC terms already explained → ",
+       true,
+       "INK"
+      ],
+      [
+       "cancel upcoming jobs and RC, waive ETF if it applies, refund and invalidate any unused DHJ voucher, tell C why.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Unlikely, not explained yet → ",
+       true,
+       "INK"
+      ],
+      [
+       "call and explain the FC terms (or the voucher-to-credits conversion).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "Answers: ",
+        true,
+        "INK"
+       ],
+       [
+        "decide on a voucher refund and/or cancel FC + waive ETF. Booking-only issue → 360-day flag, fix the service issue.",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "No answer: ",
+        true,
+        "INK"
+       ],
+       [
+        "add the 360-day flag, email the FC terms and a self-service link.",
+        false,
+        "INK"
+       ]
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Identity details keep changing",
+    "sender": "views.customerprofilepassword",
+    "fires": "Name, email or phone changed 3+ times in the last year.",
+    "steps": [
+     [
+      [
+       "Often normal (new phone, Airbnb, booking for someone else). The ",
+       false,
+       "INK"
+      ],
+      [
+       "repetition",
+       true,
+       "INK"
+      ],
+      [
+       " is what makes it worth checking.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Follow the instructions on the action item.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   }
+  ],
+  "notes": ""
+ },
+ {
+  "title": "Group B — Dispute Risk & Chargebacks",
+  "sub": "Prevent the dispute, don't invite one.",
+  "tiles": [
+   {
+    "title": "Flagged as dispute risk",
+    "sender": "Customer.flag_as_dispute_risk",
+    "fires": "Something we did makes a dispute more likely.",
+    "steps": [
+     [
+      [
+       "Find out ",
+       false,
+       "INK"
+      ],
+      [
+       "why",
+       true,
+       "INK"
+      ],
+      [
+       " the account was flagged.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Follow the ",
+       false,
+       "INK"
+      ],
+      [
+       "HDR Ticket Handling Process",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "FC charge, disputed before",
+    "sender": "ForeverClean.charge",
+    "fires": "C has disputed before and gets charged for FC again.",
+    "steps": [
+     [
+      [
+       "Run the ",
+       false,
+       "INK"
+      ],
+      [
+       "dispute-risk assessment",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Above, C asked → ",
+       true,
+       "INK"
+      ],
+      [
+       "cancel FC, waive ETF, refund the smaller of disputable charges or the ask. Tell C.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Above, no ask → ",
+       true,
+       "INK"
+      ],
+      [
+       "cancel FC, waive ETF ",
+       false,
+       "INK"
+      ],
+      [
+       "without contacting C",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Below → ",
+       true,
+       "INK"
+      ],
+      [
+       "call and explain FC terms. No answer: email with the self-cancel link.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "FC charge, no first job",
+    "sender": "ForeverClean.charge  ·  no_first_job",
+    "fires": "MF charge, but C has no submitted, claimed or invoiced jobs.",
+    "steps": [
+     [
+      [
+       "Run the ",
+       false,
+       "INK"
+      ],
+      [
+       "dispute-risk assessment",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Above → ",
+       true,
+       "INK"
+      ],
+      [
+       "same steps as \"disputed before\".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Below → ",
+       true,
+       "INK"
+      ],
+      [
+       "it's about getting C to book their first job. Call in business hours.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "History of disputes, still active",
+    "sender": "utils.flag_dispute_risks",
+    "fires": "C has disputed before and still has FC, RC or an upcoming job.",
+    "steps": [
+     [
+      [
+       "Contacted us before/after the dispute → ",
+       true,
+       "INK"
+      ],
+      [
+       "Customer Has Dispute History.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "If not → ",
+       true,
+       "INK"
+      ],
+      [
+       "review the disputed or declined charges (job issue? unaware of FC terms?).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Required: ",
+       true,
+       "INK"
+      ],
+      [
+       "call to say FC is still active and explain the terms.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "No answer or job-only issue → 360-day flag; email with the self-cancel link.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Pre-disputed charge",
+    "sender": "views.cs_customerprospect",
+    "fires": "C pre-disputes a charge.",
+    "steps": [
+     [
+      [
+       "Job-related → check for fraud or CP fault; penalize the CP if needed.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Review other jobs on the action item; note findings.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Confirm RC and upcoming appointments are cancelled.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Credits removed? Restore them if needed. Note the risk on other charges.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": [
+     [
+      "Don't refund on this flag alone. C reached out → Customer Has Dispute History.",
+      false,
+      "INK"
+     ]
+    ]
+   },
+   {
+    "title": "Dispute or Early Fraud Warning",
+    "sender": "views.stripegeneral",
+    "fires": "C disputes a charge, or Stripe sends an EFW.",
+    "steps": [
+     [
+      [
+       "Check the internal note for the dispute ",
+       false,
+       "INK"
+      ],
+      [
+       "type",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Needs a response → ",
+       true,
+       "INK"
+      ],
+      [
+       "reassign to the ",
+       false,
+       "INK"
+      ],
+      [
+       "Dispute Response Team",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "HDR → ",
+       true,
+       "INK"
+      ],
+      [
+       "follow the HDR Ticket Handling Process.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Otherwise → ",
+       true,
+       "INK"
+      ],
+      [
+       "follow the action item and note findings.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   }
+  ],
+  "notes": ""
+ },
+ {
+  "title": "Group C — Jobs, Bookings & Scheduling",
+  "sub": "Find the Sender code on the internal note, then follow its tile.",
+  "tiles": [
+   {
+    "title": "Repeat lockout",
+    "sender": "cleaner_jobs.report_lockout",
+    "fires": "CP reports a lockout; not C's first.",
+    "steps": [
+     [
+      [
+       "Check the ",
+       false,
+       "INK"
+      ],
+      [
+       "lockout requirements",
+       true,
+       "INK"
+      ],
+      [
+       ". Refund from the CP dashboard only if the CP shouldn't be paid; tell the CP why.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Premium rate charged → refund it.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Note whether it was valid and what you did.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Message C only if no auto message, C reached out, or FC is active.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Double-booked customer",
+    "sender": "utils.report_double_booked_clients",
+    "fires": "2+ active requests close together (LMC/lockout risk).",
+    "steps": [
+     [
+      [
+       "Follow the action item. ",
+       false,
+       "INK"
+      ],
+      [
+       "Call",
+       true,
+       "INK"
+      ],
+      [
+       " in business hours.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Wants both → ",
+       true,
+       "INK"
+      ],
+      [
+       "silence the flag 30 days (Add Flag > admin_approve_double_book).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Otherwise → ",
+       true,
+       "INK"
+      ],
+      [
+       "cancel the duplicate(s).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Other issues raised → note, email follow-up signed as Emma.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "DHJ voucher, zip not covered",
+    "sender": "views.choosecp",
+    "fires": "C books with a Legacy DHJ voucher; zip not covered or no CPs.",
+    "steps": [
+     [
+      [
+       "Check coverage at <brand>.com/coverage.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Refund the voucher via CRM and make sure it's ",
+       false,
+       "INK"
+      ],
+      [
+       "invalidated",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Cancel FC, RC and upcoming appointments.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Frequent LMCs or lockouts",
+    "sender": "views.cpjob",
+    "fires": "Invoiced jobs too close together, or frequent LMCs/lockouts.",
+    "steps": [
+     [
+      [
+       "Check whether the LMC or lockout is ",
+       false,
+       "INK"
+      ],
+      [
+       "valid",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Premium Fee charged → refund it.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Contact C only if not auto-notified, C reached out, or FC is active.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Note your findings.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "1-star review, CP below 4.0",
+    "sender": "views.cpreviews",
+    "fires": "1-star OCW review; CP's recent average is below 4.0 or unrated.",
+    "steps": [
+     [
+      [
+       "Check for signs of a ",
+       false,
+       "INK"
+      ],
+      [
+       "false invoice",
+       true,
+       "INK"
+      ],
+      [
+       " or wrong hours.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Don't refund proactively",
+       true,
+       "INK"
+      ],
+      [
+       " without solid evidence the job wasn't done.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Long pending invoice",
+    "sender": "utils.message_or_charge_long_pending_invoice_customers",
+    "fires": "A job stays in pending_invoice too long.",
+    "steps": [
+     [
+      [
+       "The longer it sits, the higher the risk of an ",
+       false,
+       "INK"
+      ],
+      [
+       "accidental or false invoice",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Follow ",
+       false,
+       "INK"
+      ],
+      [
+       "Long-Pending-Invoice Handling",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Refund request flagged",
+    "sender": "views.customer_request_refund",
+    "fires": "Refund request suggests an unfinished job, or damaged/missing items.",
+    "steps": [
+     [
+      [
+       "Review the specific issue.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Follow the matching policy: ",
+       false,
+       "INK"
+      ],
+      [
+       "OCH, False Invoice, PCQ",
+       true,
+       "INK"
+      ],
+      [
+       " or related refund policy.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   }
+  ],
+  "notes": ""
+ },
+ {
+  "title": "Group D — Comms & Account Flags",
+  "sub": "A block-comms flag left on can make C miss reminders and confirmations.",
+  "tiles": [
+   {
+    "title": "Block-comms flag on an active C",
+    "sender": "utils.flag_active_block_comms_users",
+    "fires": "An active customer has a block-comms flag.",
+    "steps": [
+     [
+      [
+       "Find out ",
+       false,
+       "INK"
+      ],
+      [
+       "why",
+       true,
+       "INK"
+      ],
+      [
+       " the flag is there; resolve any pending issue.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Nothing outstanding → remove the flag",
+       true,
+       "INK"
+      ],
+      [
+       " (preferred): C CRM > Do > Deactivate > Remove block-comms.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Write an internal note explaining why you removed it.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Upcoming job + block-comms",
+    "sender": "utils.flag_upcoming_jobs_customer_cp_unable_to_receive_sms",
+    "fires": "C has an upcoming job but isn't getting notifications.",
+    "steps": [
+     [
+      [
+       "Flag left on by mistake → ",
+       true,
+       "INK"
+      ],
+      [
+       "remove it and remind C about the appointment.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "On purpose, FC active → ",
+       true,
+       "INK"
+      ],
+      [
+       "remove the flag. Ask if C wants to keep the appointment:",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "Yes: ",
+        true,
+        "INK"
+       ],
+       [
+        "remind them about the appointment and FC.",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "No: ",
+        true,
+        "INK"
+       ],
+       [
+        "cancel it (correct reason code); remind them FC (and RC) stays active.",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      [
+       "On purpose, FC not active → ",
+       true,
+       "INK"
+      ],
+      [
+       "ask the same question.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "Keep: ",
+        true,
+        "INK"
+       ],
+       [
+        "remove the flag and remind them.",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "Don't keep: ",
+        true,
+        "INK"
+       ],
+       [
+        "cancel the appointment (and RC). Remove the flag unless something requires it.",
+        false,
+        "INK"
+       ]
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "Booked while block-comms active",
+    "sender": "views.customerbookagain",
+    "fires": "C books a new appointment while block-comms is active.",
+    "steps": [
+     [
+      [
+       "C never got a booking confirmation.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Remove the flag",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Send a message confirming or reminding them about the appointment.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   }
+  ],
+  "notes": ""
+ },
+ {
+  "title": "Group E — Membership & Reminders",
+  "sub": "Reminders you set, and High-LTV FC cancellations.",
+  "tiles": [
+   {
+    "title": "Timed reminder is due",
+    "sender": "TimedReminder (customer-side)",
+    "fires": "A timed reminder you (or a Project agent) set comes due.",
+    "steps": [
+     [
+      [
+       "Follow the ",
+       false,
+       "INK"
+      ],
+      [
+       "instructions in the reminder",
+       true,
+       "INK"
+      ],
+      [
+       ".",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "About cancelling FC after MCT → ",
+       true,
+       "INK"
+      ],
+      [
+       "see the Membership Retention Playbook (Scenario 8).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Created by a Project agent → ",
+       true,
+       "INK"
+      ],
+      [
+       "check Project Agent Ticket Reassignment to see if it needs reassigning.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   },
+   {
+    "title": "High-LTV C cancels FC via OCW",
+    "sender": "views.customer_foreverclean",
+    "fires": "A High-LTV customer cancels FC through OCW. Goal: retention, only when it makes sense.",
+    "steps": [
+     [
+      [
+       "Reassign to FC Reactivations",
+       true,
+       "INK"
+      ],
+      [
+       ", except when:",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "C also contacted us about something unrelated to reactivating",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "C has disputed a charge before",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "C is asking for a refund, before or after cancelling",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "C has a damage_theft_reported flag",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      "sub",
+      [
+       [
+        "there is a BBB, Yelp or social-media threat on file",
+        false,
+        "INK"
+       ]
+      ]
+     ],
+     [
+      [
+       "The same exceptions apply to non-High-LTV customers (see FC Reactivations Routing).",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "Not reassigned → ",
+       true,
+       "INK"
+      ],
+      [
+       "handle any other pending messages as usual.",
+       false,
+       "INK"
+      ]
+     ],
+     [
+      [
+       "C writes in to reactivate → ",
+       true,
+       "INK"
+      ],
+      [
+       "AG – ForeverClean Reactivation → A.",
+       false,
+       "INK"
+      ]
+     ]
+    ],
+    "note": null
+   }
+  ],
+  "notes": ""
+ }
+]
