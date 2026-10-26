@@ -134,7 +134,7 @@ old = next((sl for sl in slides if txt(sl.shapes[1]) == 'Referencing Help Center
 EB = 'HELP CENTER SEARCHES'
 
 # ---------- Slide A: what this is and why it matters ----------
-args = (EB, 'Referencing Help Center searches', "Respond to what C sent us. Don't bring up what C searched for.")
+args = ('TOPIC 06 OF 06', 'Referencing Help Center searches', "Respond to what C sent us. Don't bring up what C searched for.")
 s = reuse_slide(old, *args) if old is not None else new_slide(*args)
 LW = 268
 box(s, X, 100, LW, 74, 'TEAL_PALE', paras=[
