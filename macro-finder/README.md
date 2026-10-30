@@ -51,7 +51,7 @@ To install Option A: open the sheet, go to Extensions › Apps Script, add `WebA
 
 ## Trainee Macro Search Bank (current version of the sheet)
 
-The same spreadsheet was rebuilt as a two-tab name bank for trainees: `DHJ Macros` and `FCF Macros`. Each tab lists exact Comms Kit macro names only, under three categories (ForeverClean Membership, Job and Service Issues, Job-Related Charges), with a category dropdown and a search box. Macros whose category is a judgment call carry a review note; macros that fit none of the three sit under "Needs Category Review". `name_bank.py` builds both lists:
+The same spreadsheet was rebuilt as a two-tab name bank for trainees: `DHJ Macros` and `FCF Macros`. Each tab lists exact Comms Kit macro names only, under three categories (ForeverClean Membership, Job and Service Issues, Job-Related Charges), grouped by category. A clickable category list at the top jumps to each section and every section links back, so it works with view-only access (viewers can't use dropdowns or type in cells); trainees search with Ctrl+F. Macros whose category is a judgment call carry a review note; macros that fit none of the three sit under "Needs Category Review". `name_bank.py` builds both lists:
 
 ```bash
 python3 name_bank.py <commskit.json> <out_dir>
