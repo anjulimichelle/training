@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root { --teal-dark:#00695c; --teal:#00897b; --teal-light:#e0f2f1; --ink:#213333; --muted:#5f6b6b; --internal:#eceff1; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:14px/1.45 Arial, sans-serif; color:var(--ink); background:#fff; }
+    header { background:var(--teal-dark); color:#fff; padding:14px 20px; font-size:20px; font-weight:bold; }
+    main { max-width:1100px; margin:0 auto; padding:16px; }
+    #q { width:100%; font-size:17px; padding:12px 14px; border:3px solid var(--teal); border-radius:8px; background:#fff8e1; }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 4px; }
+    .filters select, .filters button { padding:6px 8px; border:1px solid var(--teal); border-radius:6px; background:var(--teal-light); font-size:13px; }
+    .filters button { background:#fff; cursor:pointer; }
+    .layout { display:grid; grid-template-columns: minmax(260px, 2fr) 3fr; gap:16px; margin-top:12px; }
+    @media (max-width: 800px) { .layout { grid-template-columns:1fr; } }
+    .result { padding:10px 12px; border-bottom:1px solid #e3eceb; cursor:pointer; }
+    .result:hover, .result.active { background:var(--teal-light); }
+    .result b { display:block; }
+    .result small { color:var(--muted); }
+    .panel h2 { margin:0 0 4px; font-size:17px; color:var(--teal-dark); }
+    .label { font-weight:bold; font-size:12px; text-transform:uppercase; letter-spacing:.03em; margin:14px 0 4px; }
+    .customer { border:3px solid var(--teal); border-radius:8px; padding:12px; white-space:pre-wrap; background:#fff; }
+    .copy { margin-top:6px; padding:8px 14px; background:var(--teal); color:#fff; border:0; border-radius:6px; cursor:pointer; font-weight:bold; }
+    .internal { background:var(--internal); border-radius:8px; padding:10px 12px; white-space:pre-wrap; color:#37474f; }
+    .muted { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>🔎 Macro Finder</header>
+  <main>
+    <input id="q" placeholder="Type the customer's concern, e.g. can't afford membership" autofocus>
+    <div class="filters">
+      <select id="tt"><option value="">All ticket types</option></select>
+      <select id="main"><option value="">All categories</option></select>
+      <select id="sub"><option value="">All subcategories</option></select>
+      <select id="scenario"><option value="">All scenarios</option></select>
+      <button id="reset">↺ Reset</button>
+    </div>
+    <div class="layout">
+      <div id="results" class="muted">Loading…</div>
+      <div id="detail" class="panel muted">Pick a result to see the full macro.</div>
+    </div>
+  </main>
+<script>
+  let opts = null, timer = null, current = [];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function fill(sel, items) { items.forEach(v => sel.add(new Option(v, v))); }
+  function refillSubs() {
+    const sub = $('sub'); sub.length = 1;
+    const mains = $('main').value ? [$('main').value] : Object.keys(opts.subsByMain);
+    mains.forEach(m => fill(sub, opts.subsByMain[m]));
+  }
+  function run() {
+    const f = { ticketType:$('tt').value, main:$('main').value, sub:$('sub').value, scenario:$('scenario').value };
+    google.script.run.withSuccessHandler(render).search($('q').value, f);
+  }
+  function render(list) {
+    current = list;
+    if (!list.length) { $('results').innerHTML = '<p class="muted">No matching approved macros. Try fewer or different words, or reset the filters.</p>'; return; }
+    $('results').innerHTML = list.map((m, i) =>
+      `<div class="result" data-i="${i}"><b>${esc(m.name)}</b><small>${esc(m.id)} · ${esc(m.main)} › ${esc(m.sub)}</small><br><small>${esc(m.when)}</small></div>`).join('');
+    document.querySelectorAll('.result').forEach(el => el.onclick = () => show(+el.dataset.i));
+    show(0);
+  }
+  function show(i) {
+    const m = current[i];
+    document.querySelectorAll('.result').forEach(el => el.classList.toggle('active', +el.dataset.i === i));
+    $('detail').classList.remove('muted');
+    $('detail').innerHTML = `
+      <h2>${esc(m.name)}</h2><div class="muted">${esc(m.id)} · ${esc(m.ticketType)} · ${esc(m.main)} › ${esc(m.sub)}</div>
+      <div class="label">When to use</div><div>${esc(m.when)}</div>
+      <div class="label">✅ Customer-facing response</div><div class="customer" id="body">${esc(m.body)}</div>
+      <button class="copy" id="copy">Copy response</button>
+      <div class="label">🔒 Internal only: CRM actions</div><div class="internal">${esc(m.crm || 'None documented for this macro.')}</div>
+      <div class="label">🔒 Internal only: policy reminders</div><div class="internal">${esc(m.policy)}</div>
+      <div class="label">Source</div><a href="${esc(m.kbLink)}" target="_blank">${esc(m.kbLabel)}</a>`;
+    $('copy').onclick = () => navigator.clipboard.writeText(m.body).then(() => { $('copy').textContent = 'Copied ✓'; });
+  }
+  google.script.run.withSuccessHandler(o => {
+    opts = o;
+    fill($('tt'), o.ticketTypes); fill($('main'), Object.keys(o.subsByMain)); fill($('scenario'), o.scenarios); refillSubs();
+    run();
+  }).getFilterOptions();
+  $('q').oninput = () => { clearTimeout(timer); timer = setTimeout(run, 250); };
+  $('main').onchange = () => { refillSubs(); run(); };
+  ['tt', 'sub', 'scenario'].forEach(id => $(id).onchange = run);
+  $('reset').onclick = () => { $('q').value = ''; ['tt','main','sub','scenario'].forEach(id => $(id).value = ''); refillSubs(); run(); };
+</script>
+</body>
+</html>
