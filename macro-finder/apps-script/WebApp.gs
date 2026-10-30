@@ -61,8 +61,9 @@ function norm_(s) {
   return String(s || '').toLowerCase().replace(/['’]/g, '');
 }
 
-// Same scoring as the sheet: each typed word (plus its synonyms) scores 13 on the name,
-// 12 on keywords/phrases/category/scenario, 11 on the response text.
+// Same scoring as the sheet. Each typed word scores 14 when it appears in the name (13 if
+// only a synonym does), 12 / 11.5 in keywords, phrases, category or scenario, and 11 / 10.5
+// in the response text, plus 1 when the exact word also appears outside the name.
 function buildPatterns_(query) {
   const sheet = SpreadsheetApp.getActive().getSheetByName(SHEETS.synonyms);
   const rows = sheet.getDataRange().getValues().slice(1);
@@ -72,7 +73,7 @@ function buildPatterns_(query) {
     .filter(w => w.length >= 2 && !stop.has(w));
   return words.map(w => {
     const extra = triggers.filter(t => t.re.test(w)).map(t => t.expand);
-    return new RegExp([w].concat(extra).join('|'));
+    return { exact: new RegExp(w), any: new RegExp([w].concat(extra).join('|')) };
   });
 }
 
@@ -88,8 +89,10 @@ function search(query, filters) {
     .filter(m => !filters.sub || m.sub === filters.sub)
     .filter(m => !filters.scenario || m.scenario === filters.scenario)
     .map(m => {
-      const score = patterns.length === 0 ? 1 : patterns.reduce((acc, p) =>
-        acc + (p.test(m._name) ? 13 : p.test(m._meta) ? 12 : p.test(m._body) ? 11 : 0), 0);
+      const score = patterns.length === 0 ? 1 : patterns.reduce((acc, p) => acc +
+        (p.exact.test(m._name) ? 14 : p.any.test(m._name) ? 13 : p.exact.test(m._meta) ? 12 :
+         p.any.test(m._meta) ? 11.5 : p.exact.test(m._body) ? 11 : p.any.test(m._body) ? 10.5 : 0) +
+        (p.exact.test(m._meta + ' ' + m._body) ? 1 : 0), 0);
       return { m: m, score: score };
     })
     .filter(x => x.score > 0)

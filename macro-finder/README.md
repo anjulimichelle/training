@@ -37,7 +37,7 @@ python3 build.py <commskit.json> <kb.txt> <out_dir>
 
 ## How search ranks results
 
-Each typed word, plus its synonyms, scores 13 when it appears in the macro name, 12 in the keywords, phrases, category, scenario or KB article, and 11 in the response text. Words match partially, so "cancel" finds "cancellation". A macro that matches more of the typed words ranks higher. Ignored words such as "the" and "customer" don't count.
+Each typed word scores highest when it appears in the macro name, then in the keywords, phrases, category, scenario or KB article, then in the response text. The exact typed word beats a synonym at each level. Words match partially, so "cancel" finds "cancellation". A macro that matches more of the typed words ranks higher. Ignored words such as "the" and "customer" don't count.
 
 ## Giving agents access
 
