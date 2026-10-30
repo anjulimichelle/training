@@ -48,3 +48,11 @@ A view-only user can't type in a Google Sheet's search box, so a sheet-only Find
 - Option C is edit access to the Finder tab only. Agents searching at the same time overwrite each other's search.
 
 To install Option A: open the sheet, go to Extensions › Apps Script, add `WebApp.gs`, `Index.html` and (optionally) `Sync.gs`, then Deploy › New deployment › Web app with "Execute as: Me" and "Who has access: Anyone in your organization". For the sync, run `syncFromCommsKit` once to authorize, then add a daily time-driven trigger.
+
+## Trainee Macro Search Bank (current version of the sheet)
+
+The same spreadsheet was rebuilt as a two-tab name bank for trainees: `DHJ Macros` and `FCF Macros`. Each tab lists exact Comms Kit macro names only, under three categories (ForeverClean Membership, Job and Service Issues, Job-Related Charges), with a category dropdown and a search box. Macros whose category is a judgment call carry a review note; macros that fit none of the three sit under "Needs Category Review". `name_bank.py` builds both lists:
+
+```bash
+python3 name_bank.py <commskit.json> <out_dir>
+```
