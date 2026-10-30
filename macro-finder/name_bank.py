@@ -17,7 +17,9 @@ FC = "ForeverClean Membership"
 JS = "Job and Service Issues"
 JC = "Job-Related Charges"
 RV = "Needs Category Review"
-ORDER = [FC, JS, JC, RV]
+UV = "Unused DHJ Voucher"       # DHJ tab only
+PI = "FCF Pre-Invoice"          # FCF tab only
+ORDER = [FC, UV, PI, JS, JC, RV]
 UNCLEAR = "⚠ Category unclear: please review"
 
 # Subcategory (from assignments.py) -> list of (category, needs_review)
@@ -62,6 +64,27 @@ BY_ROW = {
 }
 
 TABS = {"DHJ": ("DHJ",), "FCF": ("FCF",), "DHJ, FCF": ("DHJ", "FCF")}
+
+NOT_IN_ARTICLE = "⚠ Not named in the KB article: please review"
+
+# Extra rows for the scenario categories the Care team added. Each macro also keeps its
+# rows elsewhere. KB = "Unused DHJ Voucher" and "FCF Pre-Invoice Cancellation and Refund
+# Requests" articles, Related Macros sections.
+# (tab, category, customer concern, Comms Kit row, note)
+SCENARIO_ROWS = [
+    ("DHJ", UV, "Wants the voucher refunded", 110, ""),
+    ("DHJ", UV, "Wants the voucher refunded", 109, ""),
+    ("DHJ", UV, "Wants to try the service first", 112, ""),
+    ("DHJ", UV, "Only wanted a one-time cleaning", 111, ""),
+    ("DHJ", UV, "Wants their account closed", 166, ""),
+    ("DHJ", UV, "Asks why a card is needed", 114, NOT_IN_ARTICLE),
+    ("DHJ", UV, "Asks whether the voucher is active", 116, NOT_IN_ARTICLE),
+    ("FCF", PI, "Wants a refund before the first cleaning", 187, ""),
+    ("FCF", PI, "Wants a refund before the first cleaning", 188, ""),
+    ("FCF", PI, "Wants a refund before the first cleaning (service issue)", 189, ""),
+    ("FCF", PI, "Charged 2 or more membership fees, no cleaning yet", 190, ""),
+    ("FCF", PI, "Wants to cancel before the first cleaning", 3, NOT_IN_ARTICLE),
+]
 SHARED_NAME = "Two macros share this exact name; check the wording in the CRM"
 
 
@@ -77,6 +100,8 @@ def main(ck_path, out):
                 if names.count(name) > 1:
                     note = (note + "; " if note else "") + SHARED_NAME
                 tabs[tab].append([cat, sub, name, note])
+    for tab, cat, concern, n, note in SCENARIO_ROWS:
+        tabs[tab].append([cat, concern, rows[n][5], note])
     os.makedirs(out, exist_ok=True)
     for tab, data in tabs.items():
         data.sort(key=lambda r: (ORDER.index(r[0]), r[1], r[2].lower()))
@@ -84,6 +109,8 @@ def main(ck_path, out):
         counts = {c: sum(1 for r in data if r[0] == c) for c in ORDER}
         print(tab, len(data), "rows,", len({r[2] for r in data}), "distinct names", counts,
               "flagged", sum(1 for r in data if r[3].startswith("⚠")))
+        new = [r for r in data if r[0] in (UV, PI)]
+        print(json.dumps(new, ensure_ascii=False))
 
 
 if __name__ == "__main__":
