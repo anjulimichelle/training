@@ -102,9 +102,20 @@ function addTrainee() {
   var added = [];
   copies.forEach(function (c) {
     var type = c.getType();
-    if (type === DocumentApp.ElementType.PARAGRAPH) added.push(body.appendParagraph(c));
-    else if (type === DocumentApp.ElementType.TABLE) added.push(body.appendTable(c));
-    else if (type === DocumentApp.ElementType.LIST_ITEM) added.push(body.appendListItem(c));
+    if (type === DocumentApp.ElementType.PARAGRAPH) {
+      // Appending a table also adds an empty paragraph after it; drop that one.
+      var prev = body.getChild(body.getNumChildren() - 1);
+      var p = body.appendParagraph(c);
+      var beforePrev = body.getChildIndex(prev) > 0 ? body.getChild(body.getChildIndex(prev) - 1) : null;
+      if (isBlankParagraph_(prev) && beforePrev && beforePrev.getType() === DocumentApp.ElementType.TABLE) {
+        prev.removeFromParent();
+      }
+      added.push(p);
+    } else if (type === DocumentApp.ElementType.TABLE) {
+      added.push(body.appendTable(c));
+    } else if (type === DocumentApp.ElementType.LIST_ITEM) {
+      added.push(body.appendListItem(c));
+    }
   });
 
   var num = sections.length + 1;
