@@ -4,6 +4,15 @@ A standalone app for Care Specialist training. Trainers build ticket-based quizz
 
 This is a **staging prototype**. It sends nothing to trainees, publishes no forms, and touches no existing dashboards, sheets or forms. It ships with fictional demo data only.
 
+## claude.ai artifact version
+
+The hub is also published as a claude.ai artifact in the same style as the Training Agenda Library: https://claude.ai/artifact/FgJxWnL73dezrTf77zNJPs (private until shared from its Share menu).
+
+- Records live in the artifact's shared database. Contributors and Editors read and write them; Viewers and Commenters see nothing, so rubrics stay private.
+- Grading uses Claude through the account of the trainer who clicks Grade (no API key needed).
+- Google Forms: the page writes an Apps Script per quiz that the trainer runs at script.google.com. Responses come back through a read-only Google Sheets import or a CSV.
+- Source: `artifact/page.src.html` and `artifact/app.src.js`, sharing `server/core.js` and `server/demo.js`. Build with `node artifact/build.js`, which writes `artifact/dist/ticket-assessment-hub.html`.
+
 ## Run it
 
 Requires Node 20 or later.

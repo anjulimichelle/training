@@ -1,0 +1,312 @@
+<title>Ticket Assessment Hub</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Play:wght@400;700&display=swap">
+<style>
+/* Layout: same family as the Training Agenda Library. Header, status bar, tab row, then one working panel per tab; stacks on phones. */
+:root {
+  --bg: #f4f8f7;
+  --surface: #ffffff;
+  --ink: #1d1d1f;
+  --soft: #5f6b69;
+  --border: #d8e2e0;
+  --teal: #0b7a6f;
+  --teal-soft: #e3f4f1;
+  --teal-ink: #ffffff;
+  --ok: #2e7d32;
+  --ok-soft: #e4f2e1;
+  --warn: #9a6410;
+  --warn-soft: #fff3d6;
+  --bad: #b3261e;
+  --bad-soft: #fcebea;
+  --focus: #0b7a6f;
+  --form: #673ab7;
+  --form-soft: #f0ebf8;
+  --display: "Play", "Trebuchet MS", Arial, sans-serif;
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #172221; --ink: #e8efee; --soft: #9fb0ad; --border: #2a3a38;
+    --teal: #3fb8aa; --teal-soft: #173a36; --teal-ink: #062421;
+    --ok: #7cc77f; --ok-soft: #1b3320; --warn: #e3b25c; --warn-soft: #3a2d14; --bad: #f08a83; --bad-soft: #3d1c1a;
+    --focus: #3fb8aa; --form: #b39ddb; --form-soft: #221d2c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #172221; --ink: #e8efee; --soft: #9fb0ad; --border: #2a3a38;
+  --teal: #3fb8aa; --teal-soft: #173a36; --teal-ink: #062421;
+  --ok: #7cc77f; --ok-soft: #1b3320; --warn: #e3b25c; --warn-soft: #3a2d14; --bad: #f08a83; --bad-soft: #3d1c1a;
+  --focus: #3fb8aa; --form: #b39ddb; --form-soft: #221d2c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; display: grid; gap: 16px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.75rem; line-height: 1.15; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+h4 { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); }
+.eyebrow { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); }
+.muted { color: var(--soft); }
+.small { font-size: .85rem; }
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; overflow-wrap: anywhere; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: var(--teal); }
+
+header.top { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; justify-content: space-between; }
+header.top .intro { display: grid; gap: 4px; min-width: 0; }
+header.top p { margin: 0; max-width: 66ch; }
+
+.btn { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--ink); }
+.btn:hover:not(:disabled) { border-color: var(--teal); }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: var(--teal-ink); }
+.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.small { padding: 5px 10px; font-size: .85rem; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.btn.ghost:hover:not(:disabled) { border-color: var(--border); }
+.linkish { border: 0; background: none; padding: 0; color: var(--teal); font-weight: 700; text-align: left; }
+.linkish:hover { text-decoration: underline; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* Status bar */
+.sync { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: .82rem; white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.pill.busy { background: var(--teal-soft); color: var(--teal); }
+.pill.busy::before { animation: pulse 1s ease-in-out infinite; }
+.pill.plain { background: var(--bg); color: var(--soft); }
+@keyframes pulse { 50% { opacity: .25; } }
+.sync-msg { flex: 1 1 240px; min-width: 0; font-size: .9rem; color: var(--soft); }
+
+/* Tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border: 1px solid var(--border); background: transparent; border-radius: 999px; padding: 6px 14px; font-weight: 700; color: var(--soft); display: inline-flex; gap: 8px; align-items: center; }
+.tab[aria-selected="true"] { background: var(--teal); border-color: var(--teal); color: var(--teal-ink); }
+.tab .n { font-family: var(--display); font-size: .8rem; opacity: .8; }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
+.panel-head p { margin: 2px 0 0; }
+.count { font-variant-numeric: tabular-nums; color: var(--soft); font-size: .88rem; }
+.split { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.split > * { min-width: 0; }
+.side { display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } .side { position: static; } }
+.stack { display: grid; gap: 16px; min-width: 0; }
+
+/* Lists */
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.li { display: grid; gap: 3px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); text-align: left; width: 100%; }
+.li:hover { border-color: var(--teal); }
+.li[aria-current="true"] { border-color: var(--teal); background: var(--teal-soft); }
+.li .t { font-weight: 700; overflow-wrap: anywhere; }
+.li .s { font-size: .82rem; color: var(--soft); }
+.tag { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--teal-soft); color: var(--teal); white-space: nowrap; display: inline-block; }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.tag.bad { background: var(--bad-soft); color: var(--bad); }
+.tag.ok { background: var(--ok-soft); color: var(--ok); }
+.tag.plain { background: var(--bg); color: var(--soft); border: 1px solid var(--border); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Forms */
+.field { display: grid; gap: 4px; font-size: .82rem; font-weight: 700; color: var(--soft); min-width: 0; }
+.field .opt { font-weight: 400; }
+input[type=text], input[type=url], input[type=email], input[type=number], input[type=date], input[type=search], select, textarea {
+  border: 1px solid var(--border); background: var(--bg); border-radius: 8px; padding: 8px 10px; font-weight: 400; color: var(--ink); width: 100%; min-width: 0;
+}
+textarea { min-height: 64px; resize: vertical; line-height: 1.4; }
+.grid { display: grid; gap: 12px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.span2 { grid-column: span 2; }
+@media (max-width: 720px) { .g2, .g3, .g4 { grid-template-columns: minmax(0, 1fr); } .span2 { grid-column: auto; } }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.checks input, .li input { accent-color: var(--teal); }
+
+/* Disclosure blocks */
+details.block { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+details.block > summary { cursor: pointer; padding: 10px 12px; font-weight: 700; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+details.block > summary::-webkit-details-marker { display: none; }
+details.block > summary::before { content: "›"; color: var(--teal); font-size: 1.2rem; line-height: 1; transition: transform .15s; }
+details.block[open] > summary::before { transform: rotate(90deg); }
+details.block > .body { padding: 0 12px 12px; display: grid; gap: 12px; }
+.private { font-size: .82rem; font-weight: 700; color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 6px 10px; }
+
+.ticket { border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; gap: 10px; background: var(--bg); }
+.ticket-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.ticket-name { font-family: var(--display); font-weight: 700; color: var(--teal); font-size: 1.05rem; }
+.ticket-url { flex: 1 1 200px; min-width: 0; color: var(--soft); font-size: .85rem; overflow-wrap: anywhere; }
+.icon { border: 0; background: transparent; width: 30px; height: 30px; border-radius: 6px; color: var(--soft); font-size: 1rem; line-height: 1; }
+.icon:hover:not(:disabled) { background: var(--teal-soft); color: var(--teal); }
+.icon:disabled { opacity: .3; cursor: default; }
+
+/* Tables */
+.tw { overflow-x: auto; min-width: 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th { text-align: left; font-size: .75rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--soft); padding: 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 9px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--teal-soft); }
+.crit td { padding: 6px; }
+.crit input, .crit select, .crit textarea { padding: 6px 8px; }
+
+.notice { border-radius: 8px; padding: 10px 12px; font-size: .9rem; }
+.notice ul { margin: 4px 0 0; padding-left: 18px; }
+.notice.bad { background: var(--bad-soft); color: var(--bad); }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice.ok { background: var(--ok-soft); color: var(--ok); }
+.notice.info { background: var(--teal-soft); color: var(--teal); }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1000px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.metric { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; min-width: 0; }
+.metric .l { font-size: .78rem; color: var(--soft); font-weight: 700; }
+.metric .v { font-family: var(--display); font-size: 1.7rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.metric .s { font-size: .75rem; color: var(--soft); }
+
+.scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 10px; }
+.score { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg); display: grid; gap: 2px; }
+.score .big { font-family: var(--display); font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--teal); }
+ul.plain { margin: 4px 0 0; padding-left: 18px; font-size: .9rem; }
+ul.plain li { margin-bottom: 3px; }
+.answer { white-space: pre-wrap; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: .9rem; overflow-wrap: anywhere; }
+.qlabel { font-weight: 700; font-size: .85rem; }
+.flag { color: var(--warn); font-weight: 700; font-size: .8rem; }
+.empty { padding: 22px 8px; color: var(--soft); text-align: center; border: 1px dashed var(--border); border-radius: 8px; }
+
+/* Google Form look for the trainee preview */
+.gform { background: var(--form-soft); border-radius: 12px; padding: 14px; display: grid; gap: 10px; }
+.gcard { background: var(--surface); border-radius: 8px; padding: 14px 18px; border: 1px solid var(--border); display: grid; gap: 6px; }
+.gcard.head { border-top: 8px solid var(--form); }
+.gsec { background: var(--form); color: #fff; justify-self: start; padding: 4px 12px; border-radius: 8px 8px 0 0; font-size: .8rem; font-weight: 700; margin-bottom: -10px; }
+.gcard textarea, .gcard input { background: var(--surface); }
+
+/* Modal */
+.backdrop { position: fixed; inset: 0; background: rgba(10, 25, 23, .5); display: flex; align-items: flex-start; justify-content: center; padding: calc(env(safe-area-inset-top, 0px) + 24px) max(12px, env(safe-area-inset-right, 0px)) 24px max(12px, env(safe-area-inset-left, 0px)); overflow-y: auto; z-index: 50; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: min(980px, 100%); display: grid; }
+.modal.narrow { width: min(560px, 100%); }
+.modal-head { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.modal-body { padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.modal-foot { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; }
+.toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-weight: 700; z-index: 60; max-width: calc(100vw - 32px); }
+.toast.bad { background: var(--bad); color: #fff; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+pre.code { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 260px; overflow: auto; font-size: .75rem; margin: 0; }
+
+/* About */
+details.about { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+details.about > summary { cursor: pointer; padding: 14px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+details.about > summary::-webkit-details-marker { display: none; }
+details.about > summary::before { content: "›"; color: var(--teal); font-size: 1.3rem; line-height: 1; transition: transform .15s; }
+details.about[open] > summary::before { transform: rotate(90deg); }
+details.about > summary .muted { font-family: var(--body); font-weight: 400; font-size: .88rem; }
+.about-body { padding: 0 14px 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.about-card { border-top: 1px solid var(--border); padding-top: 12px; min-width: 0; }
+.about-card h3 { font-size: .98rem; color: var(--teal); margin-bottom: 6px; }
+.about-card p, .about-card li, .about-card dd { font-size: .9rem; margin: 0 0 6px; overflow-wrap: anywhere; }
+.about-card ul, .about-card ol { margin: 0; padding-left: 18px; }
+.about-card code { font-size: .85em; background: var(--teal-soft); color: var(--teal); padding: 1px 5px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="intro">
+      <span class="eyebrow">Homeaglow · New Hire Care Training</span>
+      <h1>Ticket Assessment Hub</h1>
+      <p class="muted">Build ticket quizzes with a private rubric per ticket, collect trainee answers, grade them with Claude, review the scores, and export the results.</p>
+    </div>
+    <button class="btn" id="setup-btn" type="button">Setup and demo data</button>
+  </header>
+  <section class="sync" id="status" aria-live="polite"></section>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  <main id="app"></main>
+  <details class="about" id="about">
+    <summary>About this tool and how it was built <span class="muted">What it stores, how grading works, and what it never does</span></summary>
+    <div class="about-body">
+      <section class="about-card">
+        <h3>What it is</h3>
+        <p>A staging workspace for trainers to run ticket-based assessments for new Care Specialists: build the quiz, preview the trainee form, collect answers, grade each ticket against its own rubric, review the grade, and track performance by cohort.</p>
+        <p>It is a prototype. Use fictional trainees and tickets until the team approves it.</p>
+      </section>
+      <section class="about-card">
+        <h3>Where the data lives</h3>
+        <p>Quizzes, rubrics, submissions and evaluations are saved in this page's shared database. Everyone the page is shared with as Contributor or above reads and edits the same records. Viewers and Commenters see nothing, so rubrics and expected answers stay private to trainers.</p>
+        <p>Raw trainee answers are saved once and never changed by grading or review.</p>
+      </section>
+      <section class="about-card">
+        <h3>How grading works</h3>
+        <ul>
+          <li>Each ticket is graded on its own, against only the rubric and reference material the trainer wrote for it.</li>
+          <li>Claude judges whether the resolution is correct, not whether the wording matches, and must give a reason for every deduction.</li>
+          <li>When the rubric doesn't give enough to judge a criterion, Claude flags it for trainer review instead of guessing.</li>
+          <li>The page clamps every score to the criterion's maximum and adds up totals itself, so Claude's arithmetic is never trusted.</li>
+          <li>Grading runs on the account of the trainer who clicks the button, and asks that trainer's permission the first time.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>Trainer review</h3>
+        <ul>
+          <li>The original Claude grade is kept unchanged. The trainer's edited grade is saved beside it with who approved it and when.</li>
+          <li>Reevaluating creates a new version and keeps the old one for the audit trail.</li>
+          <li>Pass or fail shows only when the quiz has a passing threshold.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>Google Forms</h3>
+        <ol>
+          <li>After you approve a quiz's preview, the page writes a Google Apps Script for that quiz.</li>
+          <li>You paste it into a new project at script.google.com and run it yourself. It creates the form closed and unpublished, with one section per ticket and the ticket link at the top.</li>
+          <li>You open and share the form yourself. Then import the responses here from the linked Google Sheet or a CSV.</li>
+        </ol>
+        <p>The page never creates, opens or shares a form on its own, and never sends messages.</p>
+      </section>
+      <section class="about-card">
+        <h3>How it was built</h3>
+        <ul>
+          <li>Built with Claude as a single page published as a claude.ai artifact, in the same style as the Training Agenda Library.</li>
+          <li>Uses the page's shared database for records, Claude for grading, your Google Sheets connector (read only) for response imports, and SheetJS for Excel files.</li>
+          <li>The source is in the <code>ticket-assessment-hub/artifact</code> folder of the training GitHub repository.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>Terms used on this page</h3>
+        <dl style="margin:0">
+          <dt><b>C</b> and <b>CP</b></dt><dd>The customer and the cleaning professional.</dd>
+          <dt><b>Rubric</b></dt><dd>The trainer's private scoring guide for one ticket: criteria, points, deductions, critical errors and auto-fail conditions.</dd>
+          <dt><b>Reference material</b></dt><dd>Policy context, knowledge base notes and sample answers that Claude uses to grade. Trainees never see it.</dd>
+          <dt><b>Staging form</b></dt><dd>The in-page preview of the trainee form, used to submit fictional test answers.</dd>
+          <dt><b>Trainer final</b></dt><dd>The grade a trainer approved, which may differ from the original Claude grade.</dd>
+        </dl>
+      </section>
+    </div>
+  </details>
+</div>
+<div id="modal-root"></div>
+<div id="toast-root" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/*__CORE__*/
+</script>
+<script>
+/*__APP__*/
+</script>
