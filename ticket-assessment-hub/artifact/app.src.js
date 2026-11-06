@@ -189,7 +189,7 @@
     const prev = old ? old.tickets : [];
     // A link that stays in the quiz keeps its ticket id, points and guidelines.
     const used = new Set();
-    const tickets = links.map((url) => { const keep = prev.find((t) => t.url === url && !used.has(t.id)); if (keep) { used.add(keep.id); return { ...keep }; } return { id: uid('tkt'), url, points: 10, guidelines: '', updatedAt: now }; });
+    const tickets = links.map((url) => { const keep = prev.find((t) => t.url === url && !used.has(t.id)); if (keep) { used.add(keep.id); return { ...keep }; } return { id: uid('tkt'), url, points: 10, qpoints: { ...DEFAULT_QP }, guidelines: '', updatedAt: now }; });
     const q = old ? clone(old) : { id: uid('quiz'), createdAt: now, createdBy: me && me.id, googleFormUrl: '', sheetUrl: '' };
     if (old && q.googleFormUrl && JSON.stringify(old.tickets.map((t) => t.url)) !== JSON.stringify(links)) q.formOutOfDate = true;
     Object.assign(q, { title: f.title.trim(), date: f.date, tickets, traineeEmails: parseEmails(f.emails), updatedAt: now });
@@ -406,49 +406,68 @@ function createQuizForm() {
   // =====================================================================
   // TAB 3 · Scoring
   // =====================================================================
-  const guideHash = (t) => hash(`${Number(t.points) || 0}|${(t.guidelines || '').trim()}`);
+  const QKEYS = ['q1', 'q2', 'q3', 'q4'];
+  const QSHORT = { q1: 'What C wants', q2: 'CRM actions', q3: 'Response to C', q4: 'Message to CP' };
+  const DEFAULT_QP = { q1: 2, q2: 4, q3: 2, q4: 2 };
+  // Points per question. Older tickets that only had a total get it split 20/40/20/20.
+  function qpts(t) {
+    if (t.qpoints) return QKEYS.reduce((o, k) => ((o[k] = Number(t.qpoints[k]) || 0), o), {});
+    const p = Number(t.points) || 10;
+    const o = { q1: Math.round(p * 0.4) / 2, q2: 0, q3: Math.round(p * 0.4) / 2, q4: Math.round(p * 0.4) / 2 };
+    o.q2 = round1(p - o.q1 - o.q3 - o.q4);
+    return o;
+  }
+  const tmax = (t) => round1(QKEYS.reduce((a, k) => a + qpts(t)[k], 0));
+  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}`);
   const gradeId = (q, email) => `${q.id}__${email}`.replace(/[^A-Za-z0-9_\-.~:@+]/g, '_');
 
   function cellState(q, t, resp) {
     const g = byId('grades', gradeId(q, resp.email));
     const c = g && g.tickets && g.tickets[t.id];
-    const max = Number(t.points) || 0;
+    const max = tmax(t);
     if (!c || !c.ai) return { state: 'none', max };
     const stale = c.ai.guideHash !== guideHash(t) || c.ai.responseId !== resp.id;
     const raw = c.override && c.override.score != null ? c.override.score : c.ai.score;
     return { state: stale ? 'stale' : 'ok', c, score: Math.min(max, raw), max };
   }
 
+  function guideDirty(t, ed) {
+    const cur = qpts(t);
+    return ed.guidelines !== t.guidelines || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k]));
+  }
+
   function renderScore() {
     const q = pickQuiz('scoreQuiz');
     if (!q) return `<section class="panel">${quizPicker('pick-score', '', 'Quiz')}<div class="empty">Create a quiz in tab 1 first.</div></section>`;
     const resp = [...latestByEmail(q.id).values()].sort((a, b) => a.name.localeCompare(b.name));
-    const total = q.tickets.reduce((a, t) => a + (Number(t.points) || 0), 0);
+    const total = q.tickets.reduce((a, t) => a + (tmax(t)), 0);
     const todoOf = (t) => resp.filter((r) => cellState(q, t, r).state !== 'ok');
     const allTodo = q.tickets.reduce((a, t) => a + (t.guidelines.trim() ? todoOf(t).length : 0), 0);
     const anyBusy = q.tickets.some((t) => S.busy[q.id + t.id]);
 
     const guides = q.tickets.map((t, i) => {
-      const ed = S.guide[t.id] || { points: t.points, guidelines: t.guidelines };
-      const dirty = String(ed.points) !== String(t.points) || ed.guidelines !== t.guidelines;
+      const ed = S.guide[t.id] || { qp: qpts(t), guidelines: t.guidelines };
+      const dirty = guideDirty(t, ed);
+      const edTotal = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
       const todo = todoOf(t);
       const stale = todo.filter((r) => cellState(q, t, r).state === 'stale').length;
       const busy = S.busy[q.id + t.id];
-      const hint = !t.guidelines.trim() ? 'Add guidelines, save, then score.' : dirty ? 'Save first, then re-score.' : stale ? `<b style="color:var(--warn)">Guidelines or answers changed. ${plural(stale, 'score')} out of date.</b>` : todo.length ? `${plural(todo.length, 'trainee')} not scored yet.` : resp.length ? 'All scores use these guidelines.' : 'No responses yet.';
+      const hint = !t.guidelines.trim() ? 'Add context, save, then score.' : dirty ? 'Save first, then re-score.' : stale ? `<b style="color:var(--warn)">Guidelines or answers changed. ${plural(stale, 'score')} out of date.</b>` : todo.length ? `${plural(todo.length, 'trainee')} not scored yet.` : resp.length ? 'All scores use these guidelines.' : 'No responses yet.';
       return `<div class="ticket">
         <div class="ticket-head"><span class="ticket-name">Ticket ${i + 1}</span><a class="ticket-url" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>
-          <label class="field" style="display:flex;align-items:center;gap:6px">Points<input type="number" min="1" step="1" style="width:76px" id="pts-${t.id}" data-g="${t.id}" data-k="points" value="${esc(ed.points)}"></label></div>
-        <label class="field">Scoring guidelines and context <span class="opt">correct resolution, required actions and amounts, common mistakes, how the points split</span>
-          <textarea id="gd-${t.id}" data-g="${t.id}" data-k="guidelines" rows="5" placeholder="Example: Correct resolution is a 25% partial refund ($30). Required CRM actions: internal note, partial refund, flag CP for lateness with arrival time. 4 pts actions, 3 pts response to C, 3 pts message to CP. Deduct 2 if the refund amount is missing.">${esc(ed.guidelines)}</textarea></label>
+          <span class="small">Ticket total: <b id="tot-${t.id}">${edTotal}</b> points</span></div>
+        <div class="qpts">${QUESTIONS.map((qq) => `<label class="qp-row" for="qp-${t.id}-${qq.key}"><span>${esc(qq.label)}</span><span class="qp-in"><input type="number" min="0" step="0.5" id="qp-${t.id}-${qq.key}" data-g="${t.id}" data-k="${qq.key}" value="${esc(ed.qp[qq.key])}"> pts</span></label>`).join('')}</div>
+        <label class="field">More context and scoring guidance <span class="opt">correct resolution, required actions and amounts, what earns each question's points, deductions, when N/A is correct</span>
+          <textarea id="gd-${t.id}" data-g="${t.id}" data-k="guidelines" rows="5" placeholder="Example: Correct resolution is a 25% partial refund ($30). CRM actions must include an internal note, the $30 partial refund, and a lateness flag on the CP with the arrival time. Deduct 2 from CRM actions if the refund amount is missing. Message to CP: N/A is wrong here.">${esc(ed.guidelines)}</textarea></label>
         <div class="actions">
-          <button class="btn small ${dirty ? 'primary' : ''}" type="button" data-act="save-guide" data-id="${t.id}" ${dirty ? '' : 'disabled'}>Save guidelines</button>
+          <button class="btn small ${dirty ? 'primary' : ''}" type="button" data-act="save-guide" data-id="${t.id}" ${dirty ? '' : 'disabled'}>Save points and guidance</button>
           <button class="btn small ${!dirty && todo.length && t.guidelines.trim() ? 'primary' : ''}" type="button" data-act="score-ticket" data-id="${t.id}" ${!t.guidelines.trim() || dirty || !resp.length || busy || !caps.sample ? 'disabled' : ''}>${busy ? '<span class="spin"></span> Scoring' : todo.length ? `Score ${plural(todo.length, 'trainee')}` : 'Re-score everyone'}</button>
           <span class="small muted" id="hint-${t.id}">${hint}</span>
         </div></div>`;
     }).join('');
 
     const sums = resp.map((r) => traineeSummary(q, r));
-    const table = resp.length ? `<div class="tw"><table class="scores-t"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th class="num">T${i + 1} <span class="muted">/${Number(t.points) || 0}</span></th>`).join('')}<th class="num">Total /${total}</th><th class="num">Score</th><th>Errors</th></tr></thead><tbody>
+    const table = resp.length ? `<div class="tw"><table class="scores-t"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th class="num">T${i + 1} <span class="muted">/${tmax(t)}</span></th>`).join('')}<th class="num">Total /${total}</th><th class="num">Score</th><th>Errors</th></tr></thead><tbody>
       ${sums.map((x) => `<tr class="click" data-act="jump" data-to="card-${esc(cardId(x.r))}"><td><b>${esc(x.r.name)}</b><div class="small muted">${esc(x.r.email)}</div></td>
           ${x.cells.map((c) => `<td class="num">${c.state === 'none' ? '<span class="muted">—</span>' : `${c.score}${c.state === 'stale' ? '<div><span class="tag warn" title="Scored with older guidelines">old</span></div>' : ''}${c.adjusted ? '<div><span class="tag" title="Adjusted by a trainer">adjusted</span></div>' : ''}`}</td>`).join('')}
           <td class="num"><b>${x.scored ? x.sum : '—'}</b>${x.scored && !x.complete ? '<div class="small muted">partial</div>' : ''}</td><td class="num">${x.complete && total ? x.pct + '%' : '—'}</td>
@@ -479,12 +498,14 @@ function createQuizForm() {
       areas: ov.areas || g.ai.improvements || [],
       feedback: g.ai.feedback || '', note: ov.note || '', needsReview: !!g.ai.needsReview,
       adjusted: ov.score != null, override: g.override, gradedAt: g.ai.gradedAt,
+      qmax: qpts(t), aiQ: g.ai.qscores || null,
+      qscores: g.ai.qscores ? QKEYS.reduce((o, k) => ((o[k] = ov.qscores && ov.qscores[k] != null ? ov.qscores[k] : g.ai.qscores[k]), o), {}) : null,
     };
   }
   function traineeSummary(q, r) {
     const cells = q.tickets.map((t) => ticketView(q, t, r));
     const done = cells.filter((c) => c.state !== 'none');
-    const total = q.tickets.reduce((a, t) => a + (Number(t.points) || 0), 0);
+    const total = q.tickets.reduce((a, t) => a + (tmax(t)), 0);
     const sum = round1(done.reduce((a, c) => a + c.score, 0));
     const areas = [];
     cells.forEach((c, i) => c.areas.forEach((a) => {
@@ -515,17 +536,19 @@ function createQuizForm() {
       return `<div class="trow">
         <div class="trow-h"><b>Ticket ${i + 1}</b><span class="tscore ${c.score >= c.max ? 'full' : ''}">${c.score} / ${c.max}</span>
           <span class="tags">${c.state === 'stale' ? '<span class="tag warn">Older guidelines</span>' : ''}${c.needsReview ? '<span class="tag warn">Claude unsure, check this</span>' : ''}${c.adjusted ? `<span class="tag">Adjusted from Claude's ${c.aiScore}</span>` : ''}</span></div>
+        ${c.qscores ? `<div class="qchips">${QKEYS.map((k) => `<span class="qchip ${c.qscores[k] >= c.qmax[k] ? 'full' : ''}">${QSHORT[k]} <b>${c.qscores[k]} / ${c.qmax[k]}</b></span>`).join('')}</div>` : ''}
         ${c.errors.length ? `<ul class="plain wrong">${c.errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>` : '<div class="small" style="color:var(--ok);font-weight:700">Nothing wrong on this ticket.</div>'}
         ${c.feedback ? `<div class="small muted"><b>Feedback:</b> ${esc(c.feedback)}</div>` : ''}${c.note ? `<div class="small"><b>Trainer note:</b> ${esc(c.note)}</div>` : ''}
         <div class="actions" style="gap:6px">
           <details class="block mini"><summary class="small">Answers</summary><div class="body" style="gap:4px">${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label)}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</div></details>
           <details class="block mini"><summary class="small">Adjust</summary><div class="body">
-            <div class="grid g2"><label class="field">Score (0 to ${c.max})<input type="number" min="0" max="${c.max}" step="0.5" id="ov-s-${fid}" value="${c.adjusted ? esc(c.score) : ''}" placeholder="Claude: ${c.aiScore}"></label>
-            <label class="field">Note <span class="opt">optional</span><input type="text" id="ov-n-${fid}" value="${esc(c.note)}"></label></div>
+            ${c.aiQ ? `<div class="grid g4">${QKEYS.map((k) => `<label class="field">${QSHORT[k]} (0 to ${c.qmax[k]})<input type="number" min="0" max="${c.qmax[k]}" step="0.5" id="ov-${k}-${fid}" value="${c.override && c.override.qscores && c.override.qscores[k] != null ? esc(c.override.qscores[k]) : ''}" placeholder="Claude: ${c.aiQ[k]}"></label>`).join('')}</div>`
+              : `<label class="field">Score (0 to ${c.max})<input type="number" min="0" max="${c.max}" step="0.5" id="ov-s-${fid}" value="${c.adjusted ? esc(c.score) : ''}" placeholder="Claude: ${c.aiScore}"></label>`}
+            <label class="field">Note <span class="opt">optional</span><input type="text" id="ov-n-${fid}" value="${esc(c.note)}"></label>
             <label class="field">What they got wrong <span class="opt">one per line</span><textarea id="ov-e-${fid}" rows="3">${esc(c.errors.join('\n'))}</textarea></label>
             <label class="field">Areas for improvement <span class="opt">one per line</span><textarea id="ov-a-${fid}" rows="2">${esc(c.areas.join('\n'))}</textarea></label>
             <div class="actions"><button class="btn small primary" type="button" data-act="save-ov" data-email="${esc(r.email)}" data-t="${t.id}" data-f="${fid}">Save adjustment</button>${c.override ? `<button class="btn small ghost" type="button" data-act="clear-ov" data-email="${esc(r.email)}" data-t="${t.id}">Go back to Claude's version</button>` : ''}</div>
-            <p class="small muted" style="margin:0">Re-scoring keeps your adjustment. Claude's own score stays beside it.</p></div></details>
+            <p class="small muted" style="margin:0">Leave a box blank to keep Claude's score for it. Re-scoring keeps your adjustment, with Claude's own score beside it.</p></div></details>
         </div></div>`;
     }).join('');
     const areas = x.areas.length ? `<ul class="plain">${x.areas.map((a) => `<li>${esc(a.text)} <span class="muted small">(Ticket ${a.tickets.join(', ')})</span></li>`).join('')}</ul>` : `<p class="small muted" style="margin:4px 0 0">${x.scored ? (x.errorCount ? 'Re-score to get areas for improvement.' : 'None. Every scored ticket was correct.') : 'Shows after scoring.'}</p>`;
@@ -539,7 +562,8 @@ function createQuizForm() {
     const resp = [...latestByEmail(q.id).values()].filter((r) => !onlyTodo || cellState(q, t, r).state !== 'ok');
     if (!resp.length) return 0;
     const n = q.tickets.findIndex((x) => x.id === t.id) + 1;
-    const max = Number(t.points) || 0;
+    const max = tmax(t);
+    const qp = qpts(t);
     const gh = guideHash(t);
     let done = 0;
     for (let i = 0; i < resp.length; i += BATCH) {
@@ -547,14 +571,16 @@ function createQuizForm() {
       const prompt = `You score Homeaglow Care Specialist training answers for one ticket. "C" is the customer, "CP" is the cleaning professional, "CRM actions" are steps taken in the internal tools.
 
 Ticket ${n}: ${t.url} (you cannot open this link; rely only on the trainer's guidelines)
-Points available: ${max}
+Points available: ${max}, split by question:
+${QUESTIONS.map((qq) => `- ${qq.key} "${qq.label}": ${qp[qq.key]} points`).join('\n')}
 
 <trainer_guidelines>
 ${t.guidelines.trim()}
 </trainer_guidelines>
 
 Rules:
-- Score each trainee from 0 to ${max} using only the trainer's guidelines. Half points are allowed.
+- Score each of the four questions separately, from 0 up to that question's points, using only the trainer's guidelines. Half points are allowed. A question worth 0 points always scores 0.
+- When the guidelines say N/A is the correct answer to a question, an N/A answer earns full points for it.
 - Judge whether the actions and resolution are correct, not whether the wording matches. Accept different wording that reaches the same correct outcome.
 - Trainees were told to be specific: the kind of refund, the exact amount or duration, and what to include when flagging a C or CP. Missing specifics that the guidelines require count as errors.
 - Don't take points off for tone or grammar unless the guidelines say to.
@@ -568,8 +594,10 @@ Rules:
 Answers:
 ${part.map((r) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<trainee id="${r.id}">\n${QUESTIONS.map((qq) => `${qq.label}\n${String(a[qq.key] || '').trim() || '(blank)'}`).join('\n\n')}\n</trainee>`; }).join('\n')}
 
+- In "errors", start each item with the question it belongs to, for example "CRM actions: didn't state the refund amount".
+
 Reply with only a JSON array, one object per trainee, for example:
-[{"id":"resp_x","score":7.5,"errors":["Didn't state the refund amount"],"improvements":["State the exact refund amount"],"feedback":"…","needsReview":false}]`;
+[{"id":"resp_x","questionScores":{"q1":2,"q2":2.5,"q3":2,"q4":2},"errors":["CRM actions: didn't state the refund amount"],"improvements":["State the exact refund amount"],"feedback":"…","needsReview":false}]`;
       let out;
       try { out = await caps.sample.json(prompt, { modelTier: 'default', cache: false }); }
       catch (e) {
@@ -582,11 +610,12 @@ Reply with only a JSON array, one object per trainee, for example:
       const now = new Date().toISOString();
       for (const r of part) {
         const got = list.find((x) => x && x.id === r.id);
-        let score = got ? Number(got.score) : 0;
+        const qs = got && got.questionScores && typeof got.questionScores === 'object' ? QKEYS.reduce((o, k) => { let v = Number(got.questionScores[k]); if (!Number.isFinite(v)) v = 0; o[k] = Math.max(0, Math.min(qp[k], Math.round(v * 2) / 2)); return o; }, {}) : null;
+        let score = qs ? QKEYS.reduce((a, k) => a + qs[k], 0) : got ? Number(got.score) : 0;
         if (!Number.isFinite(score)) score = 0;
         score = Math.max(0, Math.min(max, Math.round(score * 2) / 2));
         const ai = got
-          ? { score, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
+          ? { score, qscores: qs, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
           : { score: 0, errors: [], improvements: [], feedback: 'Claude didn\'t return a score for this trainee. Re-score, or adjust by hand.', needsReview: true, guideHash: gh, responseId: r.id, gradedAt: now };
         const id = gradeId(q, r.email);
         const doc = clone(byId('grades', id) || { id, quizId: q.id, email: r.email, tickets: {} });
@@ -630,7 +659,7 @@ Reply with only a JSON array, one object per trainee, for example:
   const RESULTS_TAB = 'Scoring Results';
   function buildReport(q) {
     const resp = [...latestByEmail(q.id).values()].sort((a, b) => a.name.localeCompare(b.name));
-    const total = q.tickets.reduce((a, t) => a + (Number(t.points) || 0), 0);
+    const total = q.tickets.reduce((a, t) => a + (tmax(t)), 0);
     const perTicket = (cells, pick) => cells.map((c, i) => { const v = pick(c); return v ? `Ticket ${i + 1}: ${v}` : ''; }).filter(Boolean).join('\n');
     const rows = resp.map((r) => {
       const x = traineeSummary(q, r);
@@ -638,6 +667,7 @@ Reply with only a JSON array, one object per trainee, for example:
       x.cells.forEach((c, i) => (row[`Ticket ${i + 1} (out of ${c.max})`] = c.state === 'none' ? '' : c.score));
       row[`Total (out of ${total})`] = x.scored ? x.sum : '';
       row['Score (%)'] = x.complete && total ? x.pct : '';
+      row['Points by question'] = perTicket(x.cells, (c) => (c.qscores ? QKEYS.map((k) => `${QSHORT[k]} ${c.qscores[k]}/${c.qmax[k]}`).join(', ') : ''));
       row['What they got wrong'] = perTicket(x.cells, (c) => c.errors.join('; '));
       row['Areas for improvement'] = x.areas.map((a) => `${a.text} (Ticket ${a.tickets.join(', ')})`).join('\n');
       row.Feedback = perTicket(x.cells, (c) => c.feedback);
@@ -645,7 +675,7 @@ Reply with only a JSON array, one object per trainee, for example:
       row.Status = !x.scored ? 'Not scored' : !x.complete ? 'Partly scored' : x.stale ? 'Some scores use older guidelines' : 'Scored';
       return row;
     });
-    return { file: `${slug(q.title)}-${q.date}-scoring-results.xlsx`, sheets: [{ name: RESULTS_TAB, rows, wide: ['What they got wrong', 'Areas for improvement', 'Feedback', 'Trainer notes'] }] };
+    return { file: `${slug(q.title)}-${q.date}-scoring-results.xlsx`, sheets: [{ name: RESULTS_TAB, rows, wide: ['Points by question', 'What they got wrong', 'Areas for improvement', 'Feedback', 'Trainer notes'] }] };
   }
 
   function workbookBytes(rep) {
@@ -761,8 +791,8 @@ Reply with only a JSON array, one object per trainee, for example:
     const now = new Date().toISOString();
     const q = { id: uid('quiz'), title: 'Example quiz (fictional)', date: now.slice(0, 10), createdAt: now, updatedAt: now, googleFormUrl: '', sheetUrl: '', traineeEmails: ['alpha.trainee@example.com', 'bravo.trainee@example.com', 'charlie.trainee@example.com'],
       tickets: [
-        { id: uid('tkt'), url: 'https://example.com/fictional-tickets/T-1001', points: 10, updatedAt: now, guidelines: 'FICTIONAL. C says the CP arrived 90 minutes late and skipped the kitchen, and asks for a refund.\nCorrect resolution: 25% partial refund ($30 of $120). Not a full refund.\nRequired CRM actions: internal note summarizing the complaint; partial refund of $30; flag the CP for lateness including the arrival time.\nPoints: 2 understanding what C wants, 4 CRM actions (exact amount required), 2 response to C, 2 message to CP.' },
-        { id: uid('tkt'), url: 'https://example.com/fictional-tickets/T-2002', points: 6, updatedAt: now, guidelines: 'FICTIONAL. C wants to move tomorrow\'s cleaning to Monday; the CP has no Monday availability.\nCorrect: offer another CP on Monday OR the same CP on another day, and let C choose. Message to CP is N/A.\nPoints: 1 understanding, 2 actions, 3 response to C. Deduct 2 if the job is moved without C choosing.' },
+        { id: uid('tkt'), url: 'https://example.com/fictional-tickets/T-1001', points: 10, qpoints: { q1: 2, q2: 4, q3: 2, q4: 2 }, updatedAt: now, guidelines: 'FICTIONAL. C says the CP arrived 90 minutes late and skipped the kitchen, and asks for a refund.\nCorrect resolution: 25% partial refund ($30 of $120). Not a full refund.\nRequired CRM actions: internal note summarizing the complaint; partial refund of $30; flag the CP for lateness including the arrival time.\nCRM actions need the exact refund amount for full points.' },
+        { id: uid('tkt'), url: 'https://example.com/fictional-tickets/T-2002', points: 6, qpoints: { q1: 1, q2: 2, q3: 3, q4: 0 }, updatedAt: now, guidelines: 'FICTIONAL. C wants to move tomorrow\'s cleaning to Monday; the CP has no Monday availability.\nCorrect: offer another CP on Monday OR the same CP on another day, and let C choose. Message to CP is N/A.\nDeduct 2 from the response to C if the job is moved without C choosing.' },
       ] };
     await put('quizzes', q);
     const ans = [
@@ -919,9 +949,11 @@ Reply with only a JSON array, one object per trainee, for example:
           const t = q.tickets.find((x) => x.id === el.dataset.id);
           const ed = S.guide[t.id];
           if (!ed) return;
-          const pts = Number(ed.points);
-          if (!(pts > 0)) return toast('Points must be more than 0.', true);
-          t.points = pts; t.guidelines = ed.guidelines; t.updatedAt = new Date().toISOString();
+          const qp = {};
+          for (const k of QKEYS) { const v = Number(ed.qp[k]); if (!(v >= 0)) return toast(`Points for "${QSHORT[k]}" must be 0 or more.`, true); qp[k] = v; }
+          const tot = round1(QKEYS.reduce((a, k) => a + qp[k], 0));
+          if (!(tot > 0)) return toast('Give at least one question some points.', true);
+          t.qpoints = qp; t.points = tot; t.guidelines = ed.guidelines; t.updatedAt = new Date().toISOString();
           await put('quizzes', q);
           delete S.guide[t.id];
           render();
@@ -946,11 +978,26 @@ Reply with only a JSON array, one object per trainee, for example:
           const q = byId('quizzes', S.scoreQuiz);
           const t = q.tickets.find((x) => x.id === el.dataset.t);
           const f = el.dataset.f;
-          const sv = $('ov-s-' + f).value.trim();
-          const max = Number(t.points) || 0;
-          if (sv !== '' && !(Number(sv) >= 0 && Number(sv) <= max)) return toast(`Score must be between 0 and ${max}.`, true);
+          const max = tmax(t);
           const doc = clone(byId('grades', gradeId(q, el.dataset.email)));
-          doc.tickets[t.id].override = { score: sv === '' ? null : Number(sv), errors: $('ov-e-' + f).value.split('\n').map((x) => x.trim()).filter(Boolean), areas: $('ov-a-' + f).value.split('\n').map((x) => x.trim()).filter(Boolean), note: $('ov-n-' + f).value.trim(), by: me && me.id, at: new Date().toISOString() };
+          const aiQ = doc.tickets[t.id].ai.qscores;
+          let score = null;
+          let qscores = null;
+          if (aiQ && $('ov-q1-' + f)) {
+            const qp = qpts(t);
+            qscores = {};
+            for (const k of QKEYS) {
+              const v = $(`ov-${k}-${f}`).value.trim();
+              if (v !== '' && !(Number(v) >= 0 && Number(v) <= qp[k])) return toast(`${QSHORT[k]} must be between 0 and ${qp[k]}.`, true);
+              qscores[k] = v === '' ? null : Number(v);
+            }
+            if (QKEYS.some((k) => qscores[k] != null)) score = round1(QKEYS.reduce((a, k) => a + (qscores[k] != null ? qscores[k] : aiQ[k]), 0));
+          } else {
+            const sv = $('ov-s-' + f).value.trim();
+            if (sv !== '' && !(Number(sv) >= 0 && Number(sv) <= max)) return toast(`Score must be between 0 and ${max}.`, true);
+            score = sv === '' ? null : Number(sv);
+          }
+          doc.tickets[t.id].override = { score, qscores, errors: $('ov-e-' + f).value.split('\n').map((x) => x.trim()).filter(Boolean), areas: $('ov-a-' + f).value.split('\n').map((x) => x.trim()).filter(Boolean), note: $('ov-n-' + f).value.trim(), by: me && me.id, at: new Date().toISOString() };
           await put('grades', doc);
           render(); toast('Adjustment saved.');
           break;
@@ -997,9 +1044,11 @@ Reply with only a JSON array, one object per trainee, for example:
     if (el.dataset.g) {
       const q = byId('quizzes', S.scoreQuiz);
       const t = q.tickets.find((x) => x.id === el.dataset.g);
-      const ed = S.guide[t.id] || (S.guide[t.id] = { points: t.points, guidelines: t.guidelines });
-      ed[el.dataset.k] = el.value;
-      const dirty = String(ed.points) !== String(t.points) || ed.guidelines !== t.guidelines;
+      const ed = S.guide[t.id] || (S.guide[t.id] = { qp: qpts(t), guidelines: t.guidelines });
+      if (el.dataset.k === 'guidelines') ed.guidelines = el.value; else ed.qp[el.dataset.k] = el.value;
+      const tot = $('tot-' + t.id);
+      if (tot) tot.textContent = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
+      const dirty = guideDirty(t, ed);
       if (!dirty) delete S.guide[t.id];
       const btn = document.querySelector(`[data-act="save-guide"][data-id="${t.id}"]`);
       if (btn) { btn.disabled = !dirty; btn.classList.toggle('primary', dirty); }

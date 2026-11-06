@@ -262,6 +262,14 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
 .sheet-tabs { display: flex; gap: 2px; background: #f1f3f4; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 6px 6px; padding: 4px 6px; overflow-x: auto; margin-top: -14px; }
 .stab { border: 0; background: transparent; padding: 5px 12px; border-radius: 4px; font: 13px Arial, sans-serif; color: #444; }
 .stab[aria-selected="true"] { background: #fff; color: #0b7a6f; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.qpts { display: grid; gap: 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 6px 10px; }
+.qp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .9rem; padding: 3px 0; }
+.qp-row + .qp-row { border-top: 1px solid var(--border); }
+.qp-in { display: inline-flex; align-items: center; gap: 6px; color: var(--soft); font-size: .85rem; white-space: nowrap; }
+.qp-in input { width: 76px; padding: 5px 8px; }
+.qchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.qchip { font-size: .78rem; padding: 2px 8px; border-radius: 6px; background: var(--warn-soft); color: var(--warn); }
+.qchip.full { background: var(--ok-soft); color: var(--ok); }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
