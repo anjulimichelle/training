@@ -459,7 +459,7 @@ function createQuizForm() {
     return `<div class="stack">
       <section class="panel"><div class="panel-head" style="align-items:end">${quizPicker('pick-score', q.id, 'Quiz')}
         <div class="actions"><button class="btn primary" type="button" data-act="score-all" ${allTodo && !anyBusy && caps.sample ? '' : 'disabled'}>${anyBusy ? '<span class="spin"></span> Scoring' : `Score everything not up to date (${allTodo})`}</button>
-        <button class="btn" type="button" data-act="sheet-preview" ${resp.length ? '' : 'disabled'}>Preview score sheet</button></div></div>
+        <button class="btn" type="button" data-act="sheet-preview" ${resp.length ? '' : 'disabled'}>Write results to response sheet</button></div></div>
         ${caps.sample === null ? '<div class="notice warn">Claude scoring isn\'t available in this view. Open the page in claude.ai.</div>' : ''}</section>
       <section class="panel"><div><h2>Points and guidelines per ticket</h2><p class="small muted" style="margin:2px 0 0">Claude scores each ticket against only what you write here. When you change a ticket's points or guidelines, its scores are marked out of date until you re-score. Re-scoring updates the scores, mistakes, areas for improvement and feedback.</p></div>${guides}</section>
       <section class="panel"><div><h2>Score overview</h2><p class="small muted" style="margin:2px 0 0">Click a trainee to jump to their summary.</p></div>${table}</section>
@@ -626,34 +626,26 @@ Reply with only a JSON array, one object per trainee, for example:
     store.responses.filter((r) => r.quizId === q.id).forEach((r) => q.tickets.forEach((t, i) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; lines.push([r.name, r.email, r.submittedAt, `Ticket ${i + 1}`, t.url, a.q1, a.q2, a.q3, a.q4].map(csvCell).join(',')); }));
     await save(`${slug(q.title)}-${q.date}-responses.csv`, '﻿' + lines.join('\r\n') + '\r\n');
   }
-  // One source for the preview, the Excel file and the Google Sheet.
+  // One source for the preview, the response sheet tab and the Excel file.
+  const RESULTS_TAB = 'Scoring Results';
   function buildReport(q) {
     const resp = [...latestByEmail(q.id).values()].sort((a, b) => a.name.localeCompare(b.name));
     const total = q.tickets.reduce((a, t) => a + (Number(t.points) || 0), 0);
-    const summary = resp.map((r) => {
+    const perTicket = (cells, pick) => cells.map((c, i) => { const v = pick(c); return v ? `Ticket ${i + 1}: ${v}` : ''; }).filter(Boolean).join('\n');
+    const rows = resp.map((r) => {
       const x = traineeSummary(q, r);
       const row = { Trainee: r.name, Email: r.email };
       x.cells.forEach((c, i) => (row[`Ticket ${i + 1} (out of ${c.max})`] = c.state === 'none' ? '' : c.score));
       row[`Total (out of ${total})`] = x.scored ? x.sum : '';
       row['Score (%)'] = x.complete && total ? x.pct : '';
-      row['What they got wrong'] = x.cells.map((c, i) => (c.errors.length ? `Ticket ${i + 1}: ${c.errors.join('; ')}` : '')).filter(Boolean).join('\n');
+      row['What they got wrong'] = perTicket(x.cells, (c) => c.errors.join('; '));
       row['Areas for improvement'] = x.areas.map((a) => `${a.text} (Ticket ${a.tickets.join(', ')})`).join('\n');
+      row.Feedback = perTicket(x.cells, (c) => c.feedback);
+      row['Trainer notes'] = perTicket(x.cells, (c) => c.note);
       row.Status = !x.scored ? 'Not scored' : !x.complete ? 'Partly scored' : x.stale ? 'Some scores use older guidelines' : 'Scored';
       return row;
     });
-    const byTicket = [];
-    resp.forEach((r) => q.tickets.forEach((t, i) => {
-      const c = ticketView(q, t, r);
-      if (c.state === 'none') return;
-      byTicket.push({ Trainee: r.name, Email: r.email, Ticket: `Ticket ${i + 1}`, 'Ticket link': t.url, Score: c.score, 'Out of': c.max, 'What they got wrong': c.errors.join('\n'), 'Areas for improvement': c.areas.join('\n'), Feedback: c.feedback, 'Trainer note': c.note, "Claude's score": c.aiScore, 'Adjusted by trainer': c.adjusted ? 'Yes' : 'No', 'Scored with current guidelines': c.state === 'ok' ? 'Yes' : 'No' });
-    }));
-    const guides = q.tickets.map((t, i) => ({ Ticket: `Ticket ${i + 1}`, 'Ticket link': t.url, Points: Number(t.points) || 0, 'Scoring guidelines': t.guidelines }));
-    const sheets = [
-      { name: 'Summary', rows: summary, wide: ['What they got wrong', 'Areas for improvement'] },
-      { name: 'By ticket', rows: byTicket, wide: ['What they got wrong', 'Areas for improvement', 'Feedback'] },
-      { name: 'Guidelines', rows: guides, wide: ['Scoring guidelines'] },
-    ];
-    return { title: `${formTitle(q)} - Scores`, file: `${slug(q.title)}-${q.date}-scores.xlsx`, sheets };
+    return { file: `${slug(q.title)}-${q.date}-scoring-results.xlsx`, sheets: [{ name: RESULTS_TAB, rows, wide: ['What they got wrong', 'Areas for improvement', 'Feedback', 'Trainer notes'] }] };
   }
 
   function workbookBytes(rep) {
@@ -663,7 +655,6 @@ Reply with only a JSON array, one object per trainee, for example:
       const rows = sh.rows.length ? sh.rows : [{ Note: 'No rows yet.' }];
       const ws = XLSX.utils.json_to_sheet(rows);
       ws['!cols'] = Object.keys(rows[0]).map((k) => ({ wch: sh.wide && sh.wide.includes(k) ? 55 : Math.min(40, Math.max(12, k.length + 2)) }));
-      ws['!freeze'] = { xSplit: 0, ySplit: 1 };
       XLSX.utils.book_append_sheet(wb, ws, sh.name);
     });
     return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
@@ -679,51 +670,75 @@ Reply with only a JSON array, one object per trainee, for example:
       ${rows.map((r, i) => `<tr><td class="rn">${i + 2}</td>${keys.map((k) => `<td class="${typeof r[k] === 'number' ? 'n' : ''} ${sh.wide && sh.wide.includes(k) ? 'w' : ''}">${esc(r[k])}</td>`).join('')}</tr>`).join('')}
     </tbody></table></div>`;
   }
-  function openSheetPreview(q, tab) {
+  function openSheetPreview(q) {
     const rep = buildReport(q);
-    const i = Math.max(0, Math.min(rep.sheets.length - 1, tab || 0));
-    openModal('Score sheet preview', `
-      <p class="small muted" style="margin:0">This is what the file will contain: ${rep.sheets.map((s) => `<b>${esc(s.name)}</b> (${plural(s.rows.length, 'row')})`).join(', ')}. The first row stays frozen as the header.</p>
-      <div class="sheet-title">${esc(rep.title)}</div>
-      ${sheetGrid(rep.sheets[i])}
-      <div class="sheet-tabs" role="tablist">${rep.sheets.map((s, k) => `<button type="button" role="tab" class="stab" aria-selected="${k === i}" data-act="sheet-tab" data-i="${k}">${esc(s.name)}</button>`).join('')}</div>
+    const sh = rep.sheets[0];
+    const sheetName = q.sheetTitle || (q.sheetUrl ? 'your response sheet' : '');
+    openModal('Scoring results preview', `
+      ${q.sheetUrl
+        ? `<p class="small muted" style="margin:0">This is the <b>${RESULTS_TAB}</b> tab that will be added to ${q.sheetTitle ? `<b>${esc(q.sheetTitle)}</b>` : '<a href="' + safeUrl(q.sheetUrl) + '" target="_blank" rel="noopener">your response sheet</a>'}, next to the form's responses. ${plural(sh.rows.length, 'trainee')}. Writing it again replaces this tab only; the Form Responses tab is never changed.</p>`
+        : '<div class="notice warn">No response sheet is connected to this quiz yet. Connect it in tab 1 (Google Form) or with Get latest responses in tab 2, then write the results.</div>'}
+      ${sheetGrid(sh)}
+      <div class="sheet-tabs" role="tablist"><span class="stab muted" title="The form's own tab. It's not changed.">Form Responses 1</span><button type="button" role="tab" class="stab" aria-selected="true">${RESULTS_TAB}</button></div>
       <div id="gs-status" class="small"></div>`,
       `<button class="btn" type="button" data-act="close-modal">Close</button>
-       <button class="btn" type="button" data-act="dl-scores" ${caps.downloads ? '' : 'disabled'}>Download Excel</button>
-       <button class="btn primary" type="button" data-act="make-gsheet" ${caps.mcp ? '' : 'disabled title="Google Drive isn\'t available in this view"'}>Create Google Sheet in my Drive</button>`);
+       <button class="btn" type="button" data-act="dl-scores" ${caps.downloads ? '' : 'disabled'}>Download Excel instead</button>
+       <button class="btn primary" type="button" data-act="write-results" ${q.sheetUrl && caps.mcp ? '' : 'disabled'}>${q.resultsWrittenAt ? 'Update the tab in the response sheet' : 'Add tab to the response sheet'}</button>`);
     $('modal-root').querySelector('.modal').classList.add('wide');
+  }
+
+  async function sheetsCall(tool, input) {
+    try {
+      const res = await caps.mcp.callTool(SHEETS, tool, input, { cache: false });
+      let p = res && res.payload;
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { /* keep text */ } }
+      return p || {};
+    } catch (e) {
+      const c = e && e.code;
+      if (c === 'server_not_connected') throw new Error('Google Sheets isn\'t connected. Add it in claude.ai Settings › Connectors.');
+      if (c === 'needs_reauth') throw new Error('Your Google Sheets connection expired. Reconnect it in claude.ai Settings › Connectors.');
+      if (c === 'not_in_manifest' || c === 'not_granted') throw new Error('Writing to Google Sheets is turned off for this page. Allow it in the page\'s permissions.');
+      throw new Error('Google Sheets: ' + String((e && e.message) || 'request failed').slice(0, 200));
+    }
+  }
+  const cellValue = (v) => (typeof v === 'number' ? v : (v = String(v == null ? '' : v), /^[=+@]/.test(v) ? ' ' + v : v));
+
+  // Adds (or refreshes) the "Scoring Results" tab in the quiz's response sheet. Never touches other tabs.
+  async function writeResults(q) {
+    if (!caps.mcp) throw new Error('Google Sheets isn\'t available in this view.');
+    const id = (/\/d\/([a-zA-Z0-9_-]{20,})/.exec(q.sheetUrl || '') || [])[1];
+    if (!id) throw new Error('No response sheet is connected to this quiz.');
+    const sh = buildReport(q).sheets[0];
+    const keys = Object.keys(sh.rows[0] || { Trainee: '' });
+    const values = [keys, ...sh.rows.map((r) => keys.map((k) => cellValue(r[k])))];
+    const tabs = (((await sheetsCall('get_spreadsheet', { spreadsheetId: id, fields: ['sheets.properties.sheetId', 'sheets.properties.title'] })).sheets) || []).map((x) => x.properties || {});
+    let tab = tabs.find((t) => t.title === RESULTS_TAB);
+    const range = `'${RESULTS_TAB}'`;
+    if (tab) {
+      await sheetsCall('batch_clear_values', { spreadsheetId: id, ranges: [`${range}!A1:ZZ5000`] });
+    } else {
+      await sheetsCall('update_spreadsheet', { spreadsheetId: id, requests: [{ addSheet: { properties: { title: RESULTS_TAB, gridProperties: { frozenRowCount: 1 } } } }] });
+      tab = (((await sheetsCall('get_spreadsheet', { spreadsheetId: id, fields: ['sheets.properties.sheetId', 'sheets.properties.title'] })).sheets) || []).map((x) => x.properties || {}).find((t) => t.title === RESULTS_TAB);
+    }
+    await sheetsCall('update_values', { spreadsheetId: id, range: `${range}!A1`, values });
+    // Formatting is a nicety: if it fails, the data is already written.
+    if (tab && tab.sheetId != null) {
+      const sid = tab.sheetId;
+      const reqs = [
+        { updateSheetProperties: { properties: { sheetId: sid, gridProperties: { frozenRowCount: 1 } }, fields: 'gridProperties.frozenRowCount' } },
+        { repeatCell: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: keys.length }, cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColorStyle: { rgbColor: { red: 0.89, green: 0.957, blue: 0.945 } } } }, fields: 'userEnteredFormat.textFormat.bold,userEnteredFormat.backgroundColorStyle' } },
+        { repeatCell: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: values.length, startColumnIndex: 0, endColumnIndex: keys.length }, cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat.wrapStrategy,userEnteredFormat.verticalAlignment' } },
+        ...keys.map((k, i) => ({ updateDimensionProperties: { range: { sheetId: sid, dimension: 'COLUMNS', startIndex: i, endIndex: i + 1 }, properties: { pixelSize: sh.wide.includes(k) ? 340 : k === 'Email' ? 220 : k === 'Trainee' ? 170 : 110 }, fields: 'pixelSize' } })),
+      ];
+      try { await sheetsCall('update_spreadsheet', { spreadsheetId: id, requests: reqs }); } catch (_) { /* data is written; formatting skipped */ }
+    }
+    return { url: `https://docs.google.com/spreadsheets/d/${id}/edit${tab && tab.sheetId != null ? '#gid=' + tab.sheetId : ''}`, rows: sh.rows.length };
   }
 
   async function downloadScores(q) {
     const rep = buildReport(q);
     await save(rep.file, new Blob([workbookBytes(rep)]));
   }
-  function toBase64(buf) {
-    const bytes = new Uint8Array(buf);
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(bin);
-  }
-  async function createGoogleSheet(q) {
-    if (!caps.mcp) throw new Error('Google Drive isn\'t available in this view. Use Download Excel instead.');
-    const rep = buildReport(q);
-    let res;
-    try {
-      res = await caps.mcp.callTool(DRIVE, 'create_file', { title: rep.title, base64Content: toBase64(workbookBytes(rep)), contentMimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }, { cache: false });
-    } catch (e) {
-      const c = e && e.code;
-      if (c === 'server_not_connected') throw new Error('Google Drive isn\'t connected. Add it in claude.ai Settings › Connectors, or use Download Excel.');
-      if (c === 'needs_reauth') throw new Error('Your Google Drive connection expired. Reconnect it in claude.ai Settings › Connectors.');
-      if (c === 'not_in_manifest' || c === 'not_granted') throw new Error('Creating files in Google Drive is turned off for this page. Allow it in the page\'s permissions.');
-      throw new Error('Google Drive couldn\'t create the sheet: ' + String((e && e.message) || 'unknown error').slice(0, 160));
-    }
-    let p = res && res.payload;
-    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { p = {}; } }
-    const f = (p && (p.file || p)) || {};
-    const url = f.id ? (/spreadsheet/.test(f.mimeType || 'spreadsheet') ? `https://docs.google.com/spreadsheets/d/${f.id}/edit` : f.viewUrl) : f.viewUrl;
-    return { url: url || '', title: f.title || rep.title };
-  }
-
   // ---------- setup ----------
   function openSetup() {
     const url = settings().formMakerUrl || '';
@@ -837,7 +852,7 @@ Reply with only a JSON array, one object per trainee, for example:
             if (!q.sheetUrl) {
               const f = await findFiles(q);
               if (!f.sheet) throw new Error(`No response sheet found for "${formTitle(q)}". Link one to the form in Google (Responses tab › Link to Sheets), or paste its link in tab 1 under Google Form.`);
-              await put('quizzes', { ...clone(q), sheetUrl: f.sheet.url, googleFormUrl: q.googleFormUrl || (f.form ? f.form.url : ''), updatedAt: new Date().toISOString() });
+              await put('quizzes', { ...clone(q), sheetUrl: f.sheet.url, sheetTitle: f.sheet.title, googleFormUrl: q.googleFormUrl || (f.form ? f.form.url : ''), updatedAt: new Date().toISOString() });
             }
             const r = await readSheet(byId('quizzes', q.id)); toast(`${plural(r.added, 'new response')}${r.skipped ? `, ${r.skipped} already here` : ''}.`); }
           finally { delete S.busy.sheet; schedule(); }
@@ -883,15 +898,19 @@ Reply with only a JSON array, one object per trainee, for example:
         }
         case 'dl-raw': await downloadRaw(byId('quizzes', S.respQuiz)); break;
         case 'dl-scores': await downloadScores(byId('quizzes', S.scoreQuiz)); break;
-        case 'sheet-preview': openSheetPreview(byId('quizzes', S.scoreQuiz), 0); break;
-        case 'sheet-tab': openSheetPreview(byId('quizzes', S.scoreQuiz), Number(el.dataset.i)); break;
-        case 'make-gsheet': {
-          el.disabled = true;
-          $('gs-status').innerHTML = '<span class="pill busy">Creating the Google Sheet</span>';
+        case 'sheet-preview': openSheetPreview(byId('quizzes', S.scoreQuiz)); break;
+        case 'write-results': {
+          const q = byId('quizzes', S.scoreQuiz);
+          const ok = await ask('Add the results to the response sheet?', `The <b>${RESULTS_TAB}</b> tab will be ${q.resultsWrittenAt ? 'replaced with the latest scores' : 'added'} in ${q.sheetTitle ? `<b>${esc(q.sheetTitle)}</b>` : 'the response sheet'}. Anyone the sheet is shared with will see it. The Form Responses tab isn't changed.`, q.resultsWrittenAt ? 'Update tab' : 'Add tab');
+          if (ok !== true) { openSheetPreview(q); return; }
+          openSheetPreview(q);
+          $('gs-status').innerHTML = '<span class="pill busy">Writing to the response sheet</span>';
           try {
-            const g = await createGoogleSheet(byId('quizzes', S.scoreQuiz));
-            $('gs-status').innerHTML = `<div class="notice ok">Created "${esc(g.title)}" in your Google Drive (My Drive). ${g.url ? `<a href="${safeUrl(g.url)}" target="_blank" rel="noopener">Open it</a>, then move it to the right folder.` : 'Find it in My Drive and move it to the right folder.'}</div>`;
-          } catch (er) { $('gs-status').innerHTML = `<div class="notice bad">${esc(er.message)}</div>`; el.disabled = false; }
+            const r = await writeResults(q);
+            await put('quizzes', { ...clone(byId('quizzes', q.id)), resultsWrittenAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+            openSheetPreview(byId('quizzes', q.id));
+            $('gs-status').innerHTML = `<div class="notice ok">Wrote ${plural(r.rows, 'trainee')} to the ${RESULTS_TAB} tab. <a href="${safeUrl(r.url)}" target="_blank" rel="noopener">Open the sheet</a></div>`;
+          } catch (er) { $('gs-status').innerHTML = `<div class="notice bad">${esc(er.message)} Nothing else in the sheet was changed.</div>`; }
           break;
         }
         case 'jump': { const c = $(el.dataset.to); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
