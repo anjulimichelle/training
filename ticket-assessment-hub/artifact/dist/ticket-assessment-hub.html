@@ -851,7 +851,7 @@ function createQuizForm() {
   }
   const tmax = (t) => round1(QKEYS.reduce((a, k) => a + qpts(t)[k], 0));
   const DEFAULT_RULES = [
-    'ZTP, Response to C scores 0: the trainee refers to cleaners as Homeaglow\'s own, such as "our cleaners", "one of our top cleaners" or similar wording. Cleaners are independent contractors.',
+    'ZTP, Response to C scores 0: the trainee refers to cleaners as Homeaglow\'s own anywhere in the message to C, such as "our cleaners", "one of our top cleaners" or similar wording. No exceptions, even when the message goes on to say cleaners are independent. Cleaners are independent contractors.',
     'ZTP, CRM actions scores 0: the ticket requires an "Unsubscribe customer" CRM action and the trainee\'s CRM actions don\'t include it.',
   ].join('\n');
   const generalRules = () => { const r = settings().generalRules; return typeof r === 'string' ? r : DEFAULT_RULES; };
