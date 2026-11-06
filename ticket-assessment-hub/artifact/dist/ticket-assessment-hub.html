@@ -449,7 +449,7 @@ tr.detail > td { background: var(--bg); }
     const qs = quizzesSorted();
     return `<div class="split even">
       <section class="panel">
-        <div class="panel-head"><h2>${f.id ? 'Edit quiz' : 'New quiz'}</h2>${f.id ? '<button class="btn small ghost" type="button" data-act="new-quiz">Start a new quiz</button>' : ''}</div>
+        <div class="panel-head"><h2>${f.id ? 'Edit quiz' : 'New quiz'}</h2>${f.id ? `<span class="actions"><button class="btn small ghost" type="button" data-act="new-quiz">Start a new quiz</button><button class="btn small ghost danger" type="button" data-act="delete-quiz" data-id="${f.id}">Delete quiz</button></span>` : ''}</div>
         <div class="grid g2">
           <label class="field">Quiz title<input type="text" id="f-title" data-f="title" value="${esc(f.title)}" placeholder="Day 3 Ticket Quiz"></label>
           <label class="field">Quiz date<input type="date" id="f-date" data-f="date" value="${esc(f.date)}"></label>
@@ -469,7 +469,7 @@ tr.detail > td { background: var(--bg); }
           const n = new Set(store.responses.filter((r) => r.quizId === q.id).map((r) => r.email)).size;
           return `<li class="li"><span class="t">${esc(quizLabel(q))}</span><span class="s">${plural(q.tickets.length, 'ticket')} · ${n} of ${plural(q.traineeEmails.length, 'trainee')} answered</span>
                 <span class="tags">${q.googleFormUrl ? (q.formOutOfDate ? '<span class="tag warn">Google Form out of date</span>' : '<span class="tag ok">Google Form connected</span>') : '<span class="tag warn">Google Form not created yet</span>'}${q.sheetUrl ? '<span class="tag ok">Response sheet connected</span>' : ''}</span>
-            <span class="actions"><button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Google Form</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
+            <span class="actions"><button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Google Form</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button><button class="btn small ghost danger" type="button" data-act="delete-quiz" data-id="${q.id}">Delete</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
         }).join('')}</ul>` : '<div class="empty">No quizzes yet. Fill in the form on the left.</div>'}
       </section></div>`;
   }
@@ -970,6 +970,23 @@ Reply with only a JSON array, one object per trainee, for example:
         case 'modal-bg': case 'close-modal': closeModal(null); break;
         case 'ask-ok': closeModal($('ask-input') ? $('ask-input').value : true); break;
         case 'new-quiz': S.form = blankForm(); render(); break;
+        case 'delete-quiz': {
+          const q = byId('quizzes', el.dataset.id);
+          if (!q) return;
+          const nResp = store.responses.filter((r) => r.quizId === q.id).length;
+          const nGrades = store.grades.filter((g) => g.quizId === q.id).length;
+          const ok = await ask('Delete this quiz?', `<b>${esc(quizLabel(q))}</b> will be deleted from this page for everyone, with its ${plural(nResp, 'response')}, ${plural(nGrades, 'trainee score record')} and its scoring guidelines. This can't be undone.<br><br>Your Google Form and response sheet are not touched; delete them in Google Drive if you want them gone too.`, 'Delete quiz', true);
+          if (ok !== true) return;
+          for (const g of store.grades.filter((x) => x.quizId === q.id).slice()) await del('grades', g.id);
+          for (const r of store.responses.filter((x) => x.quizId === q.id).slice()) await del('responses', r.id);
+          await del('quizzes', q.id);
+          if (S.form && S.form.id === q.id) S.form = null;
+          ['respQuiz', 'scoreQuiz'].forEach((k) => { if (S[k] === q.id) S[k] = ''; });
+          q.tickets.forEach((t) => delete S.guide[t.id]);
+          render();
+          toast('Quiz deleted.');
+          break;
+        }
         case 'edit-quiz': S.form = formFromQuiz(byId('quizzes', el.dataset.id)); render(); scrollTo(0, 0); break;
         case 'preview': {
           const links = parseLinks(S.form.links);
