@@ -1,0 +1,16 @@
+{
+  "name": "ticket-assessment-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ticket Assessment & Scoring Hub for Care Specialist training (staging prototype)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node test/e2e.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
+    "exceljs": "^4.4.0"
+  }
+}

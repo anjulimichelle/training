@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket Assessment Hub</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-title">Ticket Assessment Hub</span>
+    <span class="badge badge-staging" title="Staging prototype. Nothing is sent to trainees.">Staging</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="builder">Quiz Builder</button>
+    <button role="tab" data-tab="responses">Quiz Responses</button>
+    <button role="tab" data-tab="evaluation">Evaluation &amp; Scoring</button>
+    <button role="tab" data-tab="dashboard">Performance Dashboard</button>
+  </nav>
+  <div class="topbar-right">
+    <span id="integrations" class="integrations"></span>
+    <button class="btn btn-ghost" data-action="open-setup">Setup</button>
+  </div>
+</header>
+<main id="app" class="app"><p class="muted pad">Loading…</p></main>
+<div id="modal-root"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/core.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
