@@ -1012,11 +1012,18 @@ Reply with only a JSON array, one object per trainee, for example:
         }
         case 'seed': el.disabled = true; await seed(); closeModal(); S.tab = 'score'; lsSet('tab', 'score'); render(); toast('Example loaded. Try scoring it.'); break;
         case 'reset': {
-          const p = await ask('Delete everything?', 'Every quiz, response and score on this page is deleted for everyone. Type <b>DELETE</b> to confirm.', 'Delete everything', true, 'Confirmation');
+          const p = await ask('Delete all quizzes and responses?', 'Every quiz, response and score on this page is deleted for everyone. Your Form Maker link stays, and nothing in Google Drive is touched. Type <b>DELETE</b> to confirm.', 'Delete everything', true, 'Type DELETE');
           if (p === null) return;
-          if (p.trim() !== 'DELETE') return toast('Nothing was deleted.', true);
-          for (const c of Object.keys(COLLS)) for (const x of store[c].slice()) await del(c, x.id);
-          S.form = null; render(); toast('Deleted.');
+          if (p.replace(/["'\s]/g, '').toUpperCase() !== 'DELETE') return toast('Nothing was deleted. Type the word DELETE in the box to confirm.', true);
+          let n = 0;
+          for (const c of ['grades', 'responses', 'quizzes']) for (const x of store[c].slice()) { await del(c, x.id); n++; }
+          // Records left by the first version of this page.
+          if (caps.db) {
+            for (const path of ['trainees', 'quizzes', 'submissions', 'evaluations']) {
+              try { const snap = await caps.db.collection(path).get(); for (const d of snap.docs) { await caps.db.collection(path).doc(d.id).delete(); n++; } } catch (_) { /* nothing there */ }
+            }
+          }
+          S.form = null; S.guide = {}; S.respQuiz = S.scoreQuiz = ''; render(); toast(`Deleted ${plural(n, 'record')}.`);
           break;
         }
       }
@@ -1072,7 +1079,7 @@ Reply with only a JSON array, one object per trainee, for example:
       el.value = '';
     }
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
   window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length) { e.preventDefault(); e.returnValue = ''; } });
 
   // =====================================================================
