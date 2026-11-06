@@ -145,6 +145,21 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
 .mk-status .busy::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--teal); margin-right: 8px; animation: pulse 1s infinite; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .foot { font-size: .82rem; color: var(--soft); max-width: 75ch; }
+
+/* About this tool */
+details.about { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0; }
+details.about > summary { cursor: pointer; padding: 14px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; list-style: none; display: flex; align-items: center; gap: 10px; }
+details.about > summary::-webkit-details-marker { display: none; }
+details.about > summary::before { content: "›"; color: var(--teal); font-size: 1.3rem; line-height: 1; transition: transform .15s; }
+details.about[open] > summary::before { transform: rotate(90deg); }
+details.about > summary .muted { font-family: var(--body); font-weight: 400; font-size: .88rem; }
+.about-body { padding: 0 14px 16px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.about-card { border-top: 1px solid var(--border); padding-top: 12px; min-width: 0; }
+.about-card h3 { font-size: .98rem; color: var(--teal); margin-bottom: 6px; }
+.about-card p, .about-card li { font-size: .9rem; margin: 0 0 6px; overflow-wrap: anywhere; }
+.about-card ul, .about-card ol { margin: 0; padding-left: 18px; }
+.about-card code { font-size: .85em; background: var(--teal-soft); color: var(--teal); padding: 1px 5px; border-radius: 4px; }
+.about-card a { color: var(--teal); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; } }
 </style>
 
@@ -212,6 +227,66 @@ details.sources summary { cursor: pointer; font-weight: 700; color: var(--soft);
       <p class="foot">Your original Google Slides are never edited. Nothing is saved, and your selection clears when you close or reload the page.</p>
     </aside>
   </div>
+
+  <details class="about" id="about">
+    <summary>About this tool and how it was built <span class="muted">What it reads, how topics are found, and what it never changes</span></summary>
+    <div class="about-body">
+      <section class="about-card">
+        <h3>What it is</h3>
+        <p>One place to find every topic in the New Hire Care Training decks, pick the ones a session needs, put them in order, and download them as a single presentation with speaker notes.</p>
+        <p>It replaces opening each day's deck and copying slides by hand.</p>
+      </section>
+      <section class="about-card">
+        <h3>Where the topics come from</h3>
+        <p>When the page opens, and each time you click <b>Refresh Slides</b>, it lists the presentations in the shared training decks folder in Google Drive and reads each deck's text. The list is always as current as the decks themselves.</p>
+        <p>To add a deck to the library, put it in that folder. Decks outside the folder don't appear.</p>
+      </section>
+      <section class="about-card">
+        <h3>How a topic is found</h3>
+        <ul>
+          <li>A topic starts at a slide whose top label reads <code>TOPIC 01 OF 08</code> (any numbers). The next line is the topic's title, and the line after it is the description.</li>
+          <li>The topic runs until the slide before the next topic's title slide. A closing "Thank you" slide is left out.</li>
+          <li>A topic is missing? Its first slide is probably missing that label. Add it to the slide, then click Refresh Slides.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>How the combined deck is made</h3>
+        <ol>
+          <li>The page downloads each deck you picked from as a .pptx through Google Drive.</li>
+          <li>In your browser, it copies the chosen slides, with their speaker notes, layouts and images, into one file in your order.</li>
+          <li>You save the file and drag it into Google Drive to open it in Google Slides.</li>
+        </ol>
+        <p>Decks over the Google Drive connector's 16 MB limit use a compressed copy kept in a separate folder. A copy is used only if it is at least as new as the deck. Otherwise the page says so and names the deck.</p>
+      </section>
+      <section class="about-card">
+        <h3>Your access and your data</h3>
+        <ul>
+          <li>It reads Google Drive with <b>your own</b> connection, so you only see decks you can open.</li>
+          <li>It only reads. Your Google Slides are never edited, moved or shared.</li>
+          <li>Nothing is stored. Your selection clears when you close or reload the page.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>How it was built</h3>
+        <ul>
+          <li>Built with Claude as a single web page published as a claude.ai artifact, for the New Hire Care Training team.</li>
+          <li>Reads Google Drive through the claude.ai Google Drive connector (search files, read file content, download file content).</li>
+          <li>Builds the .pptx in the browser with the open-source JSZip library. No server stores or sees your slides.</li>
+          <li>The page's source is kept in the <code>agenda-library</code> folder of the training GitHub repository, alongside the scripts that build the decks.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>Terms used on this page</h3>
+        <dl style="margin:0">
+          <dt><b>Deck</b></dt><dd style="margin:0 0 6px">A Google Slides presentation in the training decks folder, such as one training day.</dd>
+          <dt><b>Topic</b></dt><dd style="margin:0 0 6px">A run of slides that starts at a "TOPIC NN OF NN" title slide.</dd>
+          <dt><b>.pptx</b></dt><dd style="margin:0 0 6px">The PowerPoint file format. Google Slides opens it when you drag it into Google Drive.</dd>
+          <dt><b>Connector</b></dt><dd style="margin:0 0 6px">Your claude.ai link to Google Drive, set in Settings › Connectors. The page reads Drive through it.</dd>
+          <dt><b>Compressed copy</b></dt><dd style="margin:0">A smaller .pptx of a deck that is too large to download through the connector, used only when it is up to date.</dd>
+        </dl>
+      </section>
+    </div>
+  </details>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
