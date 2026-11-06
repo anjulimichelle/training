@@ -270,6 +270,10 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
 .qchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .qchip { font-size: .78rem; padding: 2px 8px; border-radius: 6px; background: var(--warn-soft); color: var(--warn); }
 .qchip.full { background: var(--ok-soft); color: var(--ok); }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; }
+.check input { margin-top: 3px; accent-color: var(--teal); }
+.ztp { background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 6px 10px; font-size: .88rem; }
+.ztp ul { margin: 2px 0 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
@@ -390,6 +394,7 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
     respQuiz: lsGet('respQuiz') || '',
     scoreQuiz: lsGet('scoreQuiz') || '',
     guide: {},
+    rulesDraft: null,
     open: {},
     busy: {},
   };
@@ -845,7 +850,22 @@ function createQuizForm() {
     return o;
   }
   const tmax = (t) => round1(QKEYS.reduce((a, k) => a + qpts(t)[k], 0));
-  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}`);
+  const DEFAULT_RULES = [
+    'ZTP, Response to C scores 0: the trainee refers to cleaners as Homeaglow\'s own, such as "our cleaners", "one of our top cleaners" or similar wording. Cleaners are independent contractors.',
+    'ZTP, CRM actions scores 0: the ticket requires an "Unsubscribe customer" CRM action and the trainee\'s CRM actions don\'t include it.',
+  ].join('\n');
+  const generalRules = () => { const r = settings().generalRules; return typeof r === 'string' ? r : DEFAULT_RULES; };
+  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}|${t.requiresUnsub ? 'unsub' : ''}|${generalRules().trim()}`);
+  // Page-side checks that back up the two ZTP rules, so they don't rely on Claude alone.
+  const OUR_CLEANERS = /\bour\s+(?:[a-z-]+\s+){0,3}(?:cleaners?|cleaning\s+(?:pros?|professionals?)|pros|professionals|housekeepers?|maids?)\b/i;
+  const UNSUB = /\bunsubscri(?:be|bed|bing|ption)\b/i;
+  function codeZtp(t, ans) {
+    const out = [];
+    const m = OUR_CLEANERS.exec(String(ans.q3 || ''));
+    if (m) out.push({ q: 'q3', reason: `Called cleaners Homeaglow's own ("${m[0]}"). Cleaners are independent contractors.` });
+    if (t.requiresUnsub && !UNSUB.test(String(ans.q2 || ''))) out.push({ q: 'q2', reason: 'Missed the required "Unsubscribe customer" CRM action.' });
+    return out;
+  }
   const gradeId = (q, email) => `${q.id}__${email}`.replace(/[^A-Za-z0-9_\-.~:@+]/g, '_');
 
   function cellState(q, t, resp) {
@@ -860,7 +880,7 @@ function createQuizForm() {
 
   function guideDirty(t, ed) {
     const cur = qpts(t);
-    return ed.guidelines !== t.guidelines || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k]));
+    return ed.guidelines !== t.guidelines || !!ed.unsub !== !!t.requiresUnsub || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k]));
   }
 
   function renderScore() {
@@ -873,7 +893,7 @@ function createQuizForm() {
     const anyBusy = q.tickets.some((t) => S.busy[q.id + t.id]);
 
     const guides = q.tickets.map((t, i) => {
-      const ed = S.guide[t.id] || { qp: qpts(t), guidelines: t.guidelines };
+      const ed = S.guide[t.id] || { qp: qpts(t), guidelines: t.guidelines, unsub: !!t.requiresUnsub };
       const dirty = guideDirty(t, ed);
       const edTotal = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
       const todo = todoOf(t);
@@ -884,6 +904,7 @@ function createQuizForm() {
         <div class="ticket-head"><span class="ticket-name">Ticket ${i + 1}</span>${t.url ? `<a class="ticket-url" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>` : '<span class="ticket-url muted">No link (imported quiz)</span>'}
           <span class="small">Ticket total: <b id="tot-${t.id}">${edTotal}</b> points</span></div>
         <div class="qpts">${QUESTIONS.map((qq) => `<label class="qp-row" for="qp-${t.id}-${qq.key}"><span>${esc(qq.label)}</span><span class="qp-in"><input type="number" min="0" step="0.5" id="qp-${t.id}-${qq.key}" data-g="${t.id}" data-k="${qq.key}" value="${esc(ed.qp[qq.key])}"> pts</span></label>`).join('')}</div>
+        <label class="check"><input type="checkbox" id="un-${t.id}" data-g="${t.id}" data-k="unsub" ${ed.unsub ? 'checked' : ''}> This ticket requires an <b>"Unsubscribe customer"</b> CRM action <span class="muted small">(missing it is a ZTP: CRM actions scores 0)</span></label>
         <label class="field">More context and scoring guidance <span class="opt">correct resolution, required actions and amounts, what earns each question's points, deductions, when N/A is correct</span>
           <textarea id="gd-${t.id}" data-g="${t.id}" data-k="guidelines" rows="5" placeholder="Example: Correct resolution is a 25% partial refund ($30). CRM actions must include an internal note, the $30 partial refund, and a lateness flag on the CP with the arrival time. Deduct 2 from CRM actions if the refund amount is missing. Message to CP: N/A is wrong here.">${esc(ed.guidelines)}</textarea></label>
         <div class="actions">
@@ -898,7 +919,7 @@ function createQuizForm() {
       ${sums.map((x) => `<tr class="click" data-act="jump" data-to="card-${esc(cardId(x.r))}"><td><b>${esc(x.r.name)}</b><div class="small muted">${esc(x.r.email)}</div></td>
           ${x.cells.map((c) => `<td class="num">${c.state === 'none' ? '<span class="muted">—</span>' : `${c.score}${c.state === 'stale' ? '<div><span class="tag warn" title="Scored with older guidelines">old</span></div>' : ''}${c.adjusted ? '<div><span class="tag" title="Adjusted by a trainer">adjusted</span></div>' : ''}`}</td>`).join('')}
           <td class="num"><b>${x.scored ? x.sum : '—'}</b>${x.scored && !x.complete ? '<div class="small muted">partial</div>' : ''}</td><td class="num">${x.complete && total ? x.pct + '%' : '—'}</td>
-          <td style="white-space:nowrap">${x.errorCount ? `<span class="tag bad">${plural(x.errorCount, 'error')}</span>` : x.scored ? '<span class="tag ok">None</span>' : ''}</td></tr>`).join('')}
+          <td style="white-space:nowrap">${x.ztpCount ? `<span class="tag bad">${plural(x.ztpCount, 'ZTP')}</span> ` : ''}${x.errorCount ? `<span class="tag bad">${plural(x.errorCount, 'error')}</span>` : x.scored ? '<span class="tag ok">None</span>' : ''}</td></tr>`).join('')}
       </tbody></table></div>` : '<div class="empty">No responses for this quiz yet. Get them in tab 2.</div>';
     const cards = sums.map((x) => summaryCard(q, x)).join('');
 
@@ -907,6 +928,9 @@ function createQuizForm() {
         <div class="actions"><button class="btn primary" type="button" data-act="score-all" ${allTodo && !anyBusy && caps.sample ? '' : 'disabled'}>${anyBusy ? '<span class="spin"></span> Scoring' : `Score everything not up to date (${allTodo})`}</button>
         <button class="btn" type="button" data-act="sheet-preview" ${resp.length ? '' : 'disabled'}>Write results to response sheet</button></div></div>
         ${caps.sample === null ? '<div class="notice warn">Claude scoring isn\'t available in this view. Open the page in claude.ai.</div>' : ''}</section>
+      <section class="panel"><div class="panel-head"><div><h2>General scoring rules</h2><p class="small muted" style="margin:2px 0 0">Apply to every ticket in every quiz. A rule marked ZTP (zero-tolerance policy) sets that question to 0. Changing these marks all scores out of date until you re-score.</p></div></div>
+        <textarea id="rules" data-rules="1" rows="4" aria-label="General scoring rules">${esc(S.rulesDraft != null ? S.rulesDraft : generalRules())}</textarea>
+        <div class="actions"><button class="btn small ${S.rulesDraft != null && S.rulesDraft !== generalRules() ? 'primary' : ''}" type="button" data-act="save-rules" ${S.rulesDraft != null && S.rulesDraft !== generalRules() ? '' : 'disabled'}>Save general rules</button><span class="small muted">The page also checks two things itself: "our cleaners"-type wording in the response to C, and a missing unsubscribe when a ticket requires it.</span></div></section>
       <section class="panel"><div><h2>Points and guidelines per ticket</h2><p class="small muted" style="margin:2px 0 0">Claude scores each ticket against only what you write here. When you change a ticket's points or guidelines, its scores are marked out of date until you re-score. Re-scoring updates the scores, mistakes, areas for improvement and feedback.</p></div>${guides}</section>
       <section class="panel"><div><h2>Score overview</h2><p class="small muted" style="margin:2px 0 0">Click a trainee to jump to their summary.</p></div>${table}</section>
       ${resp.length ? `<section class="panel"><div><h2>Trainee summaries</h2><p class="small muted" style="margin:2px 0 0">Each trainee's score, where they went wrong on each ticket, and what to work on.</p></div><div class="grid" style="gap:14px">${cards}</div></section>` : ''}
@@ -925,7 +949,7 @@ function createQuizForm() {
       areas: ov.areas || g.ai.improvements || [],
       feedback: g.ai.feedback || '', note: ov.note || '', needsReview: !!g.ai.needsReview,
       adjusted: ov.score != null, override: g.override, gradedAt: g.ai.gradedAt,
-      qmax: qpts(t), aiQ: g.ai.qscores || null,
+      qmax: qpts(t), aiQ: g.ai.qscores || null, ztp: g.ai.ztp || [],
       qscores: g.ai.qscores ? QKEYS.reduce((o, k) => ((o[k] = ov.qscores && ov.qscores[k] != null ? ov.qscores[k] : g.ai.qscores[k]), o), {}) : null,
     };
   }
@@ -935,7 +959,8 @@ function createQuizForm() {
     const total = q.tickets.reduce((a, t) => a + (tmax(t)), 0);
     const sum = round1(done.reduce((a, c) => a + c.score, 0));
     const areas = [];
-    cells.forEach((c, i) => c.areas.forEach((a) => {
+    const ztpArea = (z) => (/unsubscri/i.test(z.reason) ? 'Always add the "Unsubscribe customer" CRM action when the ticket calls for it (ZTP)' : z.q === 'q3' && /cleaner|contractor|our /i.test(z.reason) ? 'Never call cleaners "our cleaners"; they are independent contractors (ZTP)' : `Avoid the ZTP in ${QSHORT[z.q]}: ${z.reason}`);
+    cells.forEach((c, i) => [...(c.ztp || []).map(ztpArea), ...c.areas].forEach((a) => {
       const k = a.trim().toLowerCase().replace(/[.\s]+$/, '');
       const hit = areas.find((x) => x.k === k);
       if (hit) { if (!hit.tickets.includes(i + 1)) hit.tickets.push(i + 1); } else areas.push({ k, text: a.trim(), tickets: [i + 1] });
@@ -944,7 +969,8 @@ function createQuizForm() {
       r, cells, sum, total, scored: done.length > 0, complete: done.length === cells.length,
       pct: total ? round1((sum / total) * 100) : 0,
       stale: cells.some((c) => c.state === 'stale'),
-      errorCount: done.reduce((a, c) => a + c.errors.length, 0),
+      errorCount: done.reduce((a, c) => a + c.errors.length + (c.ztp || []).length, 0),
+      ztpCount: done.reduce((a, c) => a + (c.ztp || []).length, 0),
       areas,
     };
   }
@@ -963,8 +989,9 @@ function createQuizForm() {
       return `<div class="trow">
         <div class="trow-h"><b>Ticket ${i + 1}</b><span class="tscore ${c.score >= c.max ? 'full' : ''}">${c.score} / ${c.max}</span>
           <span class="tags">${c.state === 'stale' ? '<span class="tag warn">Older guidelines</span>' : ''}${c.needsReview ? '<span class="tag warn">Claude unsure, check this</span>' : ''}${c.adjusted ? `<span class="tag">Adjusted from Claude's ${c.aiScore}</span>` : ''}</span></div>
+        ${(c.ztp || []).length ? `<div class="ztp"><b>ZTP</b><ul class="plain">${c.ztp.map((z) => `<li>${esc(QSHORT[z.q])} set to 0: ${esc(z.reason)}</li>`).join('')}</ul></div>` : ''}
         ${c.qscores ? `<div class="qchips">${QKEYS.map((k) => `<span class="qchip ${c.qscores[k] >= c.qmax[k] ? 'full' : ''}">${QSHORT[k]} <b>${c.qscores[k]} / ${c.qmax[k]}</b></span>`).join('')}</div>` : ''}
-        ${c.errors.length ? `<ul class="plain wrong">${c.errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>` : '<div class="small" style="color:var(--ok);font-weight:700">Nothing wrong on this ticket.</div>'}
+        ${c.errors.length ? `<ul class="plain wrong">${c.errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>` : ((c.ztp || []).length ? '' : '<div class="small" style="color:var(--ok);font-weight:700">Nothing wrong on this ticket.</div>')}
         ${c.feedback ? `<div class="small muted"><b>Feedback:</b> ${esc(c.feedback)}</div>` : ''}${c.note ? `<div class="small"><b>Trainer note:</b> ${esc(c.note)}</div>` : ''}
         <div class="actions" style="gap:6px">
           <details class="block mini"><summary class="small">Answers</summary><div class="body" style="gap:4px">${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label)}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</div></details>
@@ -1001,8 +1028,12 @@ Ticket ${n}${t.url ? ': ' + t.url + ' (you cannot open this link; rely only on t
 Points available: ${max}, split by question:
 ${QUESTIONS.map((qq) => `- ${qq.key} "${qq.label}": ${qp[qq.key]} points`).join('\n')}
 
+<general_rules>
+${generalRules().trim() || '(none)'}
+</general_rules>
+
 <trainer_guidelines>
-${t.guidelines.trim()}
+${t.guidelines.trim()}${t.requiresUnsub ? '\nThis ticket requires an "Unsubscribe customer" CRM action.' : ''}
 </trainer_guidelines>
 
 Rules:
@@ -1021,10 +1052,11 @@ Rules:
 Answers:
 ${part.map((r) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<trainee id="${r.id}">\n${QUESTIONS.map((qq) => `${qq.label}\n${String(a[qq.key] || '').trim() || '(blank)'}`).join('\n\n')}\n</trainee>`; }).join('\n')}
 
+- The general rules apply to every ticket. When a general rule says a question scores 0 (a ZTP), set that question to 0 and add {"question": "q1".."q4", "reason": "…"} to "ztp", quoting the trainee's words where it helps. Otherwise "ztp" is an empty list.
 - In "errors", start each item with the question it belongs to, for example "CRM actions: didn't state the refund amount".
 
 Reply with only a JSON array, one object per trainee, for example:
-[{"id":"resp_x","questionScores":{"q1":2,"q2":2.5,"q3":2,"q4":2},"errors":["CRM actions: didn't state the refund amount"],"improvements":["State the exact refund amount"],"feedback":"…","needsReview":false}]`;
+[{"id":"resp_x","questionScores":{"q1":2,"q2":2.5,"q3":2,"q4":2},"errors":["CRM actions: didn't state the refund amount"],"improvements":["State the exact refund amount"],"ztp":[],"feedback":"…","needsReview":false}]`;
       let out;
       try { out = await caps.sample.json(prompt, { modelTier: 'default', cache: false }); }
       catch (e) {
@@ -1038,11 +1070,17 @@ Reply with only a JSON array, one object per trainee, for example:
       for (const r of part) {
         const got = list.find((x) => x && x.id === r.id);
         const qs = got && got.questionScores && typeof got.questionScores === 'object' ? QKEYS.reduce((o, k) => { let v = Number(got.questionScores[k]); if (!Number.isFinite(v)) v = 0; o[k] = Math.max(0, Math.min(qp[k], Math.round(v * 2) / 2)); return o; }, {}) : null;
+        const ans = (r.answers || []).find((x) => x.ticketId === t.id) || {};
+        const ztp = [];
+        const addZ = (q, reason, by) => { if (QKEYS.includes(q) && !ztp.some((z) => z.q === q && z.reason === reason)) ztp.push({ q, reason: String(reason || 'Zero-tolerance rule broken.'), by }); };
+        (got && Array.isArray(got.ztp) ? got.ztp : []).forEach((z) => z && addZ(String(z.question || z.q || ''), z.reason, 'claude'));
+        codeZtp(t, ans).forEach((z) => { if (!ztp.some((x) => x.q === z.q)) addZ(z.q, z.reason, 'check'); });
+        if (qs) ztp.forEach((z) => (qs[z.q] = 0));
         let score = qs ? QKEYS.reduce((a, k) => a + qs[k], 0) : got ? Number(got.score) : 0;
         if (!Number.isFinite(score)) score = 0;
         score = Math.max(0, Math.min(max, Math.round(score * 2) / 2));
         const ai = got
-          ? { score, qscores: qs, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
+          ? { score, qscores: qs, ztp, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
           : { score: 0, errors: [], improvements: [], feedback: 'Claude didn\'t return a score for this trainee. Re-score, or adjust by hand.', needsReview: true, guideHash: gh, responseId: r.id, gradedAt: now };
         const id = gradeId(q, r.email);
         const doc = clone(byId('grades', id) || { id, quizId: q.id, email: r.email, tickets: {} });
@@ -1095,6 +1133,7 @@ Reply with only a JSON array, one object per trainee, for example:
       row[`Total (out of ${total})`] = x.scored ? x.sum : '';
       row['Score (%)'] = x.complete && total ? x.pct : '';
       row['Points by question'] = perTicket(x.cells, (c) => (c.qscores ? QKEYS.map((k) => `${QSHORT[k]} ${c.qscores[k]}/${c.qmax[k]}`).join(', ') : ''));
+      row.ZTPs = perTicket(x.cells, (c) => (c.ztp || []).map((z) => `${QSHORT[z.q]} set to 0: ${z.reason}`).join('; '));
       row['What they got wrong'] = perTicket(x.cells, (c) => c.errors.join('; '));
       row['Areas for improvement'] = x.areas.map((a) => `${a.text} (Ticket ${a.tickets.join(', ')})`).join('\n');
       row.Feedback = perTicket(x.cells, (c) => c.feedback);
@@ -1102,7 +1141,7 @@ Reply with only a JSON array, one object per trainee, for example:
       row.Status = !x.scored ? 'Not scored' : !x.complete ? 'Partly scored' : x.stale ? 'Some scores use older guidelines' : 'Scored';
       return row;
     });
-    return { file: `${slug(q.title)}-${q.date}-scoring-results.xlsx`, sheets: [{ name: RESULTS_TAB, rows, wide: ['Points by question', 'What they got wrong', 'Areas for improvement', 'Feedback', 'Trainer notes'] }] };
+    return { file: `${slug(q.title)}-${q.date}-scoring-results.xlsx`, sheets: [{ name: RESULTS_TAB, rows, wide: ['Points by question', 'ZTPs', 'What they got wrong', 'Areas for improvement', 'Feedback', 'Trainer notes'] }] };
   }
 
   function workbookBytes(rep) {
@@ -1411,6 +1450,14 @@ Reply with only a JSON array, one object per trainee, for example:
           break;
         }
         case 'jump': { const c = $(el.dataset.to); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
+        case 'save-rules': {
+          const v = $('rules').value;
+          await put('settings', { ...settings(), id: 'main', generalRules: v, rulesUpdatedAt: new Date().toISOString(), rulesUpdatedBy: me && me.id });
+          S.rulesDraft = null;
+          render();
+          toast('General rules saved. Re-score to apply them.');
+          break;
+        }
         case 'save-guide': {
           const q = clone(byId('quizzes', S.scoreQuiz));
           const t = q.tickets.find((x) => x.id === el.dataset.id);
@@ -1420,7 +1467,7 @@ Reply with only a JSON array, one object per trainee, for example:
           for (const k of QKEYS) { const v = Number(ed.qp[k]); if (!(v >= 0)) return toast(`Points for "${QSHORT[k]}" must be 0 or more.`, true); qp[k] = v; }
           const tot = round1(QKEYS.reduce((a, k) => a + qp[k], 0));
           if (!(tot > 0)) return toast('Give at least one question some points.', true);
-          t.qpoints = qp; t.points = tot; t.guidelines = ed.guidelines; t.updatedAt = new Date().toISOString();
+          t.qpoints = qp; t.points = tot; t.guidelines = ed.guidelines; t.requiresUnsub = !!ed.unsub; t.updatedAt = new Date().toISOString();
           await put('quizzes', q);
           delete S.guide[t.id];
           render();
@@ -1515,11 +1562,18 @@ Reply with only a JSON array, one object per trainee, for example:
       if (el.dataset.f === 'emails') $('f-emails-note').innerHTML = emailNote(parseEmails(el.value));
       return;
     }
+    if (el.dataset.rules) {
+      S.rulesDraft = el.value;
+      const b = document.querySelector('[data-act="save-rules"]');
+      const dirty = el.value !== generalRules();
+      if (b) { b.disabled = !dirty; b.classList.toggle('primary', dirty); }
+      return;
+    }
     if (el.dataset.g) {
       const q = byId('quizzes', S.scoreQuiz);
       const t = q.tickets.find((x) => x.id === el.dataset.g);
-      const ed = S.guide[t.id] || (S.guide[t.id] = { qp: qpts(t), guidelines: t.guidelines });
-      if (el.dataset.k === 'guidelines') ed.guidelines = el.value; else ed.qp[el.dataset.k] = el.value;
+      const ed = S.guide[t.id] || (S.guide[t.id] = { qp: qpts(t), guidelines: t.guidelines, unsub: !!t.requiresUnsub });
+      if (el.dataset.k === 'guidelines') ed.guidelines = el.value; else if (el.dataset.k === 'unsub') ed.unsub = el.checked; else ed.qp[el.dataset.k] = el.value;
       const tot = $('tot-' + t.id);
       if (tot) tot.textContent = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
       const dirty = guideDirty(t, ed);
@@ -1547,7 +1601,7 @@ Reply with only a JSON array, one object per trainee, for example:
     }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
-  window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || (S.rulesDraft != null && S.rulesDraft !== generalRules())) { e.preventDefault(); e.returnValue = ''; } });
 
   // =====================================================================
   // Boot
