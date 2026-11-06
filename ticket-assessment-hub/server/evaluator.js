@@ -69,7 +69,8 @@ async function evaluateSubmission(quiz, submission) {
   const byTicket = new Map(submission.answers.map((a) => [a.ticketId, a]));
   const usage = [];
   let model = mode === 'claude' ? MODEL() : 'heuristic-v1 (not AI)';
-  const tickets = await Promise.all(
+  // allSettled: wait for every ticket so no request is still in flight when a failure is reported.
+  const settled = await Promise.allSettled(
     quiz.tickets.map(async (t, i) => {
       const ans = byTicket.get(t.id) || { q1: '', q2: '', q3: '', q4: '' };
       if (mode === 'claude') {
@@ -81,6 +82,9 @@ async function evaluateSubmission(quiz, submission) {
       return core.normalizeTicketEval(t, core.heuristicEvaluateTicket(t, ans), i + 1);
     })
   );
+  const failed = settled.find((r) => r.status === 'rejected');
+  if (failed) throw failed.reason;
+  const tickets = settled.map((r) => r.value);
   return {
     evaluator: mode,
     model,
