@@ -395,6 +395,7 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
     scoreQuiz: lsGet('scoreQuiz') || '',
     guide: {},
     rulesDraft: null,
+    commsDraft: null,
     open: {},
     busy: {},
   };
@@ -854,8 +855,15 @@ function createQuizForm() {
     'ZTP, Response to C scores 0: the trainee refers to cleaners as Homeaglow\'s own anywhere in the message to C, such as "our cleaners", "one of our top cleaners" or similar wording. No exceptions, even when the message goes on to say cleaners are independent. Cleaners are independent contractors.',
     'ZTP, CRM actions scores 0: the ticket requires an "Unsubscribe customer" CRM action and the trainee\'s CRM actions don\'t include it.',
   ].join('\n');
+  const DEFAULT_COMMS = [
+    'Casual, friendly, concise and American in tone.',
+    'Not salesy, transactional or corporate sounding.',
+    'Empathize and apologize when there is a cleaning or service issue.',
+    "Don't apologize for, or acknowledge frustration about, standard membership terms or valid charges.",
+  ].join('\n');
+  const commsGuide = () => { const r = settings().commsGuidance; return typeof r === 'string' ? r : DEFAULT_COMMS; };
   const generalRules = () => { const r = settings().generalRules; return typeof r === 'string' ? r : DEFAULT_RULES; };
-  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}|${t.requiresUnsub ? 'unsub' : ''}|${generalRules().trim()}`);
+  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}|${t.requiresUnsub ? 'unsub' : ''}|${generalRules().trim()}|${commsGuide().trim()}`);
   // Page-side checks that back up the two ZTP rules, so they don't rely on Claude alone.
   const OUR_CLEANERS = /\bour\s+(?:[a-z-]+\s+){0,3}(?:cleaners?|cleaning\s+(?:pros?|professionals?)|pros|professionals|housekeepers?|maids?)\b/i;
   const UNSUB = /\bunsubscri(?:be|bed|bing|ption)\b/i;
@@ -878,6 +886,9 @@ function createQuizForm() {
     return { state: stale ? 'stale' : 'ok', c, score: Math.min(max, raw), max };
   }
 
+  function rulesDirty() {
+    return (S.rulesDraft != null && S.rulesDraft !== generalRules()) || (S.commsDraft != null && S.commsDraft !== commsGuide());
+  }
   function guideDirty(t, ed) {
     const cur = qpts(t);
     return ed.guidelines !== t.guidelines || !!ed.unsub !== !!t.requiresUnsub || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k]));
@@ -929,8 +940,11 @@ function createQuizForm() {
         <button class="btn" type="button" data-act="sheet-preview" ${resp.length ? '' : 'disabled'}>Write results to response sheet</button></div></div>
         ${caps.sample === null ? '<div class="notice warn">Claude scoring isn\'t available in this view. Open the page in claude.ai.</div>' : ''}</section>
       <section class="panel"><div class="panel-head"><div><h2>General scoring rules</h2><p class="small muted" style="margin:2px 0 0">Apply to every ticket in every quiz. A rule marked ZTP (zero-tolerance policy) sets that question to 0. Changing these marks all scores out of date until you re-score.</p></div></div>
-        <textarea id="rules" data-rules="1" rows="4" aria-label="General scoring rules">${esc(S.rulesDraft != null ? S.rulesDraft : generalRules())}</textarea>
-        <div class="actions"><button class="btn small ${S.rulesDraft != null && S.rulesDraft !== generalRules() ? 'primary' : ''}" type="button" data-act="save-rules" ${S.rulesDraft != null && S.rulesDraft !== generalRules() ? '' : 'disabled'}>Save general rules</button><span class="small muted">The page also checks two things itself: "our cleaners"-type wording in the response to C, and a missing unsubscribe when a ticket requires it.</span></div></section>
+        <div class="grid g2" style="align-items:start">
+          <label class="field">Zero-tolerance and other rules<textarea id="rules" data-rules="rules" rows="8">${esc(S.rulesDraft != null ? S.rulesDraft : generalRules())}</textarea></label>
+          <label class="field">Communication guidance <span class="opt">used to score the response to C and the message to CP</span><textarea id="comms" data-rules="comms" rows="8">${esc(S.commsDraft != null ? S.commsDraft : commsGuide())}</textarea></label>
+        </div>
+        <div class="actions"><button class="btn small ${rulesDirty() ? 'primary' : ''}" type="button" data-act="save-rules" ${rulesDirty() ? '' : 'disabled'}>Save general rules</button><span class="small muted">The page also checks two things itself: "our cleaners"-type wording in the response to C, and a missing unsubscribe when a ticket requires it.</span></div></section>
       <section class="panel"><div><h2>Points and guidelines per ticket</h2><p class="small muted" style="margin:2px 0 0">Claude scores each ticket against only what you write here. When you change a ticket's points or guidelines, its scores are marked out of date until you re-score. Re-scoring updates the scores, mistakes, areas for improvement and feedback.</p></div>${guides}</section>
       <section class="panel"><div><h2>Score overview</h2><p class="small muted" style="margin:2px 0 0">Click a trainee to jump to their summary.</p></div>${table}</section>
       ${resp.length ? `<section class="panel"><div><h2>Trainee summaries</h2><p class="small muted" style="margin:2px 0 0">Each trainee's score, where they went wrong on each ticket, and what to work on.</p></div><div class="grid" style="gap:14px">${cards}</div></section>` : ''}
@@ -1032,6 +1046,10 @@ ${QUESTIONS.map((qq) => `- ${qq.key} "${qq.label}": ${qp[qq.key]} points`).join(
 ${generalRules().trim() || '(none)'}
 </general_rules>
 
+<communication_guidance>
+${commsGuide().trim() || '(none)'}
+</communication_guidance>
+
 <trainer_guidelines>
 ${t.guidelines.trim()}${t.requiresUnsub ? '\nThis ticket requires an "Unsubscribe customer" CRM action.' : ''}
 </trainer_guidelines>
@@ -1041,7 +1059,8 @@ Rules:
 - When the guidelines say N/A is the correct answer to a question, an N/A answer earns full points for it.
 - Judge whether the actions and resolution are correct, not whether the wording matches. Accept different wording that reaches the same correct outcome.
 - Trainees were told to be specific: the kind of refund, the exact amount or duration, and what to include when flagging a C or CP. Missing specifics that the guidelines require count as errors.
-- Don't take points off for tone or grammar unless the guidelines say to.
+- Score the tone and wording of the response to C (q3) and the message to CP (q4) against the communication guidance, within those questions' points. Name any tone problem in "errors", for example "Response to C: sounds salesy" or "Response to C: apologized for a valid charge". An N/A answer that the guidelines say is correct isn't judged on tone.
+- Don't take points off for spelling or grammar unless they make the message unclear or the guidelines say to.
 - Don't invent policy, refund amounts or required actions that the guidelines don't state.
 - "errors" lists each specific mistake or missing required item, in plain words a trainer can read to the trainee. Empty list if none.
 - "improvements" lists 1 to 3 short areas for improvement, written as actions the trainee should take next time (for example "State the exact refund amount"). Empty list if the answer earned full points.
@@ -1456,9 +1475,9 @@ Reply with only a JSON array, one object per trainee, for example:
         }
         case 'jump': { const c = $(el.dataset.to); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
         case 'save-rules': {
-          const v = $('rules').value;
-          await put('settings', { ...settings(), id: 'main', generalRules: v, rulesUpdatedAt: new Date().toISOString(), rulesUpdatedBy: me && me.id });
+          await put('settings', { ...settings(), id: 'main', generalRules: $('rules').value, commsGuidance: $('comms').value, rulesUpdatedAt: new Date().toISOString(), rulesUpdatedBy: me && me.id });
           S.rulesDraft = null;
+          S.commsDraft = null;
           render();
           toast('General rules saved. Re-score to apply them.');
           break;
@@ -1568,9 +1587,9 @@ Reply with only a JSON array, one object per trainee, for example:
       return;
     }
     if (el.dataset.rules) {
-      S.rulesDraft = el.value;
+      if (el.dataset.rules === 'comms') S.commsDraft = el.value; else S.rulesDraft = el.value;
       const b = document.querySelector('[data-act="save-rules"]');
-      const dirty = el.value !== generalRules();
+      const dirty = rulesDirty();
       if (b) { b.disabled = !dirty; b.classList.toggle('primary', dirty); }
       return;
     }
@@ -1606,7 +1625,7 @@ Reply with only a JSON array, one object per trainee, for example:
     }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
-  window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || (S.rulesDraft != null && S.rulesDraft !== generalRules())) { e.preventDefault(); e.returnValue = ''; } });
+  window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || rulesDirty()) { e.preventDefault(); e.returnValue = ''; } });
 
   // =====================================================================
   // Boot
