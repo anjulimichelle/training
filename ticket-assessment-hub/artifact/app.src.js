@@ -11,7 +11,9 @@
     "Be detailed/specific with your actions (ie. indicate what kind of refund you'll do and indicate the exact amount you or duration you will refund / If the process requires you to flag a C/CP, indicate additional information you should include when flagging the user if required by the system).",
     'These are all live tickets. DO NOT make any changes or clear any action item on the live ticket.',
   ];
-  const COLLS = { quizzes: 'tq_quizzes', responses: 'tq_responses', grades: 'tq_grades' };
+  const COLLS = { quizzes: 'tq_quizzes', responses: 'tq_responses', grades: 'tq_grades', settings: 'tq_settings' };
+  const DRIVE = 'Google Drive';
+  const FORM_MAKER_SCRIPT = /*__FORM_MAKER__*/'';
   const SHEETS = 'Google Sheets';
   const BATCH = 12; // trainees scored per Claude call for one ticket
 
@@ -26,12 +28,16 @@
   const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
   const fmtDate = (iso) => { if (!iso) return ''; const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso); return isNaN(d) ? esc(iso) : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); };
   const fmtDT = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? esc(iso) : d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+  const shortDate = (iso) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? `${Number(m[2])}.${Number(m[3])}.${m[1].slice(2)}` : ''; };
+  const formTitle = (q) => `${q.title}${q.date ? ' (' + shortDate(q.date) + ')' : ''}`;
+  const settings = () => store.settings.find((x) => x.id === 'main') || {};
+  const b64url = (str) => btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const quizLabel = (q) => `${q.title || 'Untitled quiz'}${q.date ? ' · ' + fmtDate(q.date) : ''}`;
   function lsGet(k) { try { return localStorage.getItem('tq.' + k); } catch (_) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem('tq.' + k, v); } catch (_) { /* ignore */ } }
 
   // ---------- state ----------
-  const store = { quizzes: [], responses: [], grades: [] };
+  const store = { quizzes: [], responses: [], grades: [], settings: [] };
   const caps = { db: undefined, sample: undefined, downloads: undefined, mcp: undefined, user: undefined };
   const loaded = new Set();
   let me = null;
@@ -155,8 +161,8 @@
         ${qs.length ? `<ul class="list">${qs.map((q) => {
           const n = new Set(store.responses.filter((r) => r.quizId === q.id).map((r) => r.email)).size;
           return `<li class="li"><span class="t">${esc(quizLabel(q))}</span><span class="s">${plural(q.tickets.length, 'ticket')} · ${n} of ${plural(q.traineeEmails.length, 'trainee')} answered</span>
-            <span class="tags">${q.googleFormUrl ? (q.formOutOfDate ? '<span class="tag warn">Google Form out of date</span>' : '<span class="tag ok">Google Form linked</span>') : '<span class="tag warn">Google Form not linked yet</span>'}</span>
-            <span class="actions"><button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Form setup</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
+                <span class="tags">${q.googleFormUrl ? (q.formOutOfDate ? '<span class="tag warn">Google Form out of date</span>' : '<span class="tag ok">Google Form connected</span>') : '<span class="tag warn">Google Form not created yet</span>'}${q.sheetUrl ? '<span class="tag ok">Response sheet connected</span>' : ''}</span>
+            <span class="actions"><button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Google Form</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
         }).join('')}</ul>` : '<div class="empty">No quizzes yet. Fill in the form on the left.</div>'}
       </section></div>`;
   }
@@ -205,23 +211,22 @@
   }
 
   function appsScript(q) {
-    const data = JSON.stringify({ title: q.title, date: q.date, quizId: q.id, instructions: INSTRUCTIONS, questions: QUESTIONS.map((x) => x.label), tickets: q.tickets.map((t) => t.url) }, null, 2);
+    const data = JSON.stringify({ formTitle: formTitle(q), quizId: q.id, instructions: INSTRUCTIONS, questions: QUESTIONS.map((x) => x.label), tickets: q.tickets.map((t) => t.url) }, null, 2);
     return `/**
  * Creates the Google Form for "${q.title.replace(/\*\//g, '')}" (${q.date}).
  * Made by the Ticket Assessment Hub.
  *
  * 1. Go to script.google.com > New project. Paste this, then Save.
  * 2. Pick createQuizForm in the toolbar and click Run. Allow access.
- * 3. Open the Execution log. Copy the form link and the response sheet
- *    link into the hub (Form setup > step 3).
+ * 3. The form appears in your Drive. Then, in the hub, click
+ *    Find my form and response sheet.
  *
- * The form is made CLOSED and shared with no one. When you're ready,
- * open it (Responses tab > Accepting responses) and send it yourself.
+ * The form is not published or shared. You do that yourself.
  */
 var QUIZ = ${data};
 
 function createQuizForm() {
-  var form = FormApp.create(QUIZ.title + (QUIZ.date ? ' (' + QUIZ.date + ')' : ''));
+  var form = FormApp.create(QUIZ.formTitle);
   form.setDescription('Instructions:\\n' + QUIZ.instructions.map(function (t, i) { return (i + 1) + '. ' + t; }).join('\\n'));
   try { form.setEmailCollectionType(FormApp.EmailCollectionType.VERIFIED); }
   catch (e) { try { form.setCollectEmail(true); } catch (e2) {} }
@@ -234,28 +239,65 @@ function createQuizForm() {
       form.addParagraphTextItem().setTitle(label).setRequired(true);
     });
   });
-  var sheet = SpreadsheetApp.create(form.getTitle() + ' - responses');
-  form.setDestination(FormApp.DestinationType.SPREADSHEET, sheet.getId());
-  form.setAcceptingResponses(false);
-  Logger.log('Form link (send to trainees when ready): ' + form.getPublishedUrl());
-  Logger.log('Response sheet: ' + sheet.getUrl());
+  Logger.log('Form created in your Drive: ' + form.getEditUrl());
 }
 `;
   }
 
+  function makerLink(q) {
+    const url = (settings().formMakerUrl || '').trim();
+    if (!url) return '';
+    const payload = { formTitle: formTitle(q), instructions: INSTRUCTIONS, questions: QUESTIONS.map((x) => x.label), tickets: q.tickets.map((t) => t.url) };
+    return url + (url.includes('?') ? '&' : '?') + 'q=' + b64url(JSON.stringify(payload));
+  }
+
   function openFormSteps(q) {
-    openModal(`Quiz form · ${quizLabel(q)}`, `
-      ${q.formOutOfDate ? '<div class="notice warn">The ticket links changed after the Google Form was made. Run the script again to make an updated form, then paste its new links in step 3.</div>' : ''}
+    const link = makerLink(q);
+    openModal(`Google Form · ${quizLabel(q)}`, `
+      ${q.formOutOfDate ? '<div class="notice warn">The ticket links changed after the form was made. Create a new form, then find it again.</div>' : ''}
       <ol class="steps">
-        <li><b>Copy the script.</b> It builds the form with the instructions at the top, one section per ticket link, and the four questions under each.
-          <div class="actions" style="margin-top:6px"><button class="btn small primary" type="button" data-act="copy-script" data-id="${q.id}">Copy script</button><button class="btn small" type="button" data-act="show-script" data-id="${q.id}">Show script</button><button class="btn small" type="button" data-act="preview-q" data-id="${q.id}">Preview form</button></div><pre class="code" id="script-box" hidden></pre></li>
-        <li><b>Run it in Google.</b> Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">a new Apps Script project</a>, paste, save, then run <b>createQuizForm</b>. The form is made closed and shared with no one.</li>
-        <li><b>Paste the two links from the Execution log.</b>
-          <div class="grid" style="margin-top:6px"><label class="field">Google Form link<input type="url" id="g-form" value="${esc(q.googleFormUrl || '')}" placeholder="https://docs.google.com/forms/d/e/…/viewform"></label>
-          <label class="field">Response sheet link<input type="url" id="g-sheet" value="${esc(q.sheetUrl || '')}" placeholder="https://docs.google.com/spreadsheets/d/…"></label></div></li>
-        <li><b>Open the form to responses and send it yourself</b> when you're ready. This page never sends it.</li>
-      </ol>`,
+        <li><b>Create the form.</b> It's built in your Google Drive as <b>${esc(formTitle(q))}</b>, with the instructions at the top and a section per ticket with the four questions. It isn't published or shared.
+          <div class="actions" style="margin-top:8px">${link ? `<a class="btn primary" href="${esc(link)}" target="_blank" rel="noopener">Create Google Form</a><button class="btn small ghost" type="button" data-act="preview-q" data-id="${q.id}">Preview</button>` : '<span class="notice warn" style="display:block">One-time setup needed: add the Form maker link in Setup.</span><button class="btn small" type="button" data-act="open-setup">Open Setup</button>'}</div>
+          ${link ? '<p class="small muted" style="margin:6px 0 0">Opens a Google page in a new tab. Click <b>Create Google Form</b> there. The first time, Google asks you to allow it.</p>' : ''}</li>
+        <li><b>Do your part in Google:</b> move the form to the right folder, link a response sheet (Responses tab › Link to Sheets), publish it, and share the link with trainees.</li>
+        <li><b>Connect it here</b> so responses can be pulled in. The page looks in your Drive for the form and its response sheet by title.
+          <div class="actions" style="margin-top:8px"><button class="btn small primary" type="button" data-act="find-files" data-id="${q.id}" ${caps.mcp ? '' : 'disabled'}>Find my form and response sheet</button></div>
+          <div id="find-status" class="small" style="margin-top:6px"></div>
+          <div class="grid" style="margin-top:6px"><label class="field">Google Form link<input type="url" id="g-form" value="${esc(q.googleFormUrl || '')}" placeholder="Found automatically, or paste it"></label>
+          <label class="field">Response sheet link<input type="url" id="g-sheet" value="${esc(q.sheetUrl || '')}" placeholder="Found automatically, or paste it"></label></div></li>
+      </ol>
+      <details class="block"><summary class="small">Can't use the form maker? Copy a one-off script instead</summary><div class="body small">
+        <p style="margin:0">Paste it into a new project at script.google.com and run <b>createQuizForm</b>.</p>
+        <div class="actions"><button class="btn small" type="button" data-act="copy-script" data-id="${q.id}">Copy script</button></div><pre class="code" id="script-box" hidden></pre></div></details>`,
       `<button class="btn" type="button" data-act="close-modal">Close</button><button class="btn primary" type="button" data-act="save-links" data-id="${q.id}">Save links</button>`);
+  }
+
+  async function driveSearch(query) {
+    if (!caps.mcp) throw new Error('Google Drive isn\'t available in this view.');
+    let res;
+    try { res = await caps.mcp.callTool(DRIVE, 'search_files', { query, pageSize: 10, excludeContentSnippets: true }, { cache: false }); }
+    catch (e) {
+      const c = e && e.code;
+      if (c === 'server_not_connected') throw new Error('Google Drive isn\'t connected. Add it in claude.ai Settings › Connectors, or paste the links.');
+      if (c === 'needs_reauth') throw new Error('Your Google Drive connection expired. Reconnect it in claude.ai Settings › Connectors.');
+      if (c === 'not_in_manifest' || c === 'not_granted') throw new Error('Google Drive is turned off for this page. Allow it in the page\'s permissions.');
+      throw new Error('Google Drive search failed: ' + String((e && e.message) || 'unknown error').slice(0, 160));
+    }
+    let p = res && res.payload;
+    if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { p = {}; } }
+    return ((p && p.files) || []).filter((f) => f && f.id && !f.trashed).sort((a, b) => String(b.createdTime || '').localeCompare(String(a.createdTime || '')));
+  }
+  const qstr = (s) => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  async function findFiles(q) {
+    const title = formTitle(q);
+    const forms = await driveSearch(`title = '${qstr(title)}' and mimeType = 'application/vnd.google-apps.form'`);
+    const sheets = await driveSearch(`title contains '${qstr(title)}' and mimeType = 'application/vnd.google-apps.spreadsheet'`);
+    const form = forms[0];
+    const sheet = sheets.find((f) => /respons/i.test(f.title || '')) || sheets[0];
+    return {
+      form: form ? { url: `https://docs.google.com/forms/d/${form.id}/viewform`, count: forms.length } : null,
+      sheet: sheet ? { url: `https://docs.google.com/spreadsheets/d/${sheet.id}/edit`, title: sheet.title, count: sheets.length } : null,
+    };
   }
 
   // =====================================================================
@@ -281,11 +323,11 @@ function createQuizForm() {
     const rows = [...latest.values()].sort((a, b) => a.name.localeCompare(b.name));
     return `<section class="panel">
       <div class="panel-head" style="align-items:end">${quizPicker('pick-resp', q.id, 'Quiz')}
-        <div class="actions"><button class="btn small primary" type="button" data-act="refresh-sheet" ${q.sheetUrl && !S.busy.sheet ? '' : 'disabled'} ${q.sheetUrl ? '' : 'title="Add the response sheet link in tab 1, Form setup"'}>${S.busy.sheet ? '<span class="spin"></span> Reading sheet' : 'Get latest responses'}</button>
+        <div class="actions"><button class="btn small primary" type="button" data-act="refresh-sheet" ${!S.busy.sheet && (q.sheetUrl || caps.mcp) ? '' : 'disabled'}>${S.busy.sheet ? '<span class="spin"></span> Reading sheet' : 'Get latest responses'}</button>
         <label class="btn small">Import CSV<input type="file" accept=".csv,text/csv" id="csv-in" hidden></label>
         <button class="btn small ghost" type="button" data-act="test-resp">Add a test response</button>
         <button class="btn small ghost" type="button" data-act="dl-raw" ${all.length ? '' : 'disabled'}>Download CSV</button></div></div>
-      <p class="small muted" style="margin:0">${rows.length}${q.traineeEmails.length ? ` of ${q.traineeEmails.length}` : ''} trainees answered.${missing.length ? ` Not answered yet: ${missing.map(esc).join(', ')}.` : ''}${q.sheetUrl ? '' : ' Link the response sheet in tab 1 (Form setup) to pull answers from Google.'}</p>
+      <p class="small muted" style="margin:0">${rows.length}${q.traineeEmails.length ? ` of ${q.traineeEmails.length}` : ''} trainees answered.${missing.length ? ` Not answered yet: ${missing.map(esc).join(', ')}.` : ''}${q.sheetUrl ? '' : ' No response sheet connected yet. Get latest responses looks for it in your Drive.'}</p>
       ${rows.length ? `<div class="tw"><table class="raw"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th>Ticket ${i + 1}</th>`).join('')}</tr></thead><tbody>
         ${rows.map((r) => { const k = all.filter((x) => x.email === r.email).length; return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.email)}</div><div class="small muted">${fmtDT(r.submittedAt)}${k > 1 ? ` · latest of ${k}` : ''}</div></td>
           ${q.tickets.map((t) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<td>${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label.replace(/ \(.*\)$/, ''))}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</td>`; }).join('')}</tr>`; }).join('')}
@@ -344,7 +386,7 @@ function createQuizForm() {
   async function readSheet(q) {
     if (!caps.mcp) throw new Error('Google Sheets isn\'t available in this view. Use Import CSV instead.');
     const id = (/\/d\/([a-zA-Z0-9_-]{20,})/.exec(q.sheetUrl) || [])[1];
-    if (!id) throw new Error('The saved response sheet link isn\'t a Google Sheets link. Fix it in tab 1, Form setup.');
+    if (!id) throw new Error('The saved response sheet link isn\'t a Google Sheets link. Fix it in tab 1 under Google Form.');
     let res;
     try { res = await caps.mcp.callTool(SHEETS, 'get_values', { spreadsheetId: id, range: 'A1:ZZ3000' }, { cache: false }); }
     catch (e) {
@@ -572,10 +614,21 @@ Reply with only a JSON array, one object per trainee, for example:
 
   // ---------- setup ----------
   function openSetup() {
+    const url = settings().formMakerUrl || '';
     openModal('Setup', `
-      <p class="small" style="margin:0">Quizzes, responses and scores are saved on this page for everyone it's shared with as Contributor or Editor. Viewers see nothing, so guidelines stay private to trainers.</p>
+      <h3>Form maker <span class="tag ${url ? 'ok' : 'warn'}">${url ? 'Connected' : 'Not set up'}</span></h3>
+      <p class="small" style="margin:0">One-time setup so <b>Create Google Form</b> builds each quiz form for you. It's a small Google Apps Script that runs in your Google account. It only creates the form: it doesn't publish, share or send anything.</p>
+      <ol class="steps small">
+        <li>Copy the script. <span class="actions" style="display:inline-flex;margin-left:6px"><button class="btn small primary" type="button" data-act="copy-maker">Copy script</button><button class="btn small ghost" type="button" data-act="show-maker">Show</button></span><pre class="code" id="maker-box" hidden></pre></li>
+        <li>Go to <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com › New project</a>, replace everything in Code.gs with it, and save.</li>
+        <li>Click <b>Deploy › New deployment</b>, choose type <b>Web app</b>, set <b>Execute as: User accessing the web app</b> and <b>Who has access: Anyone within your organization</b>, then Deploy and allow access.</li>
+        <li>Copy the <b>Web app URL</b> (ends in /exec) and paste it here. Other trainers on this page use the same link; each one's forms go into their own Drive.</li>
+      </ol>
+      <div class="actions" style="flex-wrap:nowrap"><input type="url" id="maker-url" value="${esc(url)}" placeholder="https://script.google.com/macros/s/…/exec" aria-label="Form maker link"><button class="btn primary" type="button" data-act="save-maker">Save</button></div>
+      <h3>Data</h3>
+      <p class="small" style="margin:0">Quizzes, responses and scores are saved on this page for everyone it's shared with as Contributor or Editor. Viewers see nothing.</p>
       <div class="actions"><button class="btn" type="button" data-act="seed">Load a fictional example quiz</button><button class="btn danger" type="button" data-act="reset">Delete all quizzes and responses…</button></div>`,
-      '<button class="btn" type="button" data-act="close-modal">Close</button>', true);
+      '<button class="btn" type="button" data-act="close-modal">Close</button>');
   }
   async function seed() {
     const now = new Date().toISOString();
@@ -651,10 +704,39 @@ Reply with only a JSON array, one object per trainee, for example:
         case 'refresh-sheet': {
           const q = byId('quizzes', S.respQuiz);
           S.busy.sheet = true; render();
-          try { const r = await readSheet(q); toast(`${plural(r.added, 'new response')}${r.skipped ? `, ${r.skipped} already here` : ''}.`); }
+          try {
+            if (!q.sheetUrl) {
+              const f = await findFiles(q);
+              if (!f.sheet) throw new Error(`No response sheet found for "${formTitle(q)}". Link one to the form in Google (Responses tab › Link to Sheets), or paste its link in tab 1 under Google Form.`);
+              await put('quizzes', { ...clone(q), sheetUrl: f.sheet.url, googleFormUrl: q.googleFormUrl || (f.form ? f.form.url : ''), updatedAt: new Date().toISOString() });
+            }
+            const r = await readSheet(byId('quizzes', q.id)); toast(`${plural(r.added, 'new response')}${r.skipped ? `, ${r.skipped} already here` : ''}.`); }
           finally { delete S.busy.sheet; schedule(); }
           break;
         }
+        case 'find-files': {
+          const q = byId('quizzes', el.dataset.id);
+          $('find-status').innerHTML = '<span class="pill busy">Looking in your Drive</span>';
+          el.disabled = true;
+          try {
+            const f = await findFiles(q);
+            if (f.form) $('g-form').value = f.form.url;
+            if (f.sheet) $('g-sheet').value = f.sheet.url;
+            $('find-status').innerHTML = `<div class="notice ${f.form && f.sheet ? 'ok' : 'warn'}">${f.form ? 'Found the form.' : `No form called "${esc(formTitle(q))}" found yet.`} ${f.sheet ? `Found the response sheet "${esc(f.sheet.title)}".` : 'No response sheet found yet. Link one in Google (Responses tab › Link to Sheets), or paste it below.'}${f.form && f.form.count > 1 ? ' More than one form has this title, so the newest is used.' : ''} Check the links, then click Save links.</div>`;
+          } catch (er) { $('find-status').innerHTML = `<div class="notice bad">${esc(er.message)}</div>`; }
+          finally { el.disabled = false; }
+          break;
+        }
+        case 'open-setup': closeModal(); openSetup(); break;
+        case 'save-maker': {
+          const url = $('maker-url').value.trim();
+          if (url && !/^https:\/\/script\.google\.com\/(a\/macros\/[^/]+|macros)\/s\/[A-Za-z0-9_-]+\/exec/.test(url)) return toast('Paste the Web app URL from Apps Script. It starts with https://script.google.com/ and ends in /exec.', true);
+          await put('settings', { ...settings(), id: 'main', formMakerUrl: url, updatedAt: new Date().toISOString(), updatedBy: me && me.id });
+          closeModal(); toast(url ? 'Form maker link saved.' : 'Form maker link removed.');
+          break;
+        }
+        case 'copy-maker': copyText(FORM_MAKER_SCRIPT, () => { const b = $('maker-box'); b.textContent = FORM_MAKER_SCRIPT; b.hidden = false; selectNode(b); }); break;
+        case 'show-maker': { const b = $('maker-box'); b.textContent = FORM_MAKER_SCRIPT; b.hidden = !b.hidden; break; }
         case 'test-resp': {
           const q = byId('quizzes', S.respQuiz);
           openModal('Add a test response', `<div class="notice warn">For trying the page out. Use fictional answers.</div><div id="sf" data-quiz="${q.id}">${traineeForm(q, true)}</div>`, '<button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="button" data-act="submit-test">Save response</button>');

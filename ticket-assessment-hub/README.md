@@ -8,7 +8,7 @@ This is a **staging prototype**. It sends nothing to trainees, publishes no form
 
 The simple trainer version is a claude.ai artifact in the Training Agenda Library style: https://claude.ai/artifact/FgJxWnL73dezrTf77zNJPs (private until shared from its Share menu). Three tabs:
 
-1. **Quiz Generation**: title, date, pasted ticket links, trainee emails, then Generate quiz form. Every ticket gets the same four questions and the form opens with the two instructions. The page writes a Google Apps Script that the trainer runs at script.google.com to make the form (closed and unshared) and its response sheet.
+1. **Quiz Generation**: title, date, pasted ticket links and trainee emails. "Create Google Form" opens the trainer's Form Maker (`apps-script/FormMaker.gs`, deployed once as a web app that runs as the trainer) and builds the form in their Drive with the instructions and, per ticket, a section with the link and the four questions. It does not publish, share or create response sheets. "Find my form and response sheet" then finds both in Drive by title (read only).
 2. **Responses**: pick a quiz, pull answers from the response sheet (read only, through the trainer's Google Sheets connector) or a CSV, and see each trainee's raw answers by ticket.
 3. **Scoring**: points and scoring guidelines per ticket, scores and errors per trainee. Claude scores one ticket for all trainees per call. Changing a ticket's points or guidelines marks its scores out of date until re-scored; trainer adjustments survive re-scoring.
 
