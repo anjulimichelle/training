@@ -339,7 +339,7 @@ function createQuizForm() {
     const dup = store.quizzes.find((q) => q.sheetUrl && q.sheetUrl.includes(IMP.sheet.id));
     $('ix-details').classList.remove('muted');
     $('ix-details').innerHTML = `
-      ${dup ? `<div class="notice warn">This sheet is already connected to "${esc(quizLabel(dup))}". Importing again makes a second copy; to pull new answers into the existing one, use Get latest responses in tab 2.</div>` : ''}
+      ${dup ? `<div class="notice warn">This sheet is already connected to "${esc(quizLabel(dup))}". Importing again makes a second copy; to pull new answers into the existing one, use Sync responses in tab 2.</div>` : ''}
       <div class="notice ok">Found ${plural(starts.length, 'ticket')} and ${plural(rows.length, 'response')} from ${plural(emails.length, 'trainee')}.</div>
       <div class="grid g2" style="margin-top:8px"><label class="field">Quiz title<input type="text" id="ix-title" value="${esc(title)}"></label><label class="field">Quiz date<input type="date" id="ix-date" value="${guessDate(title)}"></label></div>
       <label class="field" style="margin-top:8px">Ticket links <span class="opt">optional, one per line in order. The sheet doesn't contain them; scoring works without them</span><textarea id="ix-links" rows="${Math.min(8, starts.length + 1)}" placeholder="${Array.from({ length: starts.length }, (_, i) => `Ticket ${i + 1} link`).join('&#10;')}"></textarea></label>`;
@@ -399,11 +399,11 @@ function createQuizForm() {
     const rows = [...latest.values()].sort((a, b) => a.name.localeCompare(b.name));
     return `<section class="panel">
       <div class="panel-head" style="align-items:end">${quizPicker('pick-resp', q.id, 'Quiz')}
-        <div class="actions"><button class="btn small primary" type="button" data-act="refresh-sheet" ${!S.busy.sheet && (q.sheetUrl || caps.mcp) ? '' : 'disabled'}>${S.busy.sheet ? '<span class="spin"></span> Reading sheet' : 'Get latest responses'}</button>
+        <div class="actions"><button class="btn small primary" type="button" data-act="refresh-sheet" ${!S.busy.sheet && (q.sheetUrl || caps.mcp) ? '' : 'disabled'}>${S.busy.sheet ? '<span class="spin"></span> Syncing' : '⟳ Sync responses'}</button>
         <label class="btn small">Import CSV<input type="file" accept=".csv,text/csv" id="csv-in" hidden></label>
         <button class="btn small ghost" type="button" data-act="test-resp">Add a test response</button>
         <button class="btn small ghost" type="button" data-act="dl-raw" ${all.length ? '' : 'disabled'}>Download CSV</button></div></div>
-      <p class="small muted" style="margin:0">${rows.length}${q.traineeEmails.length ? ` of ${q.traineeEmails.length}` : ''} trainees answered.${missing.length ? ` Not answered yet: ${missing.map(esc).join(', ')}.` : ''}${q.sheetUrl ? '' : ' No response sheet connected yet. Get latest responses looks for it in your Drive.'}</p>
+      <p class="small muted" style="margin:0">${q.traineeEmails.length ? `${rows.filter((r) => q.traineeEmails.includes(r.email)).length} of ${q.traineeEmails.length} trainees answered.${rows.some((r) => !q.traineeEmails.includes(r.email)) ? ` ${plural(rows.filter((r) => !q.traineeEmails.includes(r.email)).length, 'more response')} from emails not on the trainee list.` : ''}` : `${plural(rows.length, 'trainee')} answered.`}${missing.length ? ` Not answered yet: ${missing.map(esc).join(', ')}.` : ''}${q.sheetUrl ? (q.lastSyncedAt ? ` Last synced ${fmtDT(q.lastSyncedAt)}.` : ' Not synced yet.') + ' Sync again any time to pull in late submissions; answers already here are skipped.' : ' No response sheet connected yet. Sync responses looks for it in your Drive.'}</p>
       ${rows.length ? `<div class="tw"><table class="raw"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th>Ticket ${i + 1}</th>`).join('')}</tr></thead><tbody>
         ${rows.map((r) => { const k = all.filter((x) => x.email === r.email).length; return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.email)}</div><div class="small muted">${fmtDT(r.submittedAt)}${k > 1 ? ` · latest of ${k}` : ''}</div></td>
           ${q.tickets.map((t) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<td>${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label.replace(/ \(.*\)$/, ''))}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</td>`; }).join('')}</tr>`; }).join('')}
@@ -827,7 +827,7 @@ Reply with only a JSON array, one object per trainee, for example:
     openModal('Scoring results preview', `
       ${q.sheetUrl
         ? `<p class="small muted" style="margin:0">This is the <b>${RESULTS_TAB}</b> tab that will be added to ${q.sheetTitle ? `<b>${esc(q.sheetTitle)}</b>` : '<a href="' + safeUrl(q.sheetUrl) + '" target="_blank" rel="noopener">your response sheet</a>'}, next to the form's responses. ${plural(sh.rows.length, 'trainee')}. Writing it again replaces this tab only; the Form Responses tab is never changed.</p>`
-        : '<div class="notice warn">No response sheet is connected to this quiz yet. Connect it in tab 1 (Google Form) or with Get latest responses in tab 2, then write the results.</div>'}
+        : '<div class="notice warn">No response sheet is connected to this quiz yet. Connect it in tab 1 (Google Form) or with Sync responses in tab 2, then write the results.</div>'}
       ${sheetGrid(sh)}
       <div class="sheet-tabs" role="tablist"><span class="stab muted" title="The form's own tab. It's not changed.">Form Responses 1</span><button type="button" role="tab" class="stab" aria-selected="true">${RESULTS_TAB}</button></div>
       <div id="gs-status" class="small"></div>`,
@@ -1044,7 +1044,12 @@ Reply with only a JSON array, one object per trainee, for example:
               if (!f.sheet) throw new Error(`No response sheet found for "${formTitle(q)}". Link one to the form in Google (Responses tab › Link to Sheets), or paste its link in tab 1 under Google Form.`);
               await put('quizzes', { ...clone(q), sheetUrl: f.sheet.url, sheetTitle: f.sheet.title, googleFormUrl: q.googleFormUrl || (f.form ? f.form.url : ''), updatedAt: new Date().toISOString() });
             }
-            const r = await readSheet(byId('quizzes', q.id)); toast(`${plural(r.added, 'new response')}${r.skipped ? `, ${r.skipped} already here` : ''}.`); }
+            const r = await readSheet(byId('quizzes', q.id));
+            const cur = clone(byId('quizzes', q.id));
+            if (cur.imported) cur.traineeEmails = [...new Set([...cur.traineeEmails, ...store.responses.filter((x) => x.quizId === q.id).map((x) => x.email)])];
+            await put('quizzes', { ...cur, lastSyncedAt: new Date().toISOString() });
+            toast(r.added ? `Synced: ${plural(r.added, 'new response')} added. Score ${r.added === 1 ? 'it' : 'them'} in tab 3.` : 'Synced: no new responses since the last sync.');
+          }
           finally { delete S.busy.sheet; schedule(); }
           break;
         }
