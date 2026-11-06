@@ -157,12 +157,12 @@
           <div><b>Under each ticket link</b><ol style="margin:4px 0 0;padding-left:20px">${QUESTIONS.map((q) => `<li>${esc(q.label)}</li>`).join('')}</ol></div></div></details>
       </section>
       <section class="panel">
-        <div class="panel-head"><h2>Quizzes</h2><span class="count">${qs.length}</span></div>
+        <div class="panel-head"><h2>Quizzes <span class="count">${qs.length}</span></h2><button class="btn small" type="button" data-act="import-existing">Import an existing quiz</button></div>
         ${qs.length ? `<ul class="list">${qs.map((q) => {
           const n = new Set(store.responses.filter((r) => r.quizId === q.id).map((r) => r.email)).size;
           return `<li class="li"><span class="t">${esc(quizLabel(q))}</span><span class="s">${plural(q.tickets.length, 'ticket')} · ${n} of ${plural(q.traineeEmails.length, 'trainee')} answered</span>
-                <span class="tags">${q.googleFormUrl ? (q.formOutOfDate ? '<span class="tag warn">Google Form out of date</span>' : '<span class="tag ok">Google Form connected</span>') : '<span class="tag warn">Google Form not created yet</span>'}${q.sheetUrl ? '<span class="tag ok">Response sheet connected</span>' : ''}</span>
-            <span class="actions"><button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Google Form</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button><button class="btn small ghost danger" type="button" data-act="delete-quiz" data-id="${q.id}">Delete</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
+                <span class="tags">${q.imported ? '<span class="tag">Imported</span>' : ''}${q.googleFormUrl ? (q.formOutOfDate ? '<span class="tag warn">Google Form out of date</span>' : '<span class="tag ok">Google Form connected</span>') : q.imported ? '' : '<span class="tag warn">Google Form not created yet</span>'}${q.sheetUrl ? '<span class="tag ok">Response sheet connected</span>' : ''}</span>
+            <span class="actions">${q.imported ? '' : `<button class="btn small" type="button" data-act="form-steps" data-id="${q.id}">Google Form</button><button class="btn small ghost" type="button" data-act="edit-quiz" data-id="${q.id}">Edit</button>`}<button class="btn small ghost danger" type="button" data-act="delete-quiz" data-id="${q.id}">Delete</button>${q.googleFormUrl ? `<button class="btn small ghost" type="button" data-act="copy" data-text="${esc(q.googleFormUrl)}">Copy form link</button>` : ''}</span></li>`;
         }).join('')}</ul>` : '<div class="empty">No quizzes yet. Fill in the form on the left.</div>'}
       </section></div>`;
   }
@@ -300,6 +300,81 @@ function createQuizForm() {
     };
   }
 
+  // ---------- Import an existing Google Form quiz from its response sheet ----------
+  const IMP = { values: null, sheet: null };
+  function openImportExisting(picks) {
+    openModal('Import an existing quiz', `
+      <p class="small" style="margin:0">Bring in a ticket quiz you already ran with Google Forms, so you can score it here. The page reads its response sheet (read only): the questions, the number of tickets and every trainee's answers. It doesn't change the sheet or the form.</p>
+      <ol class="steps">
+        <li><b>Choose the response sheet.</b>
+          <div class="actions" style="margin-top:6px;flex-wrap:nowrap"><input type="text" id="ix-sheet" placeholder="Paste the response sheet link" aria-label="Response sheet link"><button class="btn small primary" type="button" data-act="ix-read">Read sheet</button></div>
+          <div class="actions" style="margin-top:6px"><button class="btn small ghost" type="button" data-act="ix-list" ${caps.mcp ? '' : 'disabled'}>Or pick from my recent response sheets</button></div>
+          ${picks ? (picks.length ? `<ul class="list" style="margin-top:6px">${picks.map((f) => `<li><button class="li" type="button" data-act="ix-pick" data-id="${esc(f.id)}"><span class="t">${esc(f.title)}</span><span class="s">${f.modifiedTime ? 'Updated ' + fmtDT(f.modifiedTime) : ''}</span></button></li>`).join('')}</ul>` : '<p class="small muted">No sheets with "Responses" in the name found in your Drive.</p>') : ''}
+          <div id="ix-status" class="small" style="margin-top:6px"></div></li>
+        <li><b>Check the details.</b><div id="ix-details" class="small muted" style="margin-top:4px">Shows after the sheet is read.</div></li>
+      </ol>`,
+      `<button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="button" data-act="ix-import" id="ix-go" disabled>Import quiz and responses</button>`);
+  }
+
+  function guessDate(title) {
+    const m = /(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})/.exec(title || '');
+    if (!m) return new Date().toISOString().slice(0, 10);
+    const y = m[3].length === 2 ? '20' + m[3] : m[3];
+    return `${y}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`;
+  }
+
+  function showImportDetails() {
+    const v = IMP.values;
+    const starts = ticketStarts(v[0]);
+    const em = (v[0] || []).findIndex((x) => /email/i.test(String(x)));
+    const rows = v.slice(1).filter((r) => r.some((x) => String(x || '').trim()));
+    const emails = [...new Set(rows.map((r) => String(r[em] || '').trim().toLowerCase()).filter(Boolean))];
+    if (!starts.length || em < 0) {
+      $('ix-details').innerHTML = '<div class="notice bad">This sheet doesn\'t look like a ticket quiz: it needs an email column and a "What does the customer want?" column for each ticket.</div>';
+      $('ix-go').disabled = true;
+      return;
+    }
+    const title = String(IMP.sheet.title || '').replace(/\s*\(responses\)\s*$/i, '').trim() || 'Imported quiz';
+    const dup = store.quizzes.find((q) => q.sheetUrl && q.sheetUrl.includes(IMP.sheet.id));
+    $('ix-details').classList.remove('muted');
+    $('ix-details').innerHTML = `
+      ${dup ? `<div class="notice warn">This sheet is already connected to "${esc(quizLabel(dup))}". Importing again makes a second copy; to pull new answers into the existing one, use Get latest responses in tab 2.</div>` : ''}
+      <div class="notice ok">Found ${plural(starts.length, 'ticket')} and ${plural(rows.length, 'response')} from ${plural(emails.length, 'trainee')}.</div>
+      <div class="grid g2" style="margin-top:8px"><label class="field">Quiz title<input type="text" id="ix-title" value="${esc(title)}"></label><label class="field">Quiz date<input type="date" id="ix-date" value="${guessDate(title)}"></label></div>
+      <label class="field" style="margin-top:8px">Ticket links <span class="opt">optional, one per line in order. The sheet doesn't contain them; scoring works without them</span><textarea id="ix-links" rows="${Math.min(8, starts.length + 1)}" placeholder="${Array.from({ length: starts.length }, (_, i) => `Ticket ${i + 1} link`).join('&#10;')}"></textarea></label>`;
+    $('ix-go').disabled = false;
+  }
+
+  async function importExisting() {
+    const v = IMP.values;
+    const starts = ticketStarts(v[0]);
+    const links = parseLinks($('ix-links').value);
+    if (links.length > starts.length) throw new Error(`You pasted ${links.length} links but the sheet has ${plural(starts.length, 'ticket')}.`);
+    const bad = links.find((l) => !/^https?:\/\/\S+\.\S+/i.test(l));
+    if (bad) throw new Error(`This isn't a link: ${bad}`);
+    const now = new Date().toISOString();
+    const em = (v[0] || []).findIndex((x) => /email/i.test(String(x)));
+    const emails = [...new Set(v.slice(1).map((r) => String(r[em] || '').trim().toLowerCase()).filter(Boolean))];
+    const title = $('ix-title').value.trim();
+    if (!title) throw new Error('Add a quiz title.');
+    const q = {
+      id: uid('quiz'), title, date: $('ix-date').value || now.slice(0, 10), createdAt: now, updatedAt: now, createdBy: me && me.id,
+      imported: true, googleFormUrl: '', sheetUrl: `https://docs.google.com/spreadsheets/d/${IMP.sheet.id}/edit`, sheetTitle: IMP.sheet.title || '',
+      traineeEmails: emails,
+      tickets: starts.map((_, i) => ({ id: uid('tkt'), url: links[i] || '', points: 10, qpoints: { ...DEFAULT_QP }, guidelines: '', updatedAt: now })),
+    };
+    // Find the form by the sheet's name, if it's in Drive; not required.
+    try {
+      const forms = await driveSearch(`title = '${qstr(String(IMP.sheet.title || '').replace(/\s*\(responses\)\s*$/i, ''))}' and mimeType = 'application/vnd.google-apps.form'`);
+      if (forms[0]) q.googleFormUrl = `https://docs.google.com/forms/d/${forms[0].id}/viewform`;
+    } catch (_) { /* optional */ }
+    await put('quizzes', q);
+    const r = await importRows(q, v);
+    S.respQuiz = S.scoreQuiz = q.id;
+    lsSet('respQuiz', q.id); lsSet('scoreQuiz', q.id);
+    return { q, r };
+  }
+
   // =====================================================================
   // TAB 2 · Responses
   // =====================================================================
@@ -358,20 +433,27 @@ function createQuizForm() {
     return rows.filter((r) => r.some((x) => String(x).trim()));
   }
 
+  // Each ticket's answers start where "What does the customer want?" appears; the next three columns are the other questions.
+  function ticketStarts(header) {
+    const norm = (x) => String(x || '').replace(/^\ufeff/, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const key = norm(QUESTIONS[0].label);
+    return (header || []).map(norm).reduce((a, x, i) => (x === key ? [...a, i] : a), []);
+  }
+
   async function importRows(q, rows) {
     const norm = (s) => String(s || '').replace(/^﻿/, '').replace(/\s+/g, ' ').trim().toLowerCase();
     const h = (rows[0] || []).map(norm);
     const ts = h.indexOf('timestamp');
     const em = h.findIndex((x) => /email/.test(x));
     const nm = h.findIndex((x) => x === 'full name' || x === 'name');
-    const first = h.indexOf(norm(QUESTIONS[0].label));
-    if (em < 0 || first < 0) throw new Error('Couldn\'t find the email and question columns. Use the response sheet of a form made with this page\'s script.');
-    if (h.length < first + q.tickets.length * 4) throw new Error(`The sheet has answers for ${Math.floor((h.length - first) / 4)} tickets, but this quiz has ${q.tickets.length}.`);
+    const starts = ticketStarts(rows[0]);
+    if (em < 0 || !starts.length) throw new Error('Couldn\'t find the email and "What does the customer want?" columns in this sheet.');
+    if (starts.length < q.tickets.length) throw new Error(`The sheet has answers for ${plural(starts.length, 'ticket')}, but this quiz has ${q.tickets.length}.`);
     let added = 0; let skipped = 0;
     for (const r of rows.slice(1)) {
       const raw = ts >= 0 ? String(r[ts] || '') : '';
       const d = raw ? new Date(raw) : null;
-      const ok = await addResponse(q, { email: r[em], name: nm >= 0 ? r[nm] : '', submittedAt: d && !isNaN(d) ? d.toISOString() : undefined, answers: q.tickets.map((_, i) => { const b = first + i * 4; return { q1: r[b], q2: r[b + 1], q3: r[b + 2], q4: r[b + 3] }; }) }, 'google-form', `${raw}|${String(r[em] || '').trim().toLowerCase()}`);
+      const ok = await addResponse(q, { email: r[em], name: nm >= 0 ? r[nm] : '', submittedAt: d && !isNaN(d) ? d.toISOString() : undefined, answers: q.tickets.map((_, i) => { const b = starts[i]; return { q1: r[b], q2: r[b + 1], q3: r[b + 2], q4: r[b + 3] }; }) }, 'google-form', `${raw}|${String(r[em] || '').trim().toLowerCase()}`);
       ok ? added++ : skipped++;
     }
     return { added, skipped };
@@ -384,9 +466,12 @@ function createQuizForm() {
     return null;
   }
   async function readSheet(q) {
+    return importRows(q, await readSheetValues(q.sheetUrl));
+  }
+  async function readSheetValues(sheetUrl) {
     if (!caps.mcp) throw new Error('Google Sheets isn\'t available in this view. Use Import CSV instead.');
-    const id = (/\/d\/([a-zA-Z0-9_-]{20,})/.exec(q.sheetUrl) || [])[1];
-    if (!id) throw new Error('The saved response sheet link isn\'t a Google Sheets link. Fix it in tab 1 under Google Form.');
+    const id = (/\/d\/([a-zA-Z0-9_-]{20,})/.exec(sheetUrl || '') || [])[1] || (/^[a-zA-Z0-9_-]{25,}$/.test(String(sheetUrl || '').trim()) ? String(sheetUrl).trim() : '');
+    if (!id) throw new Error('That isn\'t a Google Sheets link.');
     let res;
     try { res = await caps.mcp.callTool(SHEETS, 'get_values', { spreadsheetId: id, range: 'A1:ZZ3000' }, { cache: false }); }
     catch (e) {
@@ -400,7 +485,7 @@ function createQuizForm() {
     if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { /* keep */ } }
     const v = findValues(p);
     if (!v) throw new Error('No rows came back from the sheet. Check that the answers are on its first tab.');
-    return importRows(q, v);
+    return v;
   }
 
   // =====================================================================
@@ -454,7 +539,7 @@ function createQuizForm() {
       const busy = S.busy[q.id + t.id];
       const hint = !t.guidelines.trim() ? 'Add context, save, then score.' : dirty ? 'Save first, then re-score.' : stale ? `<b style="color:var(--warn)">Guidelines or answers changed. ${plural(stale, 'score')} out of date.</b>` : todo.length ? `${plural(todo.length, 'trainee')} not scored yet.` : resp.length ? 'All scores use these guidelines.' : 'No responses yet.';
       return `<div class="ticket">
-        <div class="ticket-head"><span class="ticket-name">Ticket ${i + 1}</span><a class="ticket-url" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>
+        <div class="ticket-head"><span class="ticket-name">Ticket ${i + 1}</span>${t.url ? `<a class="ticket-url" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>` : '<span class="ticket-url muted">No link (imported quiz)</span>'}
           <span class="small">Ticket total: <b id="tot-${t.id}">${edTotal}</b> points</span></div>
         <div class="qpts">${QUESTIONS.map((qq) => `<label class="qp-row" for="qp-${t.id}-${qq.key}"><span>${esc(qq.label)}</span><span class="qp-in"><input type="number" min="0" step="0.5" id="qp-${t.id}-${qq.key}" data-g="${t.id}" data-k="${qq.key}" value="${esc(ed.qp[qq.key])}"> pts</span></label>`).join('')}</div>
         <label class="field">More context and scoring guidance <span class="opt">correct resolution, required actions and amounts, what earns each question's points, deductions, when N/A is correct</span>
@@ -570,7 +655,7 @@ function createQuizForm() {
       const part = resp.slice(i, i + BATCH);
       const prompt = `You score Homeaglow Care Specialist training answers for one ticket. "C" is the customer, "CP" is the cleaning professional, "CRM actions" are steps taken in the internal tools.
 
-Ticket ${n}: ${t.url} (you cannot open this link; rely only on the trainer's guidelines)
+Ticket ${n}${t.url ? ': ' + t.url + ' (you cannot open this link; rely only on the trainer\'s guidelines)' : ' (rely only on the trainer\'s guidelines)'}
 Points available: ${max}, split by question:
 ${QUESTIONS.map((qq) => `- ${qq.key} "${qq.label}": ${qp[qq.key]} points`).join('\n')}
 
@@ -820,6 +905,46 @@ Reply with only a JSON array, one object per trainee, for example:
         case 'modal-bg': case 'close-modal': closeModal(null); break;
         case 'ask-ok': closeModal($('ask-input') ? $('ask-input').value : true); break;
         case 'new-quiz': S.form = blankForm(); render(); break;
+        case 'import-existing': IMP.values = null; IMP.sheet = null; openImportExisting(); break;
+        case 'ix-list': {
+          el.disabled = true;
+          try {
+            const files = await driveSearch("mimeType = 'application/vnd.google-apps.spreadsheet' and title contains 'Responses'");
+            const keep = $('ix-sheet') ? $('ix-sheet').value : '';
+            openImportExisting(files.sort((a, b) => String(b.modifiedTime || '').localeCompare(String(a.modifiedTime || ''))).slice(0, 10));
+            $('ix-sheet').value = keep;
+          } catch (er) { $('ix-status').innerHTML = `<div class="notice bad">${esc(er.message)}</div>`; el.disabled = false; }
+          break;
+        }
+        case 'ix-pick': $('ix-sheet').value = `https://docs.google.com/spreadsheets/d/${el.dataset.id}/edit`; document.querySelector('[data-act=ix-read]').click(); break;
+        case 'ix-read': {
+          const ref = $('ix-sheet').value.trim();
+          const id = (/\/d\/([a-zA-Z0-9_-]{20,})/.exec(ref) || [])[1] || (/^[a-zA-Z0-9_-]{25,}$/.test(ref) ? ref : '');
+          if (!id) return toast('Paste the response sheet link from Google Sheets.', true);
+          $('ix-status').innerHTML = '<span class="pill busy">Reading the sheet</span>';
+          el.disabled = true;
+          try {
+            IMP.values = await readSheetValues(id);
+            let title = '';
+            try { const meta = await sheetsCall('get_spreadsheet', { spreadsheetId: id, fields: ['properties.title'] }); title = (meta.properties && meta.properties.title) || ''; } catch (_) { /* title is optional */ }
+            IMP.sheet = { id, title };
+            $('ix-status').innerHTML = '';
+            showImportDetails();
+          } catch (er) { $('ix-status').innerHTML = `<div class="notice bad">${esc(er.message)}</div>`; }
+          finally { el.disabled = false; }
+          break;
+        }
+        case 'ix-import': {
+          el.disabled = true;
+          try {
+            const { q, r } = await importExisting();
+            closeModal();
+            S.tab = 'score'; lsSet('tab', 'score');
+            render();
+            toast(`Imported "${q.title}" with ${plural(r.added, 'response')}. Set points and guidance per ticket, then score.`);
+          } catch (er) { toast(er.message, true); el.disabled = false; }
+          break;
+        }
         case 'delete-quiz': {
           const q = byId('quizzes', el.dataset.id);
           if (!q) return;
