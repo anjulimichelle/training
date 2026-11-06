@@ -224,6 +224,18 @@ details.about > summary .muted { font-family: var(--body); font-weight: 400; fon
 .about-card p, .about-card li, .about-card dd { font-size: .9rem; margin: 0 0 6px; overflow-wrap: anywhere; }
 .about-card ul, .about-card ol { margin: 0; padding-left: 18px; }
 .about-card code { font-size: .85em; background: var(--teal-soft); color: var(--teal); padding: 1px 5px; border-radius: 4px; }
+.split.even { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .split.even { grid-template-columns: minmax(0, 1fr); } }
+ol.steps { margin: 0; padding-left: 22px; display: grid; gap: 14px; }
+ol.steps li { padding-left: 4px; }
+table.raw td { min-width: 240px; }
+table.raw td:first-child { min-width: 170px; }
+.qa { display: grid; gap: 1px; margin-bottom: 8px; }
+.ql { font-size: .74rem; font-weight: 700; color: var(--soft); }
+.qv { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .88rem; }
+tr.detail > td { background: var(--bg); }
+.dcard { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 10px 12px; display: grid; gap: 8px; }
+.ticket-url { color: var(--teal); }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
@@ -232,9 +244,9 @@ details.about > summary .muted { font-family: var(--body); font-weight: 400; fon
     <div class="intro">
       <span class="eyebrow">Homeaglow · New Hire Care Training</span>
       <h1>Ticket Assessment Hub</h1>
-      <p class="muted">Build ticket quizzes with a private rubric per ticket, collect trainee answers, grade them with Claude, review the scores, and export the results.</p>
+      <p class="muted">Paste ticket links to make a quiz form, see each trainee's answers, and score them with Claude against your own guidelines for each ticket.</p>
     </div>
-    <button class="btn" id="setup-btn" type="button">Setup and demo data</button>
+    <button class="btn" id="setup-btn" type="button">Setup</button>
   </header>
   <section class="sync" id="status" aria-live="polite"></section>
   <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
@@ -243,70 +255,55 @@ details.about > summary .muted { font-family: var(--body); font-weight: 400; fon
     <summary>About this tool and how it was built <span class="muted">What it stores, how grading works, and what it never does</span></summary>
     <div class="about-body">
       <section class="about-card">
-        <h3>What it is</h3>
-        <p>A staging workspace for trainers to run ticket-based assessments for new Care Specialists: build the quiz, preview the trainee form, collect answers, grade each ticket against its own rubric, review the grade, and track performance by cohort.</p>
-        <p>It is a prototype. Use fictional trainees and tickets until the team approves it.</p>
-      </section>
-      <section class="about-card">
-        <h3>Where the data lives</h3>
-        <p>Quizzes, rubrics, submissions and evaluations are saved in this page's shared database. Everyone the page is shared with as Contributor or above reads and edits the same records. Viewers and Commenters see nothing, so rubrics and expected answers stay private to trainers.</p>
-        <p>Raw trainee answers are saved once and never changed by grading or review.</p>
-      </section>
-      <section class="about-card">
-        <h3>How grading works</h3>
-        <ul>
-          <li>Each ticket is graded on its own, against only the rubric and reference material the trainer wrote for it.</li>
-          <li>Claude judges whether the resolution is correct, not whether the wording matches, and must give a reason for every deduction.</li>
-          <li>When the rubric doesn't give enough to judge a criterion, Claude flags it for trainer review instead of guessing.</li>
-          <li>The page clamps every score to the criterion's maximum and adds up totals itself, so Claude's arithmetic is never trusted.</li>
-          <li>Grading runs on the account of the trainer who clicks the button, and asks that trainer's permission the first time.</li>
-        </ul>
-      </section>
-      <section class="about-card">
-        <h3>Trainer review</h3>
-        <ul>
-          <li>The original Claude grade is kept unchanged. The trainer's edited grade is saved beside it with who approved it and when.</li>
-          <li>Reevaluating creates a new version and keeps the old one for the audit trail.</li>
-          <li>Pass or fail shows only when the quiz has a passing threshold.</li>
-        </ul>
-      </section>
-      <section class="about-card">
-        <h3>Google Forms</h3>
+        <h3>How to use it</h3>
         <ol>
-          <li>After you approve a quiz's preview, the page writes a Google Apps Script for that quiz.</li>
-          <li>You paste it into a new project at script.google.com and run it yourself. It creates the form closed and unpublished, with one section per ticket and the ticket link at the top.</li>
-          <li>You open and share the form yourself. Then import the responses here from the linked Google Sheet or a CSV.</li>
+          <li><b>Quiz Generation:</b> add a title and date, paste the ticket links and the trainee emails, then click Generate quiz form. Each link gets the same four questions, and the instructions go at the top.</li>
+          <li><b>Responses:</b> pick the quiz and click Get latest responses to read the form's response sheet. Each trainee's answers show by ticket.</li>
+          <li><b>Scoring:</b> set points and write guidelines for each ticket, then score. Change a guideline any time and re-score to update scores, errors and feedback.</li>
         </ol>
-        <p>The page never creates, opens or shares a form on its own, and never sends messages.</p>
+      </section>
+      <section class="about-card">
+        <h3>How the Google Form is made</h3>
+        <p>The page writes a short Google Apps Script for the quiz. You paste it at script.google.com and run it in your own Google account. It makes the form closed and shared with no one, plus a response sheet. You open the form and send it yourself.</p>
+        <p>The page never creates, opens or sends a form on its own.</p>
+      </section>
+      <section class="about-card">
+        <h3>How scoring works</h3>
+        <ul>
+          <li>Claude scores one ticket at a time for all trainees together, using only the points and guidelines you wrote for that ticket.</li>
+          <li>It judges whether the actions and resolution are right, not the exact wording, and lists each error.</li>
+          <li>When you change a ticket's points or guidelines, its scores show as out of date until you re-score.</li>
+          <li>Your manual adjustments stay through re-scoring, with Claude's own score kept beside them.</li>
+          <li>Scoring runs on the Claude account of whoever clicks the button, which asks permission the first time.</li>
+        </ul>
+      </section>
+      <section class="about-card">
+        <h3>Who can see what</h3>
+        <p>Quizzes, answers, guidelines and scores are saved on this page. People it's shared with as Contributor or Editor can use it. Viewers and Commenters see nothing.</p>
+        <p>Responses are read from Google Sheets through your own connector, read only.</p>
       </section>
       <section class="about-card">
         <h3>How it was built</h3>
-        <ul>
-          <li>Built with Claude as a single page published as a claude.ai artifact, in the same style as the Training Agenda Library.</li>
-          <li>Uses the page's shared database for records, Claude for grading, your Google Sheets connector (read only) for response imports, and SheetJS for Excel files.</li>
-          <li>The source is in the <code>ticket-assessment-hub/artifact</code> folder of the training GitHub repository.</li>
-        </ul>
+        <p>Built with Claude as a single page published as a claude.ai artifact, in the same style as the Training Agenda Library. The source is in <code>ticket-assessment-hub/artifact</code> in the training GitHub repository.</p>
       </section>
-      <section class="about-card">
+          <section class="about-card">
         <h3>Terms used on this page</h3>
         <dl style="margin:0">
           <dt><b>C</b> and <b>CP</b></dt><dd>The customer and the cleaning professional.</dd>
-          <dt><b>Rubric</b></dt><dd>The trainer's private scoring guide for one ticket: criteria, points, deductions, critical errors and auto-fail conditions.</dd>
-          <dt><b>Reference material</b></dt><dd>Policy context, knowledge base notes and sample answers that Claude uses to grade. Trainees never see it.</dd>
-          <dt><b>Staging form</b></dt><dd>The in-page preview of the trainee form, used to submit fictional test answers.</dd>
-          <dt><b>Trainer final</b></dt><dd>The grade a trainer approved, which may differ from the original Claude grade.</dd>
+          <dt><b>CRM actions</b></dt><dd>The steps a specialist takes in the internal tools, such as notes, refunds and flags.</dd>
+          <dt><b>Points</b></dt><dd>The most a trainee can score on one ticket. The total is the sum across tickets; the score is the total as a percentage.</dd>
+          <dt><b>Scoring guidelines</b></dt><dd>The trainer's notes on what a correct answer includes and how the points split. Claude scores against only these.</dd>
+          <dt><b>Out of date (old)</b></dt><dd>A score made before the ticket's points or guidelines last changed. Re-score to update it.</dd>
+          <dt><b>Adjusted</b></dt><dd>A score a trainer changed by hand. It stays through re-scoring.</dd>
         </dl>
       </section>
-    </div>
+</div>
   </details>
 </div>
 <div id="modal-root"></div>
 <div id="toast-root" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-/*__CORE__*/
-</script>
 <script>
 /*__APP__*/
 </script>
