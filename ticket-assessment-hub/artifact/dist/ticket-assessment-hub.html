@@ -1128,6 +1128,7 @@ function createQuizForm() {
       '',
       '*Correct CRM actions:*',
       crm ? crm.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => '• ' + l.replace(/^[-•*]\s*/, '')).join('\n') : '(add the correct actions here)',
+      ...(gf(t).sampleC.trim() ? ['', '*Sample response to C:*', gf(t).sampleC.trim()] : []),
       '',
       '*Feedback on comms/resolution:*',
       items.length ? items.map((e) => '• ' + e).join('\n') : '• Nice work, nothing missed on this ticket.',
@@ -1239,6 +1240,7 @@ Answers:
 ${part.map((r) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<trainee id="${r.id}">\n${QUESTIONS.map((qq) => `${qq.label}\n${String(a[qq.key] || '').trim() || '(blank)'}`).join('\n\n')}\n</trainee>`; }).join('\n')}
 
 - The general rules apply to every ticket. When a general rule says a question scores 0 (a ZTP), set that question to 0 and add {"question": "q1".."q4", "reason": "…"} to "ztp", quoting the trainee's words where it helps. Otherwise "ztp" is an empty list.
+- Only mention what cost points. Don't list, praise or comment on extra steps that aren't penalized, such as investigation steps under CRM actions, in "errors", "improvements" or "feedback".
 - In "errors", start each item with the question it belongs to, for example "CRM actions: didn't state the refund amount".
 
 Reply with only a JSON array, one object per trainee, for example:
