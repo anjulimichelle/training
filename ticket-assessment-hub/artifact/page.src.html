@@ -306,6 +306,9 @@ details.tcard[open] .tcard-hint::after { content: "Hide details"; }
 details.tcard > .tcard-body { padding: 0 14px 14px; }
 .slack-btn { gap: 6px; }
 .slack-ico { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: #4a154b; color: #fff; font-weight: 700; font-size: .75rem; }
+html { height: auto !important; overflow-y: auto !important; }
+body { height: auto !important; min-height: 100%; overflow: visible !important; }
+textarea { overscroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 

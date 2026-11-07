@@ -1490,6 +1490,12 @@ Reply with only a JSON array, one object per trainee, for example:
       el.value = '';
     }
   });
+  // The mouse wheel over a focused number box changes its value in some browsers instead of
+  // scrolling the page. Unfocus it so the wheel always scrolls and points never change by accident.
+  document.addEventListener('wheel', (e) => {
+    const el = e.target;
+    if (el && el.matches && el.matches('input[type=number]') && document.activeElement === el) el.blur();
+  }, { passive: true, capture: true });
   document.addEventListener('toggle', (e) => {
     const d = e.target;
     if (d && d.dataset && d.dataset.sec) { S.secOpen[d.dataset.sec] = d.open; lsSet('secOpen', JSON.stringify(S.secOpen)); }

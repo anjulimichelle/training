@@ -306,6 +306,9 @@ details.tcard[open] .tcard-hint::after { content: "Hide details"; }
 details.tcard > .tcard-body { padding: 0 14px 14px; }
 .slack-btn { gap: 6px; }
 .slack-ico { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: #4a154b; color: #fff; font-weight: 700; font-size: .75rem; }
+html { height: auto !important; overflow-y: auto !important; }
+body { height: auto !important; min-height: 100%; overflow: visible !important; }
+textarea { overscroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
@@ -1868,6 +1871,12 @@ Reply with only a JSON array, one object per trainee, for example:
       el.value = '';
     }
   });
+  // The mouse wheel over a focused number box changes its value in some browsers instead of
+  // scrolling the page. Unfocus it so the wheel always scrolls and points never change by accident.
+  document.addEventListener('wheel', (e) => {
+    const el = e.target;
+    if (el && el.matches && el.matches('input[type=number]') && document.activeElement === el) el.blur();
+  }, { passive: true, capture: true });
   document.addEventListener('toggle', (e) => {
     const d = e.target;
     if (d && d.dataset && d.dataset.sec) { S.secOpen[d.dataset.sec] = d.open; lsSet('secOpen', JSON.stringify(S.secOpen)); }
