@@ -121,7 +121,9 @@
     renderTabs();
     if (caps.db && Object.keys(COLLS).some((c) => !loaded.has(c)) && !dbError) { $('app').innerHTML = '<section class="panel"><div class="empty">Loading quizzes and responses…</div></section>'; return; }
     const y = scrollY;
+    const open = [...$('app').querySelectorAll('details[open][data-k]')].map((d) => d.dataset.k);
     $('app').innerHTML = S.tab === 'gen' ? renderGen() : S.tab === 'resp' ? renderResp() : renderScore();
+    open.forEach((k) => { const d = $('app').querySelector(`details[data-k="${CSS.escape(k)}"]`); if (d) d.open = true; });
     scrollTo(0, y);
   }
   const quizPicker = (id, sel, label) => {
@@ -437,10 +439,13 @@ function createQuizForm() {
         <span class="small muted">${q.traineeEmails.length ? `${q.traineeEmails.filter((e) => latest.has(e)).length} of ${q.traineeEmails.length} submitted` : 'No trainee list yet'}</span></div>
       ${S.showList ? traineeListHtml(q, latest, all) : ''}
       <p class="small muted" style="margin:0">${q.traineeEmails.length ? `${rows.filter((r) => q.traineeEmails.includes(r.email)).length} of ${q.traineeEmails.length} trainees answered.${rows.some((r) => !q.traineeEmails.includes(r.email)) ? ` ${plural(rows.filter((r) => !q.traineeEmails.includes(r.email)).length, 'more response')} from emails not on the trainee list.` : ''}` : `${plural(rows.length, 'trainee')} answered.`}${missing.length ? ` <b style="color:var(--bad)">${plural(missing.length, 'trainee')} with no response.</b>` : ''}${q.sheetUrl ? (q.lastSyncedAt ? ` Last synced ${fmtDT(q.lastSyncedAt)}.` : ' Not synced yet.') + ' Sync again any time to pull in late submissions; answers already here are skipped.' : ' No response sheet connected yet. Sync responses looks for it in your Drive.'}</p>
-      ${rows.length ? `<div class="tw"><table class="raw"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th>Ticket ${i + 1}</th>`).join('')}</tr></thead><tbody>
-        ${rows.map((r) => { const k = all.filter((x) => x.email === r.email).length; return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.email)}</div><div class="small muted">${fmtDT(r.submittedAt)}${k > 1 ? ` · latest of ${k}` : ''}</div></td>
-          ${q.tickets.map((t) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<td>${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label.replace(/ \(.*\)$/, ''))}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</td>`; }).join('')}</tr>`; }).join('')}
-      </tbody></table></div>` : '<div class="empty">No responses yet.</div>'}
+      ${rows.length ? `<div class="rlist">${rows.map((r) => {
+        const k = all.filter((x) => x.email === r.email).length;
+        return `<article class="rcard">
+          <div class="rcard-h"><div><b>${esc(r.name)}</b>${r.name !== r.email ? `<div class="small muted">${esc(r.email)}</div>` : ''}</div><span class="small muted">${fmtDT(r.submittedAt)}${k > 1 ? ` · latest of ${k}` : ''}</span></div>
+          ${q.tickets.map((t, i) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<details class="rticket" data-k="r-${esc(r.id)}-${t.id}"><summary><span class="rt-name">Ticket ${i + 1}</span>${t.url ? `<a class="small" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>` : ''}</summary>
+            <div class="rt-body">${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label)}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</div></details>`; }).join('')}
+        </article>`; }).join('')}</div>` : '<div class="empty">No responses yet.</div>'}
     </section>`;
   }
 

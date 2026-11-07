@@ -277,6 +277,17 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
 .tlist { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: var(--bg); }
 .tlist table td { padding: 6px 8px; }
 .tlist tr.nores td { background: var(--bad-soft); }
+.rlist { display: grid; gap: 10px; }
+.rcard { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 10px 12px; display: grid; gap: 4px; }
+.rcard-h { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: baseline; padding-bottom: 4px; }
+details.rticket { border-top: 1px solid var(--border); }
+details.rticket > summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 7px 2px; }
+details.rticket > summary::-webkit-details-marker { display: none; }
+details.rticket > summary::before { content: "›"; color: var(--teal); font-size: 1.2rem; line-height: 1; transition: transform .15s; }
+details.rticket[open] > summary::before { transform: rotate(90deg); }
+details.rticket > summary .rt-name { font-weight: 700; color: var(--teal); }
+details.rticket > summary a { min-width: 0; overflow-wrap: anywhere; }
+.rt-body { padding: 4px 0 10px 18px; display: grid; gap: 2px; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
