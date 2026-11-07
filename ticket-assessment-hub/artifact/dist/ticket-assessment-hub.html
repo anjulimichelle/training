@@ -274,6 +274,9 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
 .check input { margin-top: 3px; accent-color: var(--teal); }
 .ztp { background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 6px 10px; font-size: .88rem; }
 .ztp ul { margin: 2px 0 0; }
+.tlist { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: var(--bg); }
+.tlist table td { padding: 6px 8px; }
+.tlist tr.nores td { background: var(--bad-soft); }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
@@ -397,6 +400,7 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
     rulesDraft: null,
     commsDraft: null,
     open: {},
+    showList: lsGet('showList') === '1',
     busy: {},
   };
   const byId = (c, id) => store[c].find((x) => x.id === id);
@@ -737,6 +741,34 @@ function createQuizForm() {
     return m;
   }
 
+  function traineeListRows(q, latest, all) {
+    const listed = q.traineeEmails.map((e) => {
+      const r = latest.get(e);
+      return { email: e, r, n: r ? all.filter((x) => x.email === e).length : 0, listed: true };
+    });
+    const extra = [...latest.values()].filter((r) => !q.traineeEmails.includes(r.email)).map((r) => ({ email: r.email, r, n: all.filter((x) => x.email === r.email).length, listed: false }));
+    return { listed, extra };
+  }
+  function traineeListText(q) {
+    const latest = latestByEmail(q.id);
+    const all = store.responses.filter((r) => r.quizId === q.id);
+    const { listed, extra } = traineeListRows(q, latest, all);
+    const line = (x) => `${x.email} | ${x.r ? fmtDT(x.r.submittedAt) : 'No response'}${x.listed ? '' : ' (not on the trainee list)'}`;
+    return [`${q.title}${q.date ? ' | ' + fmtDate(q.date) : ''}`, ...listed.map(line), ...extra.map(line)].join('\n');
+  }
+  function traineeListHtml(q, latest, all) {
+    const { listed, extra } = traineeListRows(q, latest, all);
+    const row = (x) => `<tr class="${x.r ? '' : 'nores'}"><td>${esc(x.email)}${x.listed ? '' : ' <span class="tag warn">Not on the list</span>'}</td>
+      <td>${x.r ? `${fmtDT(x.r.submittedAt)}${x.n > 1 ? ` <span class="muted small">(latest of ${x.n})</span>` : ''}` : '<span class="tag bad">No response</span>'}</td></tr>`;
+    return `<div class="tlist">
+      <div class="panel-head"><b>${esc(q.title)}${q.date ? ' | ' + fmtDate(q.date) : ''}</b>
+        <span class="actions"><button class="btn small ghost" type="button" data-act="edit-list">Edit trainee list</button><button class="btn small ghost" type="button" data-act="copy-list">Copy list</button></span></div>
+      ${listed.length || extra.length ? `<div class="tw"><table><thead><tr><th>Trainee email</th><th>Submitted</th></tr></thead><tbody>${listed.map(row).join('')}${extra.map(row).join('')}</tbody></table></div>`
+        : '<div class="empty">No trainee emails yet. Click Edit trainee list to add them.</div>'}
+      <p class="small muted" style="margin:0">Times come from the response sheet, in your time zone. Sync responses to check for late submissions.</p>
+    </div>`;
+  }
+
   function renderResp() {
     const q = pickQuiz('respQuiz');
     if (!q) return `<section class="panel">${quizPicker('pick-resp', '', 'Quiz')}<div class="empty">Create a quiz in tab 1 first.</div></section>`;
@@ -750,7 +782,10 @@ function createQuizForm() {
         <label class="btn small">Import CSV<input type="file" accept=".csv,text/csv" id="csv-in" hidden></label>
         <button class="btn small ghost" type="button" data-act="test-resp">Add a test response</button>
         <button class="btn small ghost" type="button" data-act="dl-raw" ${all.length ? '' : 'disabled'}>Download CSV</button></div></div>
-      <p class="small muted" style="margin:0">${q.traineeEmails.length ? `${rows.filter((r) => q.traineeEmails.includes(r.email)).length} of ${q.traineeEmails.length} trainees answered.${rows.some((r) => !q.traineeEmails.includes(r.email)) ? ` ${plural(rows.filter((r) => !q.traineeEmails.includes(r.email)).length, 'more response')} from emails not on the trainee list.` : ''}` : `${plural(rows.length, 'trainee')} answered.`}${missing.length ? ` Not answered yet: ${missing.map(esc).join(', ')}.` : ''}${q.sheetUrl ? (q.lastSyncedAt ? ` Last synced ${fmtDT(q.lastSyncedAt)}.` : ' Not synced yet.') + ' Sync again any time to pull in late submissions; answers already here are skipped.' : ' No response sheet connected yet. Sync responses looks for it in your Drive.'}</p>
+      <div class="actions"><button class="btn small ${S.showList ? 'primary' : ''}" type="button" data-act="toggle-list" aria-expanded="${S.showList}">${S.showList ? 'Hide trainee list' : 'Trainee list'}</button>
+        <span class="small muted">${q.traineeEmails.length ? `${q.traineeEmails.filter((e) => latest.has(e)).length} of ${q.traineeEmails.length} submitted` : 'No trainee list yet'}</span></div>
+      ${S.showList ? traineeListHtml(q, latest, all) : ''}
+      <p class="small muted" style="margin:0">${q.traineeEmails.length ? `${rows.filter((r) => q.traineeEmails.includes(r.email)).length} of ${q.traineeEmails.length} trainees answered.${rows.some((r) => !q.traineeEmails.includes(r.email)) ? ` ${plural(rows.filter((r) => !q.traineeEmails.includes(r.email)).length, 'more response')} from emails not on the trainee list.` : ''}` : `${plural(rows.length, 'trainee')} answered.`}${missing.length ? ` <b style="color:var(--bad)">${plural(missing.length, 'trainee')} with no response.</b>` : ''}${q.sheetUrl ? (q.lastSyncedAt ? ` Last synced ${fmtDT(q.lastSyncedAt)}.` : ' Not synced yet.') + ' Sync again any time to pull in late submissions; answers already here are skipped.' : ' No response sheet connected yet. Sync responses looks for it in your Drive.'}</p>
       ${rows.length ? `<div class="tw"><table class="raw"><thead><tr><th>Trainee</th>${q.tickets.map((t, i) => `<th>Ticket ${i + 1}</th>`).join('')}</tr></thead><tbody>
         ${rows.map((r) => { const k = all.filter((x) => x.email === r.email).length; return `<tr><td><b>${esc(r.name)}</b><div class="small muted">${esc(r.email)}</div><div class="small muted">${fmtDT(r.submittedAt)}${k > 1 ? ` · latest of ${k}` : ''}</div></td>
           ${q.tickets.map((t) => { const a = (r.answers || []).find((x) => x.ticketId === t.id) || {}; return `<td>${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label.replace(/ \(.*\)$/, ''))}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</td>`; }).join('')}</tr>`; }).join('')}
@@ -1306,6 +1341,24 @@ Reply with only a JSON array, one object per trainee, for example:
         case 'modal-bg': case 'close-modal': closeModal(null); break;
         case 'ask-ok': closeModal($('ask-input') ? $('ask-input').value : true); break;
         case 'new-quiz': S.form = blankForm(); render(); break;
+        case 'toggle-list': S.showList = !S.showList; lsSet('showList', S.showList ? '1' : '0'); render(); break;
+        case 'copy-list': copyText(traineeListText(byId('quizzes', S.respQuiz))); break;
+        case 'edit-list': {
+          const q = byId('quizzes', S.respQuiz);
+          openModal('Trainee list', `<p class="small" style="margin:0">One email per line, or separated by commas. Used to show who has and hasn't submitted for <b>${esc(quizLabel(q))}</b>.</p>
+            <textarea id="tl-emails" rows="12">${esc(q.traineeEmails.join('\n'))}</textarea><p class="small muted" id="tl-note" style="margin:0">${plural(q.traineeEmails.length, 'trainee')}.</p>`,
+            `<button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="button" data-act="save-list">Save list</button>`, true);
+          break;
+        }
+        case 'save-list': {
+          const emails = parseEmails($('tl-emails').value);
+          const bad = emails.find((e) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+          if (bad) return toast(`Check this email: ${bad}`, true);
+          const q = clone(byId('quizzes', S.respQuiz));
+          await put('quizzes', { ...q, traineeEmails: emails, traineeListSet: true, updatedAt: new Date().toISOString() });
+          closeModal(); render(); toast(`Trainee list saved: ${plural(emails.length, 'trainee')}.`);
+          break;
+        }
         case 'import-existing': IMP.values = null; IMP.sheet = null; openImportExisting(); break;
         case 'ix-list': {
           el.disabled = true;
@@ -1412,7 +1465,7 @@ Reply with only a JSON array, one object per trainee, for example:
             }
             const r = await readSheet(byId('quizzes', q.id));
             const cur = clone(byId('quizzes', q.id));
-            if (cur.imported) cur.traineeEmails = [...new Set([...cur.traineeEmails, ...store.responses.filter((x) => x.quizId === q.id).map((x) => x.email)])];
+            if (cur.imported && !cur.traineeListSet) cur.traineeEmails = [...new Set([...cur.traineeEmails, ...store.responses.filter((x) => x.quizId === q.id).map((x) => x.email)])];
             await put('quizzes', { ...cur, lastSyncedAt: new Date().toISOString() });
             toast(r.added ? `Synced: ${plural(r.added, 'new response')} added. Score ${r.added === 1 ? 'it' : 'them'} in tab 3.` : 'Synced: no new responses since the last sync.');
           }
