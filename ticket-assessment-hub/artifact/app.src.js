@@ -1075,6 +1075,13 @@ Reply with only a JSON array, one object per trainee, for example:
       const range = `'${sh.name}'`;
       await sheetsCall('batch_clear_values', { spreadsheetId: id, ranges: [`${range}!A1:ZZ5000`] });
       await sheetsCall('update_values', { spreadsheetId: id, range: `${range}!A1`, values });
+      // Overall (%) is a live formula: the average of the ticket quiz % and the KB %, blank until both are filled in.
+      const oi = keys.indexOf('Overall (%)'), ti = keys.indexOf('Ticket quiz (%)'), ki = keys.indexOf('Knowledge base assessment (%)');
+      if (oi >= 0 && ti >= 0 && ki >= 0 && sh.rows.length) {
+        const T = colName(ti), K = colName(ki), O = colName(oi);
+        const formulas = sh.rows.map((_, i) => [`=IF(AND(ISNUMBER(${T}${i + 2}),ISNUMBER(${K}${i + 2})),ROUND(AVERAGE(${T}${i + 2},${K}${i + 2}),1),"")`]);
+        await sheetsCall('update_formulas', { spreadsheetId: id, range: `${range}!${O}2:${O}${sh.rows.length + 1}`, formulas });
+      }
       // Formatting is a nicety: if it fails, the data is already written.
       if (tab.sheetId != null) {
         const sid = tab.sheetId;
