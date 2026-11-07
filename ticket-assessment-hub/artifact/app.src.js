@@ -16,7 +16,7 @@
   const FORM_MAKER_SCRIPT = /*__FORM_MAKER__*/'';
   const SHEETS = 'Google Sheets';
   const SLACK = 'Slack';
-  const BATCH = 12; // trainees scored per Claude call for one ticket
+  const BATCH = 6; // trainees scored per Claude call for one ticket (long answers need small groups)
 
   // ---------- helpers ----------
   const $ = (id) => document.getElementById(id);
@@ -581,7 +581,7 @@ function createQuizForm() {
     const g = byId('grades', gradeId(q, resp.email));
     const c = g && g.tickets && g.tickets[t.id];
     const max = tmax(t);
-    if (!c || !c.ai) return { state: 'none', max };
+    if (!c || !c.ai || /^Claude didn't return a score/.test(c.ai.feedback || '')) return { state: 'none', max };
     const stale = c.ai.guideHash !== guideHash(t) || c.ai.responseId !== resp.id;
     const raw = c.override && c.override.score != null ? c.override.score : c.ai.score;
     return { state: stale ? 'stale' : 'ok', c, score: Math.min(max, raw), max };
@@ -826,8 +826,8 @@ function createQuizForm() {
     const qp = qpts(t);
     const gh = guideHash(t);
     let done = 0;
-    for (let i = 0; i < resp.length; i += BATCH) {
-      const part = resp.slice(i, i + BATCH);
+    const missed = [];
+    const runBatch = async (part) => {
       const prompt = `You score Homeaglow Care Specialist training answers for one ticket. "C" is the customer, "CP" is the cleaning professional, "CRM actions" are steps taken in the internal tools.
 
 Ticket ${n}${t.url ? ': ' + t.url + ' (you cannot open this link; rely only on the trainer\'s guidelines)' : ' (rely only on the trainer\'s guidelines)'}
@@ -877,8 +877,10 @@ Reply with only a JSON array, one object per trainee, for example:
       }
       const list = Array.isArray(out) ? out : out && Array.isArray(out.results) ? out.results : [];
       const now = new Date().toISOString();
-      for (const r of part) {
-        const got = list.find((x) => x && x.id === r.id);
+      const byPos = list.length === part.length && !list.some((x) => x && part.some((r) => r.id === x.id));
+      for (const [pi, r] of part.entries()) {
+        const got = list.find((x) => x && x.id === r.id) || (byPos ? list[pi] : null);
+        if (!got) { missed.push(r); continue; } // leave unscored; never store a made-up 0
         const qs = got && got.questionScores && typeof got.questionScores === 'object' ? QKEYS.reduce((o, k) => { let v = Number(got.questionScores[k]); if (!Number.isFinite(v)) v = 0; o[k] = Math.max(0, Math.min(qp[k], Math.round(v * 2) / 2)); return o; }, {}) : null;
         const ans = (r.answers || []).find((x) => x.ticketId === t.id) || {};
         const ztp = [];
@@ -889,9 +891,7 @@ Reply with only a JSON array, one object per trainee, for example:
         let score = qs ? QKEYS.reduce((a, k) => a + qs[k], 0) : got ? Number(got.score) : 0;
         if (!Number.isFinite(score)) score = 0;
         score = Math.max(0, Math.min(max, Math.round(score * 2) / 2));
-        const ai = got
-          ? { score, qscores: qs, ztp, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
-          : { score: 0, errors: [], improvements: [], feedback: 'Claude didn\'t return a score for this trainee. Re-score, or adjust by hand.', needsReview: true, guideHash: gh, responseId: r.id, gradedAt: now };
+        const ai = { score, qscores: qs, ztp, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now };
         const id = gradeId(q, r.email);
         const doc = clone(byId('grades', id) || { id, quizId: q.id, email: r.email, tickets: {} });
         const prev = doc.tickets[t.id];
@@ -900,7 +900,12 @@ Reply with only a JSON array, one object per trainee, for example:
         await put('grades', doc);
         done++;
       }
-    }
+    };
+    for (let i = 0; i < resp.length; i += BATCH) await runBatch(resp.slice(i, i + BATCH));
+    // Retry anyone Claude left out, in smaller groups.
+    const retry = missed.splice(0);
+    for (let i = 0; i < retry.length; i += 2) await runBatch(retry.slice(i, i + 2));
+    if (missed.length) S.lastMissed = (S.lastMissed || 0) + missed.length;
     return done;
   }
 
@@ -1367,14 +1372,16 @@ Reply with only a JSON array, one object per trainee, for example:
           const q = byId('quizzes', S.scoreQuiz);
           const t = q.tickets.find((x) => x.id === el.dataset.id);
           const todo = [...latestByEmail(q.id).values()].some((r) => cellState(q, t, r).state !== 'ok');
+          S.lastMissed = 0;
           const n = await runScoring(q, [t], todo);
-          toast(`Scored ${plural(n, 'trainee')}.`);
+          toast(`Scored ${plural(n, 'trainee')}.${S.lastMissed ? ` ${plural(S.lastMissed, 'trainee')} still couldn't be scored; click Score again.` : ''}`, !!S.lastMissed);
           break;
         }
         case 'score-all': {
           const q = byId('quizzes', S.scoreQuiz);
+          S.lastMissed = 0;
           const n = await runScoring(q, q.tickets, true);
-          toast(`Scored ${plural(n, 'answer')}.`);
+          toast(`Scored ${plural(n, 'answer')}.${S.lastMissed ? ` ${plural(S.lastMissed, 'answer')} still couldn't be scored; click Score again.` : ''}`, !!S.lastMissed);
           break;
         }
         case 'save-ov': {
@@ -1496,9 +1503,16 @@ Reply with only a JSON array, one object per trainee, for example:
     const el = e.target;
     if (el && el.matches && el.matches('input[type=number]') && document.activeElement === el) el.blur();
   }, { passive: true, capture: true });
+  // Text boxes grow to fit their text, so they never scroll inside and never trap the page's scrolling.
+  function fitTextarea(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+  function fitAll() { document.querySelectorAll('#app textarea').forEach((t) => t.offsetParent && fitTextarea(t)); }
+  document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('#app textarea')) fitTextarea(e.target); });
+  new MutationObserver(() => requestAnimationFrame(fitAll)).observe($('app'), { childList: true, subtree: false });
+
   document.addEventListener('toggle', (e) => {
     const d = e.target;
     if (d && d.dataset && d.dataset.sec) { S.secOpen[d.dataset.sec] = d.open; lsSet('secOpen', JSON.stringify(S.secOpen)); }
+    if (d && d.open) requestAnimationFrame(fitAll);
   }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
   window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || rulesDirty()) { e.preventDefault(); e.returnValue = ''; } });

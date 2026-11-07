@@ -309,6 +309,8 @@ details.tcard > .tcard-body { padding: 0 14px 14px; }
 html { height: auto !important; overflow-y: auto !important; }
 body { height: auto !important; min-height: 100%; overflow: visible !important; }
 textarea { overscroll-behavior: auto; }
+.tw { overflow-y: hidden; }
+#app textarea { overflow-y: hidden; resize: vertical; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 
@@ -397,7 +399,7 @@ textarea { overscroll-behavior: auto; }
   const FORM_MAKER_SCRIPT = "/**\n * Ticket Quiz Form Maker\n *\n * A tiny Google Apps Script web app. The Ticket Assessment Hub opens it with\n * the quiz details in the link; the trainer clicks \"Create Google Form\" and the\n * form is built in the trainer's own Google Drive. It does nothing else: it does\n * not publish or share the form, does not create response sheets and does not\n * send anything.\n *\n * One-time setup (about two minutes):\n *  1. Go to https://script.google.com and click New project.\n *  2. Replace everything in Code.gs with this file. Name the project\n *     \"Ticket Quiz Form Maker\" and click Save.\n *  3. Click Deploy > New deployment > gear icon > Web app.\n *       Execute as: User accessing the web app\n *       Who has access: Anyone within your organization\n *     Click Deploy, allow access when Google asks, and copy the Web app URL\n *     (it ends in /exec).\n *  4. In the hub, open Setup and paste that URL into \"Form maker link\".\n *\n * Because it runs as the person who clicks it, each trainer's forms go into\n * their own Drive. Each trainer allows access the first time they use it.\n */\n\nfunction doGet(e) {\n  var data;\n  var error = '';\n  try {\n    data = readQuiz_(e && e.parameter && e.parameter.q);\n  } catch (err) {\n    error = String(err && err.message ? err.message : err);\n  }\n  var t = HtmlService.createTemplate(PAGE_);\n  t.error = error;\n  t.quiz = data || { title: '', tickets: [] };\n  t.payload = data ? JSON.stringify(data).replace(/</g, '\\\\u003c') : 'null';\n  return t.evaluate().setTitle('Ticket Quiz Form Maker').addMetaTag('viewport', 'width=device-width, initial-scale=1');\n}\n\n// Called from the page's button. Builds the form and returns its links.\nfunction createQuizForm(quiz) {\n  quiz = validate_(quiz);\n  var form = FormApp.create(quiz.formTitle);\n  form.setTitle(quiz.formTitle);\n  form.setDescription('Instructions:\\n' + quiz.instructions.map(function (t, i) { return (i + 1) + '. ' + t; }).join('\\n'));\n  try { form.setEmailCollectionType(FormApp.EmailCollectionType.VERIFIED); }\n  catch (e) { try { form.setCollectEmail(true); } catch (e2) {} }\n  form.setProgressBar(true);\n  form.setAllowResponseEdits(false);\n  form.addTextItem().setTitle('Full name').setRequired(true);\n  quiz.tickets.forEach(function (url, i) {\n    form.addPageBreakItem().setTitle('Ticket ' + (i + 1)).setHelpText('Ticket link: ' + url);\n    quiz.questions.forEach(function (label) {\n      form.addParagraphTextItem().setTitle(label).setRequired(true);\n    });\n  });\n  return { id: form.getId(), editUrl: form.getEditUrl(), title: quiz.formTitle };\n}\n\nfunction readQuiz_(q) {\n  if (!q) throw new Error('This link has no quiz in it. Open it from the hub with Generate quiz form.');\n  var json = Utilities.newBlob(Utilities.base64DecodeWebSafe(q)).getDataAsString('UTF-8');\n  return validate_(JSON.parse(json));\n}\n\nfunction validate_(x) {\n  if (!x || typeof x !== 'object') throw new Error('The quiz details could not be read.');\n  var str = function (v, max) { return String(v == null ? '' : v).slice(0, max); };\n  var out = {\n    formTitle: str(x.formTitle, 200).trim(),\n    instructions: (x.instructions || []).slice(0, 10).map(function (v) { return str(v, 1000); }),\n    questions: (x.questions || []).slice(0, 10).map(function (v) { return str(v, 300); }),\n    tickets: (x.tickets || []).slice(0, 60).map(function (v) { return str(v, 2000).trim(); }),\n  };\n  if (!out.formTitle) throw new Error('The quiz has no title.');\n  if (!out.tickets.length) throw new Error('The quiz has no ticket links.');\n  if (!out.questions.length) throw new Error('The quiz has no questions.');\n  out.tickets.forEach(function (u) { if (!/^https?:\\/\\/\\S+$/i.test(u)) throw new Error('Not a link: ' + u); });\n  return out;\n}\n\nvar PAGE_ = [\n  '<!doctype html><html><head><base target=\"_top\"><style>',\n  'body{font-family:Arial,Helvetica,sans-serif;background:#f4f8f7;color:#1d1d1f;margin:0;padding:24px 16px}',\n  '.card{max-width:640px;margin:0 auto;background:#fff;border:1px solid #d8e2e0;border-radius:12px;padding:20px;display:grid;gap:12px}',\n  'h1{font-size:1.3rem;margin:0}.eyebrow{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#0b7a6f}',\n  'ol{margin:0;padding-left:22px;font-size:.9rem;overflow-wrap:anywhere}.muted{color:#5f6b69;font-size:.9rem}',\n  'button,a.btn{background:#0b7a6f;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:700;font-size:1rem;cursor:pointer;text-decoration:none;display:inline-block}',\n  'button:disabled{opacity:.6;cursor:default}.err{background:#fcebea;color:#b3261e;border-radius:8px;padding:10px 12px}.ok{background:#e4f2e1;color:#2e7d32;border-radius:8px;padding:10px 12px}',\n  '</style></head><body><div class=\"card\"><span class=\"eyebrow\">Ticket Assessment Hub</span>',\n  '<? if (error) { ?><h1>Can\\'t make this form</h1><div class=\"err\"><?= error ?></div>',\n  '<? } else { ?><h1><?= quiz.formTitle ?></h1>',\n  '<p class=\"muted\">Creates a Google Form in your Drive with the instructions at the top, a section for each ticket below, and the four questions in each section. It is not published or shared.</p>',\n  '<ol><? for (var i = 0; i < quiz.tickets.length; i++) { ?><li><?= quiz.tickets[i] ?></li><? } ?></ol>',\n  '<div><button id=\"go\" onclick=\"make()\">Create Google Form</button></div><div id=\"out\"></div>',\n  '<script>var QUIZ = <?!= payload ?>;',\n  'function make(){var b=document.getElementById(\"go\");b.disabled=true;b.textContent=\"Creating…\";',\n  'google.script.run.withSuccessHandler(function(r){b.style.display=\"none\";var o=document.getElementById(\"out\");o.className=\"ok\";',\n  'o.innerHTML=\"Form created in your Drive. \";var a=document.createElement(\"a\");a.className=\"btn\";a.href=r.editUrl;a.textContent=\"Open the form\";o.appendChild(a);',\n  'var p=document.createElement(\"p\");p.className=\"muted\";p.textContent=\"Next: move it to the right folder, link a response sheet, publish it, and share the link. Then go back to the hub and click Find my form.\";o.appendChild(p);})',\n  '.withFailureHandler(function(e){b.disabled=false;b.textContent=\"Create Google Form\";var o=document.getElementById(\"out\");o.className=\"err\";o.textContent=\"Couldn\\'t create the form: \"+(e&&e.message?e.message:e);})',\n  '.createQuizForm(QUIZ);}<\/script><? } ?></div></body></html>'\n].join('\\n');\n";
   const SHEETS = 'Google Sheets';
   const SLACK = 'Slack';
-  const BATCH = 12; // trainees scored per Claude call for one ticket
+  const BATCH = 6; // trainees scored per Claude call for one ticket (long answers need small groups)
 
   // ---------- helpers ----------
   const $ = (id) => document.getElementById(id);
@@ -962,7 +964,7 @@ function createQuizForm() {
     const g = byId('grades', gradeId(q, resp.email));
     const c = g && g.tickets && g.tickets[t.id];
     const max = tmax(t);
-    if (!c || !c.ai) return { state: 'none', max };
+    if (!c || !c.ai || /^Claude didn't return a score/.test(c.ai.feedback || '')) return { state: 'none', max };
     const stale = c.ai.guideHash !== guideHash(t) || c.ai.responseId !== resp.id;
     const raw = c.override && c.override.score != null ? c.override.score : c.ai.score;
     return { state: stale ? 'stale' : 'ok', c, score: Math.min(max, raw), max };
@@ -1207,8 +1209,8 @@ function createQuizForm() {
     const qp = qpts(t);
     const gh = guideHash(t);
     let done = 0;
-    for (let i = 0; i < resp.length; i += BATCH) {
-      const part = resp.slice(i, i + BATCH);
+    const missed = [];
+    const runBatch = async (part) => {
       const prompt = `You score Homeaglow Care Specialist training answers for one ticket. "C" is the customer, "CP" is the cleaning professional, "CRM actions" are steps taken in the internal tools.
 
 Ticket ${n}${t.url ? ': ' + t.url + ' (you cannot open this link; rely only on the trainer\'s guidelines)' : ' (rely only on the trainer\'s guidelines)'}
@@ -1258,8 +1260,10 @@ Reply with only a JSON array, one object per trainee, for example:
       }
       const list = Array.isArray(out) ? out : out && Array.isArray(out.results) ? out.results : [];
       const now = new Date().toISOString();
-      for (const r of part) {
-        const got = list.find((x) => x && x.id === r.id);
+      const byPos = list.length === part.length && !list.some((x) => x && part.some((r) => r.id === x.id));
+      for (const [pi, r] of part.entries()) {
+        const got = list.find((x) => x && x.id === r.id) || (byPos ? list[pi] : null);
+        if (!got) { missed.push(r); continue; } // leave unscored; never store a made-up 0
         const qs = got && got.questionScores && typeof got.questionScores === 'object' ? QKEYS.reduce((o, k) => { let v = Number(got.questionScores[k]); if (!Number.isFinite(v)) v = 0; o[k] = Math.max(0, Math.min(qp[k], Math.round(v * 2) / 2)); return o; }, {}) : null;
         const ans = (r.answers || []).find((x) => x.ticketId === t.id) || {};
         const ztp = [];
@@ -1270,9 +1274,7 @@ Reply with only a JSON array, one object per trainee, for example:
         let score = qs ? QKEYS.reduce((a, k) => a + qs[k], 0) : got ? Number(got.score) : 0;
         if (!Number.isFinite(score)) score = 0;
         score = Math.max(0, Math.min(max, Math.round(score * 2) / 2));
-        const ai = got
-          ? { score, qscores: qs, ztp, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now }
-          : { score: 0, errors: [], improvements: [], feedback: 'Claude didn\'t return a score for this trainee. Re-score, or adjust by hand.', needsReview: true, guideHash: gh, responseId: r.id, gradedAt: now };
+        const ai = { score, qscores: qs, ztp, errors: (Array.isArray(got.errors) ? got.errors : []).map(String).filter(Boolean), improvements: (Array.isArray(got.improvements) ? got.improvements : []).map(String).filter(Boolean).slice(0, 5), feedback: String(got.feedback || ''), needsReview: !!got.needsReview, guideHash: gh, responseId: r.id, gradedAt: now };
         const id = gradeId(q, r.email);
         const doc = clone(byId('grades', id) || { id, quizId: q.id, email: r.email, tickets: {} });
         const prev = doc.tickets[t.id];
@@ -1281,7 +1283,12 @@ Reply with only a JSON array, one object per trainee, for example:
         await put('grades', doc);
         done++;
       }
-    }
+    };
+    for (let i = 0; i < resp.length; i += BATCH) await runBatch(resp.slice(i, i + BATCH));
+    // Retry anyone Claude left out, in smaller groups.
+    const retry = missed.splice(0);
+    for (let i = 0; i < retry.length; i += 2) await runBatch(retry.slice(i, i + 2));
+    if (missed.length) S.lastMissed = (S.lastMissed || 0) + missed.length;
     return done;
   }
 
@@ -1748,14 +1755,16 @@ Reply with only a JSON array, one object per trainee, for example:
           const q = byId('quizzes', S.scoreQuiz);
           const t = q.tickets.find((x) => x.id === el.dataset.id);
           const todo = [...latestByEmail(q.id).values()].some((r) => cellState(q, t, r).state !== 'ok');
+          S.lastMissed = 0;
           const n = await runScoring(q, [t], todo);
-          toast(`Scored ${plural(n, 'trainee')}.`);
+          toast(`Scored ${plural(n, 'trainee')}.${S.lastMissed ? ` ${plural(S.lastMissed, 'trainee')} still couldn't be scored; click Score again.` : ''}`, !!S.lastMissed);
           break;
         }
         case 'score-all': {
           const q = byId('quizzes', S.scoreQuiz);
+          S.lastMissed = 0;
           const n = await runScoring(q, q.tickets, true);
-          toast(`Scored ${plural(n, 'answer')}.`);
+          toast(`Scored ${plural(n, 'answer')}.${S.lastMissed ? ` ${plural(S.lastMissed, 'answer')} still couldn't be scored; click Score again.` : ''}`, !!S.lastMissed);
           break;
         }
         case 'save-ov': {
@@ -1877,9 +1886,16 @@ Reply with only a JSON array, one object per trainee, for example:
     const el = e.target;
     if (el && el.matches && el.matches('input[type=number]') && document.activeElement === el) el.blur();
   }, { passive: true, capture: true });
+  // Text boxes grow to fit their text, so they never scroll inside and never trap the page's scrolling.
+  function fitTextarea(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+  function fitAll() { document.querySelectorAll('#app textarea').forEach((t) => t.offsetParent && fitTextarea(t)); }
+  document.addEventListener('input', (e) => { if (e.target.matches && e.target.matches('#app textarea')) fitTextarea(e.target); });
+  new MutationObserver(() => requestAnimationFrame(fitAll)).observe($('app'), { childList: true, subtree: false });
+
   document.addEventListener('toggle', (e) => {
     const d = e.target;
     if (d && d.dataset && d.dataset.sec) { S.secOpen[d.dataset.sec] = d.open; lsSet('secOpen', JSON.stringify(S.secOpen)); }
+    if (d && d.open) requestAnimationFrame(fitAll);
   }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
   window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || rulesDirty()) { e.preventDefault(); e.returnValue = ''; } });
