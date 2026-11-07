@@ -288,6 +288,24 @@ details.rticket[open] > summary::before { transform: rotate(90deg); }
 details.rticket > summary .rt-name { font-weight: 700; color: var(--teal); }
 details.rticket > summary a { min-width: 0; overflow-wrap: anywhere; }
 .rt-body { padding: 4px 0 10px 18px; display: grid; gap: 2px; }
+details.sec { padding: 0; gap: 0; }
+details.sec > summary { cursor: pointer; list-style: none; padding: 14px; display: grid; gap: 2px; }
+details.sec > summary::-webkit-details-marker { display: none; }
+details.sec > summary .sec-t { display: flex; align-items: baseline; gap: 10px; }
+details.sec > summary .sec-t::before { content: "›"; color: var(--teal); font-size: 1.4rem; line-height: 1; transition: transform .15s; align-self: center; }
+details.sec[open] > summary .sec-t::before { transform: rotate(90deg); }
+details.sec > summary .sec-d { padding-left: 22px; }
+details.sec > .sec-body { padding: 0 14px 14px; display: grid; gap: 12px; }
+details.tcard { padding: 0; display: block; }
+details.tcard > summary { list-style: none; cursor: pointer; padding: 12px 14px; display: grid; gap: 8px; }
+details.tcard > summary::-webkit-details-marker { display: none; }
+details.tcard > summary:hover { background: var(--teal-soft); border-radius: 12px; }
+details.tcard .tcard-hint { color: var(--teal); font-weight: 700; }
+details.tcard .tcard-hint::after { content: "Show details ›"; }
+details.tcard[open] .tcard-hint::after { content: "Hide details"; }
+details.tcard > .tcard-body { padding: 0 14px 14px; }
+.slack-btn { gap: 6px; }
+.slack-ico { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 4px; background: #4a154b; color: #fff; font-weight: 700; font-size: .75rem; }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
 </style>
 

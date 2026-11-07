@@ -15,6 +15,7 @@
   const DRIVE = 'Google Drive';
   const FORM_MAKER_SCRIPT = /*__FORM_MAKER__*/'';
   const SHEETS = 'Google Sheets';
+  const SLACK = 'Slack';
   const BATCH = 12; // trainees scored per Claude call for one ticket
 
   // ---------- helpers ----------
@@ -52,6 +53,7 @@
     commsDraft: null,
     open: {},
     showList: lsGet('showList') === '1',
+    secOpen: (() => { try { return JSON.parse(lsGet('secOpen') || '{}'); } catch (_) { return {}; } })(),
     busy: {},
   };
   const byId = (c, id) => store[c].find((x) => x.id === id);
@@ -555,7 +557,14 @@ function createQuizForm() {
   ].join('\n');
   const commsGuide = () => { const r = settings().commsGuidance; return typeof r === 'string' ? r : DEFAULT_COMMS; };
   const generalRules = () => { const r = settings().generalRules; return typeof r === 'string' ? r : DEFAULT_RULES; };
-  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${(t.guidelines || '').trim()}|${t.requiresUnsub ? 'unsub' : ''}|${generalRules().trim()}|${commsGuide().trim()}`);
+  const GFIELDS = [
+    { k: 'customer', label: 'Customer message', ph: 'What C wrote or is asking for' },
+    { k: 'crm', label: 'Correct CRM actions', ph: 'One per line, e.g.\nInternal note\nPartial refund of $30\nFlag CP for lateness with arrival time' },
+    { k: 'sampleC', label: 'Sample response to C', ph: 'A good response. Different wording that reaches the same outcome is fine.' },
+    { k: 'sampleCP', label: 'Sample message to CP', ph: 'Write N/A if no CP message is needed' },
+  ];
+  const gf = (t) => GFIELDS.reduce((o, f) => ((o[f.k] = String((t.fields && t.fields[f.k]) || '')), o), {});
+  const guideHash = (t) => hash(`${JSON.stringify(qpts(t))}|${JSON.stringify(gf(t))}|${(t.guidelines || '').trim()}|${t.requiresUnsub ? 'unsub' : ''}|${generalRules().trim()}|${commsGuide().trim()}`);
   // Page-side checks that back up the two ZTP rules, so they don't rely on Claude alone.
   const OUR_CLEANERS = /\bour\s+(?:[a-z-]+\s+){0,3}(?:cleaners?|cleaning\s+(?:pros?|professionals?)|pros|professionals|housekeepers?|maids?)\b/i;
   const UNSUB = /\bunsubscri(?:be|bed|bing|ption)\b/i;
@@ -581,9 +590,17 @@ function createQuizForm() {
   function rulesDirty() {
     return (S.rulesDraft != null && S.rulesDraft !== generalRules()) || (S.commsDraft != null && S.commsDraft !== commsGuide());
   }
+  const newEd = (t) => ({ qp: qpts(t), guidelines: t.guidelines || '', unsub: !!t.requiresUnsub, f: gf(t) });
   function guideDirty(t, ed) {
     const cur = qpts(t);
-    return ed.guidelines !== t.guidelines || !!ed.unsub !== !!t.requiresUnsub || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k]));
+    const f = gf(t);
+    return ed.guidelines !== t.guidelines || !!ed.unsub !== !!t.requiresUnsub || QKEYS.some((k) => String(ed.qp[k]) !== String(cur[k])) || GFIELDS.some((x) => ed.f[x.k] !== f[x.k]);
+  }
+
+  const SEC_DEFAULT = { rules: false, guides: true, overview: true, cards: true };
+  function sec(key, title, desc, body, extra) {
+    const open = S.secOpen[key] != null ? S.secOpen[key] : SEC_DEFAULT[key];
+    return `<details class="panel sec" data-sec="${key}" ${open ? 'open' : ''}><summary><span class="sec-t"><h2>${title}</h2>${extra || ''}</span><span class="small muted sec-d">${desc}</span></summary><div class="sec-body">${body}</div></details>`;
   }
 
   function renderScore() {
@@ -592,27 +609,29 @@ function createQuizForm() {
     const resp = [...latestByEmail(q.id).values()].sort((a, b) => a.name.localeCompare(b.name));
     const total = q.tickets.reduce((a, t) => a + (tmax(t)), 0);
     const todoOf = (t) => resp.filter((r) => cellState(q, t, r).state !== 'ok');
-    const allTodo = q.tickets.reduce((a, t) => a + (t.guidelines.trim() ? todoOf(t).length : 0), 0);
+    const allTodo = q.tickets.reduce((a, t) => a + todoOf(t).length, 0);
     const anyBusy = q.tickets.some((t) => S.busy[q.id + t.id]);
 
     const guides = q.tickets.map((t, i) => {
-      const ed = S.guide[t.id] || { qp: qpts(t), guidelines: t.guidelines, unsub: !!t.requiresUnsub };
+      const ed = S.guide[t.id] || newEd(t);
       const dirty = guideDirty(t, ed);
       const edTotal = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
       const todo = todoOf(t);
       const stale = todo.filter((r) => cellState(q, t, r).state === 'stale').length;
       const busy = S.busy[q.id + t.id];
-      const hint = !t.guidelines.trim() ? 'Add context, save, then score.' : dirty ? 'Save first, then re-score.' : stale ? `<b style="color:var(--warn)">Guidelines or answers changed. ${plural(stale, 'score')} out of date.</b>` : todo.length ? `${plural(todo.length, 'trainee')} not scored yet.` : resp.length ? 'All scores use these guidelines.' : 'No responses yet.';
+      const hint = dirty ? 'Save first, then re-score.' : stale ? `<b style="color:var(--warn)">Guidelines or answers changed. ${plural(stale, 'score')} out of date.</b>` : todo.length ? `${plural(todo.length, 'trainee')} not scored yet.` : resp.length ? 'All scores use these guidelines.' : 'No responses yet.';
       return `<div class="ticket">
         <div class="ticket-head"><span class="ticket-name">Ticket ${i + 1}</span>${t.url ? `<a class="ticket-url" href="${safeUrl(t.url)}" target="_blank" rel="noopener">${esc(t.url)}</a>` : '<span class="ticket-url muted">No link (imported quiz)</span>'}
           <span class="small">Ticket total: <b id="tot-${t.id}">${edTotal}</b> points</span></div>
         <div class="qpts">${QUESTIONS.map((qq) => `<label class="qp-row" for="qp-${t.id}-${qq.key}"><span>${esc(qq.label)}</span><span class="qp-in"><input type="number" min="0" step="0.5" id="qp-${t.id}-${qq.key}" data-g="${t.id}" data-k="${qq.key}" value="${esc(ed.qp[qq.key])}"> pts</span></label>`).join('')}</div>
         <label class="check"><input type="checkbox" id="un-${t.id}" data-g="${t.id}" data-k="unsub" ${ed.unsub ? 'checked' : ''}> This ticket requires an <b>"Unsubscribe customer"</b> CRM action <span class="muted small">(missing it is a ZTP: CRM actions scores 0)</span></label>
-        <label class="field">More context and scoring guidance <span class="opt">correct resolution, required actions and amounts, what earns each question's points, deductions, when N/A is correct</span>
-          <textarea id="gd-${t.id}" data-g="${t.id}" data-k="guidelines" rows="5" placeholder="Example: Correct resolution is a 25% partial refund ($30). CRM actions must include an internal note, the $30 partial refund, and a lateness flag on the CP with the arrival time. Deduct 2 from CRM actions if the refund amount is missing. Message to CP: N/A is wrong here.">${esc(ed.guidelines)}</textarea></label>
+        <details class="block" data-k="gd-${t.id}" ${GFIELDS.some((x) => ed.f[x.k].trim()) || ed.guidelines.trim() ? '' : 'open'}><summary>More context and scoring guidance <span class="muted small" style="font-weight:400">all optional; ${[...GFIELDS.filter((x) => ed.f[x.k].trim()).map((x) => x.label), ...(ed.guidelines.trim() ? ['Additional context'] : [])].join(', ') || 'nothing filled in yet'}</span></summary><div class="body grid g2">
+          ${GFIELDS.map((x) => `<label class="field">${x.label}<textarea id="gf-${t.id}-${x.k}" data-g="${t.id}" data-k="${x.k}" rows="4" placeholder="${esc(x.ph)}">${esc(ed.f[x.k])}</textarea></label>`).join('')}
+          <label class="field span2">Additional context/instructions<textarea id="gd-${t.id}" data-g="${t.id}" data-k="guidelines" rows="3" placeholder="Anything else: deductions, when N/A is correct, what to accept">${esc(ed.guidelines)}</textarea></label>
+        </div></details>
         <div class="actions">
           <button class="btn small ${dirty ? 'primary' : ''}" type="button" data-act="save-guide" data-id="${t.id}" ${dirty ? '' : 'disabled'}>Save points and guidance</button>
-          <button class="btn small ${!dirty && todo.length && t.guidelines.trim() ? 'primary' : ''}" type="button" data-act="score-ticket" data-id="${t.id}" ${!t.guidelines.trim() || dirty || !resp.length || busy || !caps.sample ? 'disabled' : ''}>${busy ? '<span class="spin"></span> Scoring' : todo.length ? `Score ${plural(todo.length, 'trainee')}` : 'Re-score everyone'}</button>
+          <button class="btn small ${!dirty && todo.length ? 'primary' : ''}" type="button" data-act="score-ticket" data-id="${t.id}" ${dirty || !resp.length || busy || !caps.sample ? 'disabled' : ''}>${busy ? '<span class="spin"></span> Scoring' : todo.length ? `Score ${plural(todo.length, 'trainee')}` : 'Re-score everyone'}</button>
           <span class="small muted" id="hint-${t.id}">${hint}</span>
         </div></div>`;
     }).join('');
@@ -631,15 +650,15 @@ function createQuizForm() {
         <div class="actions"><button class="btn primary" type="button" data-act="score-all" ${allTodo && !anyBusy && caps.sample ? '' : 'disabled'}>${anyBusy ? '<span class="spin"></span> Scoring' : `Score everything not up to date (${allTodo})`}</button>
         <button class="btn" type="button" data-act="sheet-preview" ${resp.length ? '' : 'disabled'}>Write results to response sheet</button></div></div>
         ${caps.sample === null ? '<div class="notice warn">Claude scoring isn\'t available in this view. Open the page in claude.ai.</div>' : ''}</section>
-      <section class="panel"><div class="panel-head"><div><h2>General scoring rules</h2><p class="small muted" style="margin:2px 0 0">Apply to every ticket in every quiz. A rule marked ZTP (zero-tolerance policy) sets that question to 0. Changing these marks all scores out of date until you re-score.</p></div></div>
+      ${sec('rules', 'General scoring rules', 'Apply to every ticket in every quiz. A rule marked ZTP (zero-tolerance policy) sets that question to 0. Changing these marks all scores out of date until you re-score.', `
         <div class="grid g2" style="align-items:start">
           <label class="field">Zero-tolerance and other rules<textarea id="rules" data-rules="rules" rows="8">${esc(S.rulesDraft != null ? S.rulesDraft : generalRules())}</textarea></label>
           <label class="field">Communication guidance <span class="opt">used to score the response to C and the message to CP</span><textarea id="comms" data-rules="comms" rows="8">${esc(S.commsDraft != null ? S.commsDraft : commsGuide())}</textarea></label>
         </div>
-        <div class="actions"><button class="btn small ${rulesDirty() ? 'primary' : ''}" type="button" data-act="save-rules" ${rulesDirty() ? '' : 'disabled'}>Save general rules</button><span class="small muted">The page also checks two things itself: "our cleaners"-type wording in the response to C, and a missing unsubscribe when a ticket requires it.</span></div></section>
-      <section class="panel"><div><h2>Points and guidelines per ticket</h2><p class="small muted" style="margin:2px 0 0">Claude scores each ticket against only what you write here. When you change a ticket's points or guidelines, its scores are marked out of date until you re-score. Re-scoring updates the scores, mistakes, areas for improvement and feedback.</p></div>${guides}</section>
-      <section class="panel"><div><h2>Score overview</h2><p class="small muted" style="margin:2px 0 0">Click a trainee to jump to their summary.</p></div>${table}</section>
-      ${resp.length ? `<section class="panel"><div><h2>Trainee summaries</h2><p class="small muted" style="margin:2px 0 0">Each trainee's score, where they went wrong on each ticket, and what to work on.</p></div><div class="grid" style="gap:14px">${cards}</div></section>` : ''}
+        <div class="actions"><button class="btn small ${rulesDirty() ? 'primary' : ''}" type="button" data-act="save-rules" ${rulesDirty() ? '' : 'disabled'}>Save general rules</button><span class="small muted">The page also checks two things itself: "our cleaners"-type wording in the response to C, and a missing unsubscribe when a ticket requires it.</span></div>`)}
+      ${sec('guides', 'Points and guidelines per ticket', 'Points for each question, plus optional guidance. Changing a ticket marks its scores out of date until you re-score.', guides, ` <span class="count">${plural(q.tickets.length, 'ticket')}</span>`)}
+      ${sec('overview', 'Score overview', 'Click a trainee to open their summary.', table)}
+      ${resp.length ? sec('cards', 'Trainee summaries', "Each trainee's score; open one to see where they went wrong, areas for improvement, and Slack feedback.", `<div class="grid" style="gap:10px">${cards}</div>`, ` <span class="count">${plural(resp.length, 'trainee')}</span>`) : ''}
     </div>`;
   }
 
@@ -655,7 +674,7 @@ function createQuizForm() {
       areas: ov.areas || g.ai.improvements || [],
       feedback: g.ai.feedback || '', note: ov.note || '', needsReview: !!g.ai.needsReview,
       adjusted: ov.score != null, override: g.override, gradedAt: g.ai.gradedAt,
-      qmax: qpts(t), aiQ: g.ai.qscores || null, ztp: g.ai.ztp || [],
+      qmax: qpts(t), aiQ: g.ai.qscores || null, ztp: g.ai.ztp || [], slackSent: g.slackSent || null,
       qscores: g.ai.qscores ? QKEYS.reduce((o, k) => ((o[k] = ov.qscores && ov.qscores[k] != null ? ov.qscores[k] : g.ai.qscores[k]), o), {}) : null,
     };
   }
@@ -683,7 +702,7 @@ function createQuizForm() {
 
   function summaryCard(q, x) {
     const r = x.r;
-    const head = `<div class="panel-head"><div><h3>${esc(r.name)}</h3><span class="small muted">${esc(r.email)}</span></div>
+    const head = `<div class="panel-head"><div><h3>${esc(r.name)}</h3>${r.name !== r.email ? `<span class="small muted">${esc(r.email)}</span>` : ''}</div>
       <div style="text-align:right"><span class="big-score">${x.scored ? `${x.sum} / ${x.total}` : '—'}</span>${x.complete && x.total ? `<div class="small"><b>${x.pct}%</b></div>` : ''}</div></div>
       ${x.complete && x.total ? `<div class="bar"><span style="width:${Math.min(100, x.pct)}%"></span></div>` : ''}
       <div class="tags">${!x.scored ? '<span class="tag plain">Not scored yet</span>' : !x.complete ? '<span class="tag warn">Some tickets not scored yet</span>' : ''}${x.stale ? '<span class="tag warn">Some scores use older guidelines</span>' : ''}</div>`;
@@ -700,6 +719,7 @@ function createQuizForm() {
         ${c.errors.length ? `<ul class="plain wrong">${c.errors.map((e) => `<li>${esc(e)}</li>`).join('')}</ul>` : ((c.ztp || []).length ? '' : '<div class="small" style="color:var(--ok);font-weight:700">Nothing wrong on this ticket.</div>')}
         ${c.feedback ? `<div class="small muted"><b>Feedback:</b> ${esc(c.feedback)}</div>` : ''}${c.note ? `<div class="small"><b>Trainer note:</b> ${esc(c.note)}</div>` : ''}
         <div class="actions" style="gap:6px">
+          <button class="btn small slack-btn" type="button" data-act="slack-fb" data-email="${esc(r.email)}" data-t="${t.id}" title="Send this ticket's feedback to the trainee as a Slack DM"><span class="slack-ico" aria-hidden="true">#</span> Send feedback on Slack</button>${c.slackSent ? `<span class="small muted">${c.slackSent.mode === 'draft' ? 'Slack draft saved' : 'Sent on Slack'} ${fmtDT(c.slackSent.at)}</span>` : ''}
           <details class="block mini"><summary class="small">Answers</summary><div class="body" style="gap:4px">${QUESTIONS.map((qq) => `<div class="qa"><span class="ql">${esc(qq.label)}</span><span class="qv">${esc(a[qq.key]) || '<span class="muted">(blank)</span>'}</span></div>`).join('')}</div></details>
           <details class="block mini"><summary class="small">Adjust</summary><div class="body">
             ${c.aiQ ? `<div class="grid g4">${QKEYS.map((k) => `<label class="field">${QSHORT[k]} (0 to ${c.qmax[k]})<input type="number" min="0" max="${c.qmax[k]}" step="0.5" id="ov-${k}-${fid}" value="${c.override && c.override.qscores && c.override.qscores[k] != null ? esc(c.override.qscores[k]) : ''}" placeholder="Claude: ${c.aiQ[k]}"></label>`).join('')}</div>`
@@ -712,9 +732,88 @@ function createQuizForm() {
         </div></div>`;
     }).join('');
     const areas = x.areas.length ? `<ul class="plain">${x.areas.map((a) => `<li>${esc(a.text)} <span class="muted small">(Ticket ${a.tickets.join(', ')})</span></li>`).join('')}</ul>` : `<p class="small muted" style="margin:4px 0 0">${x.scored ? (x.errorCount ? 'Re-score to get areas for improvement.' : 'None. Every scored ticket was correct.') : 'Shows after scoring.'}</p>`;
-    return `<article class="tcard" id="card-${esc(cardId(r))}">${head}
+    return `<details class="tcard" id="card-${esc(cardId(r))}" data-k="card-${esc(cardId(r))}"><summary class="tcard-sum">${head}<span class="small tcard-hint" aria-hidden="true"></span></summary>
       <div class="tcard-body"><div><h4>Where they went wrong</h4><div class="grid" style="gap:8px;margin-top:6px">${tickets}</div></div>
-      <div class="areas"><h4>Areas for improvement</h4>${areas}</div></div></article>`;
+      <div class="areas"><h4>Areas for improvement</h4>${areas}</div></div></details>`;
+  }
+
+  // ---------- Slack feedback ----------
+  const SLK = { results: null, pick: null };
+  function slackMessage(q, t, i, r, c) {
+    const first = r.name && r.name !== r.email ? r.name.split(/\s+/)[0] : '';
+    const crm = gf(t).crm.trim();
+    const items = [...(c.ztp || []).map((z) => `ZTP: ${z.reason}`), ...c.errors.map((e) => e.replace(/\s*\(?\b\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?\s*(points?|pts)?\b\)?/gi, '').replace(/\s{2,}/g, ' ').trim())];
+    return [
+      `Hi${first ? ' ' + first : ''}! Here's your feedback on Ticket ${i + 1} from ${q.title}.`,
+      '',
+      `*Ticket:* ${t.url || 'Ticket ' + (i + 1)}`,
+      '',
+      '*Correct CRM actions:*',
+      crm ? crm.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => '• ' + l.replace(/^[-•*]\s*/, '')).join('\n') : '(add the correct actions here)',
+      '',
+      '*Feedback on comms/resolution:*',
+      items.length ? items.map((e) => '• ' + e).join('\n') : '• Nice work, nothing missed on this ticket.',
+      c.feedback ? '\n' + c.feedback : '',
+      c.note ? '\n' + c.note : '',
+    ].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+  function parseSlackUsers(p) {
+    const text = typeof p === 'string' ? p : (p && (p.results || p.text)) || JSON.stringify(p || '');
+    return String(text).split(/### Result/).slice(1).map((b) => ({
+      name: ((/Name:\s*(.+)/.exec(b) || [])[1] || '').trim(),
+      id: ((/User ID:\s*([A-Z0-9]+)/.exec(b) || [])[1] || '').trim(),
+      email: ((/Email:\s*(\S+)/.exec(b) || [])[1] || '').trim().toLowerCase(),
+      title: ((/Title:\s*(.+)/.exec(b) || [])[1] || '').trim(),
+    })).filter((u) => u.id);
+  }
+  async function slackCall(tool, input) {
+    try {
+      const res = await caps.mcp.callTool(SLACK, tool, input, { cache: false });
+      let p = res && res.payload;
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch (_) { /* text */ } }
+      return p;
+    } catch (e) {
+      const c = e && e.code;
+      if (c === 'server_not_connected') throw new Error('Slack isn\'t connected. Add it in claude.ai Settings › Connectors.');
+      if (c === 'needs_reauth') throw new Error('Your Slack connection expired. Reconnect it in claude.ai Settings › Connectors.');
+      if (c === 'not_in_manifest' || c === 'not_granted') throw new Error('Slack is turned off for this page. Allow it in the page\'s permissions.');
+      throw new Error('Slack: ' + String((e && e.message) || 'request failed').slice(0, 200));
+    }
+  }
+  function openSlackFeedback(email, tid) {
+    const q = byId('quizzes', S.scoreQuiz);
+    const i = q.tickets.findIndex((x) => x.id === tid);
+    const t = q.tickets[i];
+    const r = latestByEmail(q.id).get(email);
+    const c = ticketView(q, t, r);
+    const known = (settings().slackIds || {})[email.replace(/[^A-Za-z0-9_-]/g, '_')];
+    SLK.results = known ? [known] : null;
+    SLK.pick = known || null;
+    openModal(`Slack feedback · Ticket ${i + 1}`, `
+      <div class="grid" style="gap:6px"><span class="field">To</span>
+        <div id="slk-to">${slackToHtml(email)}</div>
+        <div class="actions" style="flex-wrap:nowrap"><input type="text" id="slk-q" placeholder="Search Slack by the trainee's name" value="${esc(r.name !== r.email ? r.name : '')}" aria-label="Slack name search"><button class="btn small" type="button" data-act="slk-search">Find</button></div>
+        <span class="small muted">Trainee email: ${esc(email)}. Slack can't search by email, so search by name; the match with this email is picked for you.</span></div>
+      <label class="field">Message <span class="opt">edit anything before sending</span><textarea id="slk-msg" rows="14">${esc(slackMessage(q, t, i, r, c))}</textarea></label>
+      <div id="slk-status" class="small"></div>`,
+      `<button class="btn" type="button" data-act="close-modal">Cancel</button>
+       <button class="btn" type="button" data-act="slk-send" data-mode="draft" data-email="${esc(email)}" data-t="${tid}" ${SLK.pick ? '' : 'disabled'}>Save as Slack draft</button>
+       <button class="btn primary" type="button" data-act="slk-send" data-mode="send" data-email="${esc(email)}" data-t="${tid}" ${SLK.pick ? '' : 'disabled'}>Send DM</button>`);
+  }
+  function slackToHtml(email) {
+    if (!SLK.results) return '<span class="small muted">No one picked yet.</span>';
+    if (!SLK.results.length) return '<span class="small" style="color:var(--bad)">No Slack users found. Try another spelling of the name.</span>';
+    return `<div class="list">${SLK.results.map((u, k) => `<label class="li" style="display:flex;gap:8px;align-items:center"><input type="radio" name="slk-pick" data-act="slk-pick" data-i="${k}" ${SLK.pick && SLK.pick.id === u.id ? 'checked' : ''}><span><b>${esc(u.name)}</b>${u.email ? ` <span class="small muted">${esc(u.email)}</span>` : ''}${u.email === email ? ' <span class="tag ok">Email matches</span>' : u.email ? ' <span class="tag warn">Different email</span>' : ''}${u.title ? `<div class="small muted">${esc(u.title)}</div>` : ''}</span></label>`).join('')}</div>`;
+  }
+
+  function ticketGuidance(t) {
+    const f = gf(t);
+    const tag = (name, v) => (v.trim() ? `<${name}>\n${v.trim()}\n</${name}>\n` : '');
+    const body = tag('customer_message', f.customer) + tag('correct_crm_actions', f.crm) + tag('sample_response_to_C', f.sampleC) + tag('sample_message_to_CP', f.sampleCP) +
+      tag('additional_context', `${t.guidelines || ''}${t.requiresUnsub ? '\nThis ticket requires an "Unsubscribe customer" CRM action.' : ''}`);
+    return body
+      ? `Trainer guidance for this ticket. Samples show one good answer; accept different wording that reaches the same outcome.\n${body}`
+      : 'The trainer gave no ticket-specific guidance. Judge with the general rules and communication guidance, and set needsReview to true when you can\'t tell what the correct actions or resolution are.\n';
   }
 
   // ---------- Claude scoring: one call per ticket for a batch of trainees ----------
@@ -742,12 +841,10 @@ ${generalRules().trim() || '(none)'}
 ${commsGuide().trim() || '(none)'}
 </communication_guidance>
 
-<trainer_guidelines>
-${t.guidelines.trim()}${t.requiresUnsub ? '\nThis ticket requires an "Unsubscribe customer" CRM action.' : ''}
-</trainer_guidelines>
+${ticketGuidance(t)}
 
 Rules:
-- Score each of the four questions separately, from 0 up to that question's points, using only the trainer's guidelines. Half points are allowed. A question worth 0 points always scores 0.
+- Score each of the four questions separately, from 0 up to that question's points, using only the trainer's guidance, the general rules and the communication guidance. Half points are allowed. A question worth 0 points always scores 0.
 - When the guidelines say N/A is the correct answer to a question, an N/A answer earns full points for it.
 - Judge whether the actions and resolution are correct, not whether the wording matches. Accept different wording that reaches the same correct outcome.
 - Trainees were told to be specific: the kind of refund, the exact amount or duration, and what to include when flagging a C or CP. Missing specifics that the guidelines require count as errors.
@@ -796,7 +893,7 @@ Reply with only a JSON array, one object per trainee, for example:
         const id = gradeId(q, r.email);
         const doc = clone(byId('grades', id) || { id, quizId: q.id, email: r.email, tickets: {} });
         const prev = doc.tickets[t.id];
-        doc.tickets[t.id] = { ai, override: prev ? prev.override || null : null, history: [...((prev && prev.history) || []), ...(prev && prev.ai ? [prev.ai] : [])].slice(-5) };
+        doc.tickets[t.id] = { ai, override: prev ? prev.override || null : null, slackSent: prev ? prev.slackSent || null : null, history: [...((prev && prev.history) || []), ...(prev && prev.ai ? [prev.ai] : [])].slice(-5) };
         doc.updatedAt = now;
         await put('grades', doc);
         done++;
@@ -991,7 +1088,7 @@ Reply with only a JSON array, one object per trainee, for example:
     if (!el) return;
     const a = el.dataset.act;
     if (a === 'modal-bg' && e.target !== el) return;
-    if (a === 'jump' && e.target.closest('a,button,input,textarea,select,details')) return;
+    if (a === 'jump') { const hit = e.target.closest('a,button,input,textarea,select'); if (hit && el.contains(hit)) return; }
     try {
       switch (a) {
         case 'modal-bg': case 'close-modal': closeModal(null); break;
@@ -1183,7 +1280,63 @@ Reply with only a JSON array, one object per trainee, for example:
           } catch (er) { $('gs-status').innerHTML = `<div class="notice bad">${esc(er.message)} Nothing else in the sheet was changed.</div>`; }
           break;
         }
-        case 'jump': { const c = $(el.dataset.to); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
+        case 'jump': {
+          const sc = document.querySelector('details[data-sec="cards"]');
+          if (sc && !sc.open) { sc.open = true; S.secOpen.cards = true; lsSet('secOpen', JSON.stringify(S.secOpen)); }
+          const c = $(el.dataset.to);
+          if (c) { c.open = true; c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+          break;
+        }
+        case 'slack-fb': openSlackFeedback(el.dataset.email, el.dataset.t); break;
+        case 'slk-search': {
+          const qv = $('slk-q').value.trim();
+          if (!qv) return toast('Type the trainee\'s name as it shows in Slack.', true);
+          if (!caps.mcp) return toast('Slack isn\'t available in this view.', true);
+          el.disabled = true;
+          try {
+            const p = await slackCall('slack_search_users', { keywords: qv.split(/\s+/).filter(Boolean).slice(0, 4), natural_language_query: '', limit: 10, response_format: 'detailed' });
+            const email = document.querySelector('[data-act=slk-send]').dataset.email;
+            SLK.results = parseSlackUsers(p);
+            SLK.pick = SLK.results.find((u) => u.email === email) || (SLK.results.length === 1 ? SLK.results[0] : null);
+            $('slk-to').innerHTML = slackToHtml(email);
+            document.querySelectorAll('[data-act=slk-send]').forEach((b) => (b.disabled = !SLK.pick));
+          } catch (er) { $('slk-status').innerHTML = `<div class="notice bad">${esc(er.message)}</div>`; }
+          finally { el.disabled = false; }
+          break;
+        }
+        case 'slk-pick':
+          SLK.pick = SLK.results[Number(el.dataset.i)];
+          document.querySelectorAll('[data-act=slk-send]').forEach((b) => (b.disabled = !SLK.pick));
+          break;
+        case 'slk-send': {
+          if (!SLK.pick) return toast('Pick who to send it to first.', true);
+          const msg = $('slk-msg').value.trim();
+          if (!msg) return toast('The message is empty.', true);
+          const draft = el.dataset.mode === 'draft';
+          const email = el.dataset.email;
+          if (!draft && SLK.pick.email && SLK.pick.email !== email) {
+            const ok = await ask('Send to a different email?', `${esc(SLK.pick.name)}'s Slack email is ${esc(SLK.pick.email)}, not ${esc(email)}. Send anyway?`, 'Send anyway');
+            if (ok !== true) return;
+          }
+          document.querySelectorAll('[data-act=slk-send]').forEach((b) => (b.disabled = true));
+          $('slk-status').innerHTML = `<span class="pill busy">${draft ? 'Saving the draft' : 'Sending'}</span>`;
+          try {
+            await slackCall(draft ? 'slack_send_message_draft' : 'slack_send_message', { channel_id: SLK.pick.id, message: msg });
+            const q = byId('quizzes', S.scoreQuiz);
+            const doc = clone(byId('grades', gradeId(q, email)));
+            doc.tickets[el.dataset.t].slackSent = { at: new Date().toISOString(), by: me && me.id, mode: draft ? 'draft' : 'sent', to: SLK.pick.id };
+            await put('grades', doc);
+            const ids = { ...(settings().slackIds || {}) };
+            ids[email.replace(/[^A-Za-z0-9_-]/g, '_')] = { id: SLK.pick.id, name: SLK.pick.name, email: SLK.pick.email };
+            await put('settings', { ...settings(), id: 'main', slackIds: ids });
+            closeModal(); render();
+            toast(draft ? `Draft saved in your Slack DM with ${SLK.pick.name}. Open Slack to send it.` : `Sent to ${SLK.pick.name} on Slack.`);
+          } catch (er) {
+            $('slk-status').innerHTML = `<div class="notice bad">${esc(er.message)} Nothing was sent.</div>`;
+            document.querySelectorAll('[data-act=slk-send]').forEach((b) => (b.disabled = false));
+          }
+          break;
+        }
         case 'save-rules': {
           await put('settings', { ...settings(), id: 'main', generalRules: $('rules').value, commsGuidance: $('comms').value, rulesUpdatedAt: new Date().toISOString(), rulesUpdatedBy: me && me.id });
           S.rulesDraft = null;
@@ -1201,7 +1354,7 @@ Reply with only a JSON array, one object per trainee, for example:
           for (const k of QKEYS) { const v = Number(ed.qp[k]); if (!(v >= 0)) return toast(`Points for "${QSHORT[k]}" must be 0 or more.`, true); qp[k] = v; }
           const tot = round1(QKEYS.reduce((a, k) => a + qp[k], 0));
           if (!(tot > 0)) return toast('Give at least one question some points.', true);
-          t.qpoints = qp; t.points = tot; t.guidelines = ed.guidelines; t.requiresUnsub = !!ed.unsub; t.updatedAt = new Date().toISOString();
+          t.qpoints = qp; t.points = tot; t.guidelines = ed.guidelines; t.fields = { ...ed.f }; t.requiresUnsub = !!ed.unsub; t.updatedAt = new Date().toISOString();
           await put('quizzes', q);
           delete S.guide[t.id];
           render();
@@ -1218,7 +1371,7 @@ Reply with only a JSON array, one object per trainee, for example:
         }
         case 'score-all': {
           const q = byId('quizzes', S.scoreQuiz);
-          const n = await runScoring(q, q.tickets.filter((t) => t.guidelines.trim()), true);
+          const n = await runScoring(q, q.tickets, true);
           toast(`Scored ${plural(n, 'answer')}.`);
           break;
         }
@@ -1306,8 +1459,9 @@ Reply with only a JSON array, one object per trainee, for example:
     if (el.dataset.g) {
       const q = byId('quizzes', S.scoreQuiz);
       const t = q.tickets.find((x) => x.id === el.dataset.g);
-      const ed = S.guide[t.id] || (S.guide[t.id] = { qp: qpts(t), guidelines: t.guidelines, unsub: !!t.requiresUnsub });
-      if (el.dataset.k === 'guidelines') ed.guidelines = el.value; else if (el.dataset.k === 'unsub') ed.unsub = el.checked; else ed.qp[el.dataset.k] = el.value;
+      const ed = S.guide[t.id] || (S.guide[t.id] = newEd(t));
+      const k = el.dataset.k;
+      if (k === 'guidelines') ed.guidelines = el.value; else if (k === 'unsub') ed.unsub = el.checked; else if (GFIELDS.some((x) => x.k === k)) ed.f[k] = el.value; else ed.qp[k] = el.value;
       const tot = $('tot-' + t.id);
       if (tot) tot.textContent = round1(QKEYS.reduce((a, k) => a + (Number(ed.qp[k]) || 0), 0));
       const dirty = guideDirty(t, ed);
@@ -1334,6 +1488,10 @@ Reply with only a JSON array, one object per trainee, for example:
       el.value = '';
     }
   });
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (d && d.dataset && d.dataset.sec) { S.secOpen[d.dataset.sec] = d.open; lsSet('secOpen', JSON.stringify(S.secOpen)); }
+  }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('modal-root').innerHTML) closeModal(null); if (e.key === 'Enter' && e.target.id === 'ask-input') closeModal(e.target.value); });
   window.addEventListener('beforeunload', (e) => { if (Object.keys(S.guide).length || rulesDirty()) { e.preventDefault(); e.returnValue = ''; } });
 
