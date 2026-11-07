@@ -451,7 +451,7 @@ table.sheet td:not(.w), table.sheet th { white-space: nowrap; max-width: none; o
   // Status, tabs, router
   // =====================================================================
   function renderStatus() {
-    const p = ['<span class="pill warn">Staging</span>'];
+    const p = [];
     if (caps.db === undefined) p.push('<span class="pill busy">Connecting</span>');
     else if (!caps.db) p.push('<span class="pill bad">Not saved</span>');
     else if (dbError) p.push('<span class="pill bad">Database error</span>');
