@@ -751,6 +751,7 @@ function createQuizForm() {
     const items = [...(c.ztp || []).map((z) => `ZTP: ${z.reason}`), ...c.errors.map((e) => e.replace(/\s*\(?\b\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?\s*(points?|pts)?\b\)?/gi, '').replace(/\s{2,}/g, ' ').trim())];
     return [
       heading ? `*Ticket ${i + 1}:* ${t.url || ''}`.trim() : `*Ticket:* ${t.url || 'Ticket ' + (i + 1)}`,
+      ...(gf(t).customer.trim() ? ['', '*Customer message:*', gf(t).customer.trim().split('\n').map((l) => '> ' + l).join('\n')] : []),
       ...(crm ? ['', '*Correct CRM actions:*', crm.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => '• ' + l.replace(/^[-•*]\s*/, '')).join('\n')] : []),
       ...(gf(t).sampleC.trim() ? ['', '*Sample response to C:*', gf(t).sampleC.trim()] : []),
       '',
@@ -811,12 +812,28 @@ function createQuizForm() {
         <div class="actions" style="flex-wrap:nowrap"><input type="text" id="slk-q" placeholder="Search Slack by the trainee's name" value="${esc(r.name !== r.email ? r.name : '')}" aria-label="Slack name search"><button class="btn small" type="button" data-act="slk-search">Find</button></div>
         <span class="small muted">Trainee email: ${esc(email)}. Slack can't search by email, so search by name; the match with this email is picked for you.</span></div>
       ${unscored.length ? `<div class="notice warn">Ticket ${unscored.join(', ')} ${unscored.length === 1 ? 'isn\'t' : 'aren\'t'} scored yet, so ${unscored.length === 1 ? 'it\'s' : 'they\'re'} left out of this message.</div>` : ''}
-      <label class="field">Message <span class="opt">edit anything before sending</span><textarea id="slk-msg" rows="${all ? 22 : 14}">${esc(all ? slackMessageAll(q, r) : slackMessage(q, t, i, r, c))}</textarea></label>
+      <div class="field">Message preview <span class="opt">how it will read in Slack</span></div>
+      <div id="slk-prev" class="slk-prev"></div>
+      <details class="block mini"><summary class="small">Edit message</summary><div class="body"><textarea id="slk-msg" rows="${all ? 22 : 14}">${esc(all ? slackMessageAll(q, r) : slackMessage(q, t, i, r, c))}</textarea></div></details>
       <div id="slk-status" class="small"></div>`,
       `<button class="btn" type="button" data-act="close-modal">Cancel</button>
        <button class="btn" type="button" data-act="slk-send" data-mode="draft" data-email="${esc(email)}" data-t="${tid}" ${SLK.pick ? '' : 'disabled'}>Save as Slack draft</button>
        <button class="btn primary" type="button" data-act="slk-send" data-mode="send" data-email="${esc(email)}" data-t="${tid}" ${SLK.pick ? '' : 'disabled'}>Send DM</button>`);
+    $('modal-root').querySelector('.modal').classList.add('wide');
+    slackPreview();
   }
+  // Rough Slack mrkdwn rendering for the preview: *bold*, > quotes, links, line breaks.
+  function slackPreview() {
+    const box = $('slk-prev'), src = $('slk-msg');
+    if (!box || !src) return;
+    box.innerHTML = src.value.split('\n').map((l) => {
+      const quote = /^>\s?/.test(l);
+      let h = esc(quote ? l.replace(/^>\s?/, '') : l);
+      h = h.replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      return quote ? `<div class="q">${h || '&nbsp;'}</div>` : `<div>${h || '&nbsp;'}</div>`;
+    }).join('');
+  }
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'slk-msg') slackPreview(); });
   function slackToHtml(email) {
     if (!SLK.results) return '<span class="small muted">No one picked yet.</span>';
     if (!SLK.results.length) return '<span class="small" style="color:var(--bad)">No Slack users found. Try another spelling of the name.</span>';
