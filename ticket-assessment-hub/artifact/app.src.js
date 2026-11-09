@@ -738,30 +738,38 @@ function createQuizForm() {
     }).join('');
     const areas = x.areas.length ? `<ul class="plain">${x.areas.map((a) => `<li>${esc(a.text)} <span class="muted small">(Ticket ${a.tickets.join(', ')})</span></li>`).join('')}</ul>` : `<p class="small muted" style="margin:4px 0 0">${x.scored ? (x.errorCount ? 'Re-score to get areas for improvement.' : 'None. Every scored ticket was correct.') : 'Shows after scoring.'}</p>`;
     return `<details class="tcard" id="card-${esc(cardId(r))}" data-k="card-${esc(cardId(r))}"><summary class="tcard-sum">${head}<span class="small tcard-hint" aria-hidden="true"></span></summary>
-      <div class="tcard-body"><div><h4>Where they went wrong</h4><div class="grid" style="gap:8px;margin-top:6px">${tickets}</div></div>
+      <div class="tcard-body">${x.scored ? `<div class="actions" style="gap:6px"><button class="btn small slack-btn" type="button" data-act="slack-fb" data-email="${esc(r.email)}" data-t="all" title="Send the feedback on every scored ticket in one Slack DM"><span class="slack-ico" aria-hidden="true">#</span> Send all ticket feedback on Slack</button>${x.cells.some((c) => c.slackSent && c.slackSent.all) ? (() => { const ss = x.cells.find((c) => c.slackSent && c.slackSent.all).slackSent; return `<span class="small muted">${ss.mode === 'draft' ? 'Slack draft of all feedback saved' : 'All feedback sent on Slack'} ${fmtDT(ss.at)}</span>`; })() : ''}</div>` : ''}
+      <div><h4>Where they went wrong</h4><div class="grid" style="gap:8px;margin-top:6px">${tickets}</div></div>
       <div class="areas"><h4>Areas for improvement</h4>${areas}</div></div></details>`;
   }
 
   // ---------- Slack feedback ----------
   const SLK = { results: null, pick: null };
-  function slackMessage(q, t, i, r, c) {
-    const first = r.name && r.name !== r.email ? r.name.split(/\s+/)[0] : '';
+  const firstName = (r) => (r.name && r.name !== r.email ? r.name.split(/\s+/)[0] : '');
+  function slackTicketBlock(t, i, c, heading) {
     const crm = gf(t).crm.trim();
     const items = [...(c.ztp || []).map((z) => `ZTP: ${z.reason}`), ...c.errors.map((e) => e.replace(/\s*\(?\b\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?\s*(points?|pts)?\b\)?/gi, '').replace(/\s{2,}/g, ' ').trim())];
     return [
-      `Hi${first ? ' ' + first : ''}! Here's your feedback on Ticket ${i + 1} from ${q.title}.`,
-      '',
-      `*Ticket:* ${t.url || 'Ticket ' + (i + 1)}`,
-      '',
-      '*Correct CRM actions:*',
-      crm ? crm.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => '• ' + l.replace(/^[-•*]\s*/, '')).join('\n') : '(add the correct actions here)',
+      heading ? `*Ticket ${i + 1}:* ${t.url || ''}`.trim() : `*Ticket:* ${t.url || 'Ticket ' + (i + 1)}`,
+      ...(crm ? ['', '*Correct CRM actions:*', crm.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => '• ' + l.replace(/^[-•*]\s*/, '')).join('\n')] : []),
       ...(gf(t).sampleC.trim() ? ['', '*Sample response to C:*', gf(t).sampleC.trim()] : []),
       '',
       '*Feedback on comms/resolution:*',
       items.length ? items.map((e) => '• ' + e).join('\n') : '• Nice work, nothing missed on this ticket.',
       c.feedback ? '\n' + c.feedback : '',
       c.note ? '\n' + c.note : '',
-    ].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    ].join('\n');
+  }
+  const tidyMsg = (m) => m.replace(/\n{3,}/g, '\n\n').trim();
+  function slackMessage(q, t, i, r, c) {
+    const first = firstName(r);
+    return tidyMsg(`Hi${first ? ' ' + first : ''}! Here's your feedback on Ticket ${i + 1} from ${q.title}.\n\n` + slackTicketBlock(t, i, c, false));
+  }
+  // Every scored ticket in one DM. Unscored tickets are left out and listed in the dialog.
+  function slackMessageAll(q, r) {
+    const first = firstName(r);
+    const blocks = q.tickets.map((t, i) => ({ t, i, c: ticketView(q, t, r) })).filter((x) => x.c.state !== 'none');
+    return tidyMsg(`Hi${first ? ' ' + first : ''}! Here's your feedback on ${q.title}.\n\n` + blocks.map((x) => slackTicketBlock(x.t, x.i, x.c, true)).join('\n\n———\n\n'));
   }
   function parseSlackUsers(p) {
     const text = typeof p === 'string' ? p : (p && (p.results || p.text)) || JSON.stringify(p || '');
@@ -788,19 +796,22 @@ function createQuizForm() {
   }
   function openSlackFeedback(email, tid) {
     const q = byId('quizzes', S.scoreQuiz);
-    const i = q.tickets.findIndex((x) => x.id === tid);
+    const all = tid === 'all';
+    const i = all ? -1 : q.tickets.findIndex((x) => x.id === tid);
     const t = q.tickets[i];
     const r = latestByEmail(q.id).get(email);
-    const c = ticketView(q, t, r);
+    const c = all ? null : ticketView(q, t, r);
+    const unscored = all ? q.tickets.map((x, k) => (ticketView(q, x, r).state === 'none' ? k + 1 : null)).filter(Boolean) : [];
     const known = (settings().slackIds || {})[email.replace(/[^A-Za-z0-9_-]/g, '_')];
     SLK.results = known ? [known] : null;
     SLK.pick = known || null;
-    openModal(`Slack feedback · Ticket ${i + 1}`, `
+    openModal(all ? `Slack feedback · All tickets` : `Slack feedback · Ticket ${i + 1}`, `
       <div class="grid" style="gap:6px"><span class="field">To</span>
         <div id="slk-to">${slackToHtml(email)}</div>
         <div class="actions" style="flex-wrap:nowrap"><input type="text" id="slk-q" placeholder="Search Slack by the trainee's name" value="${esc(r.name !== r.email ? r.name : '')}" aria-label="Slack name search"><button class="btn small" type="button" data-act="slk-search">Find</button></div>
         <span class="small muted">Trainee email: ${esc(email)}. Slack can't search by email, so search by name; the match with this email is picked for you.</span></div>
-      <label class="field">Message <span class="opt">edit anything before sending</span><textarea id="slk-msg" rows="14">${esc(slackMessage(q, t, i, r, c))}</textarea></label>
+      ${unscored.length ? `<div class="notice warn">Ticket ${unscored.join(', ')} ${unscored.length === 1 ? 'isn\'t' : 'aren\'t'} scored yet, so ${unscored.length === 1 ? 'it\'s' : 'they\'re'} left out of this message.</div>` : ''}
+      <label class="field">Message <span class="opt">edit anything before sending</span><textarea id="slk-msg" rows="${all ? 22 : 14}">${esc(all ? slackMessageAll(q, r) : slackMessage(q, t, i, r, c))}</textarea></label>
       <div id="slk-status" class="small"></div>`,
       `<button class="btn" type="button" data-act="close-modal">Cancel</button>
        <button class="btn" type="button" data-act="slk-send" data-mode="draft" data-email="${esc(email)}" data-t="${tid}" ${SLK.pick ? '' : 'disabled'}>Save as Slack draft</button>
@@ -1383,7 +1394,9 @@ Reply with only a JSON array, one object per trainee, for example:
             await slackCall(draft ? 'slack_send_message_draft' : 'slack_send_message', { channel_id: SLK.pick.id, message: msg });
             const q = byId('quizzes', S.scoreQuiz);
             const doc = clone(byId('grades', gradeId(q, email)));
-            doc.tickets[el.dataset.t].slackSent = { at: new Date().toISOString(), by: me && me.id, mode: draft ? 'draft' : 'sent', to: SLK.pick.id };
+            const sent = { at: new Date().toISOString(), by: me && me.id, mode: draft ? 'draft' : 'sent', to: SLK.pick.id, ...(el.dataset.t === 'all' ? { all: true } : {}) };
+            const tids = el.dataset.t === 'all' ? q.tickets.filter((t) => ticketView(q, t, latestByEmail(q.id).get(email)).state !== 'none').map((t) => t.id) : [el.dataset.t];
+            tids.forEach((tid) => { if (doc.tickets[tid]) doc.tickets[tid].slackSent = sent; });
             await put('grades', doc);
             const ids = { ...(settings().slackIds || {}) };
             ids[email.replace(/[^A-Za-z0-9_-]/g, '_')] = { id: SLK.pick.id, name: SLK.pick.name, email: SLK.pick.email };
